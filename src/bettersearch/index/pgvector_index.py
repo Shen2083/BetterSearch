@@ -9,9 +9,9 @@ are what make a large content library affordable:
 
 Truncated (Matryoshka) dimensions
     Set by the embedding provider, not here - 512 instead of a native 1536 is
-    another 3x. Combined with halfvec, 1M chunks goes from ~6GB of raw vectors
-    to ~500MB, which is the difference between needing a large managed Postgres
-    and fitting on a small one.
+    another 3x. Combined with halfvec that is 6x: 1M chunks goes from 5.72 GB of
+    raw vectors to 0.95 GB, the difference between needing a large managed
+    Postgres and fitting on a small one.
 
 HNSW over IVFFlat
     Better recall/latency, and no need to pick a list count up front or rebuild

@@ -1,0 +1,1123 @@
+{
+  "name": "catalogue-thin",
+  "description": "Thin catalogue records derived from corpus_seed.json. Title, author and subject headings only - no body text. Synthetic authors and dates; the titles and subjects are real.",
+  "documents": [
+    {
+      "doc_id": "hastings",
+      "title": "The Battle of Hastings",
+      "text": "Author: Merrick, R. D.\nPublished: 1993\nSubjects: History; Great Britain; Battle -- Hastings",
+      "url": null,
+      "tags": [
+        "history",
+        "england"
+      ]
+    },
+    {
+      "doc_id": "william-duke",
+      "title": "William, Duke of Normandy",
+      "text": "Author: Kenwright, H.\nPublished: 2021\nSubjects: History; Great Britain; William -- Duke",
+      "url": null,
+      "tags": [
+        "history",
+        "england"
+      ]
+    },
+    {
+      "doc_id": "harold-godwinson",
+      "title": "Harold Godwinson",
+      "text": "Author: Rutherford, J. R.\nPublished: 1996\nSubjects: History; Great Britain; Harold -- Godwinson",
+      "url": null,
+      "tags": [
+        "history",
+        "england"
+      ]
+    },
+    {
+      "doc_id": "stamford-bridge",
+      "title": "Stamford Bridge",
+      "text": "Author: Lockhart, K.\nPublished: 2023\nSubjects: History; Great Britain; Stamford -- Bridge",
+      "url": null,
+      "tags": [
+        "history",
+        "england"
+      ]
+    },
+    {
+      "doc_id": "domesday",
+      "title": "The Domesday Book",
+      "text": "Author: Doyle, S.\nPublished: 2022\nSubjects: History; Great Britain; Domesday -- Book",
+      "url": null,
+      "tags": [
+        "history",
+        "england"
+      ]
+    },
+    {
+      "doc_id": "bayeux",
+      "title": "The Bayeux Tapestry",
+      "text": "Author: Ashworth, E. M.\nPublished: 1998\nSubjects: History; Art; Bayeux -- Tapestry",
+      "url": null,
+      "tags": [
+        "history",
+        "art"
+      ]
+    },
+    {
+      "doc_id": "motte-bailey",
+      "title": "Motte-and-Bailey Castles",
+      "text": "Author: Merrick, E. M.\nPublished: 1967\nSubjects: History; Architecture; Motte-and-Bailey -- Castles",
+      "url": null,
+      "tags": [
+        "history",
+        "architecture"
+      ]
+    },
+    {
+      "doc_id": "titanic",
+      "title": "RMS Titanic",
+      "text": "Author: Sandiford, K.\nPublished: 2002\nSubjects: History; Navigation; Titanic",
+      "url": null,
+      "tags": [
+        "history",
+        "maritime"
+      ]
+    },
+    {
+      "doc_id": "white-star",
+      "title": "The White Star Line",
+      "text": "Author: Doyle, M. L.\nPublished: 1964\nSubjects: History; Navigation; White -- Star",
+      "url": null,
+      "tags": [
+        "history",
+        "maritime"
+      ]
+    },
+    {
+      "doc_id": "north-atlantic-ice",
+      "title": "Icebergs of the North Atlantic",
+      "text": "Author: Harkness, R. D.\nPublished: 1963\nSubjects: Geography; Navigation; Icebergs -- North",
+      "url": null,
+      "tags": [
+        "geography",
+        "maritime"
+      ]
+    },
+    {
+      "doc_id": "carpathia",
+      "title": "RMS Carpathia",
+      "text": "Author: Brennan, C.\nPublished: 1972\nSubjects: History; Navigation; Carpathia",
+      "url": null,
+      "tags": [
+        "history",
+        "maritime"
+      ]
+    },
+    {
+      "doc_id": "solas",
+      "title": "The Safety of Life at Sea Convention",
+      "text": "Author: Kenwright, R. D.\nPublished: 2003\nSubjects: Law; Navigation; Safety -- Life",
+      "url": null,
+      "tags": [
+        "law",
+        "maritime"
+      ]
+    },
+    {
+      "doc_id": "yeast",
+      "title": "Baker's Yeast",
+      "text": "Author: Merrick, A.\nPublished: 1977\nSubjects: Science; Food and cookery; Baker's -- Yeast",
+      "url": null,
+      "tags": [
+        "science",
+        "food"
+      ]
+    },
+    {
+      "doc_id": "gluten",
+      "title": "Gluten",
+      "text": "Author: Lockhart, H.\nPublished: 1967\nSubjects: Science; Food and cookery; Gluten",
+      "url": null,
+      "tags": [
+        "science",
+        "food"
+      ]
+    },
+    {
+      "doc_id": "sourdough",
+      "title": "Sourdough Starters",
+      "text": "Author: Rutherford, P.\nPublished: 2021\nSubjects: Science; Food and cookery; Sourdough -- Starters",
+      "url": null,
+      "tags": [
+        "science",
+        "food"
+      ]
+    },
+    {
+      "doc_id": "maillard",
+      "title": "The Maillard Reaction",
+      "text": "Author: Doyle, S.\nPublished: 1984\nSubjects: Science; Food and cookery; Maillard -- Reaction",
+      "url": null,
+      "tags": [
+        "science",
+        "food"
+      ]
+    },
+    {
+      "doc_id": "bakers-percentage",
+      "title": "Baker's Percentage",
+      "text": "Author: Pemberton, C.\nPublished: 2021\nSubjects: Food and cookery; Baker's -- Percentage",
+      "url": null,
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "doc_id": "apollo-11",
+      "title": "Apollo 11",
+      "text": "Author: Ellington, E. M.\nPublished: 1973\nSubjects: Science; Astronautics; Apollo",
+      "url": null,
+      "tags": [
+        "science",
+        "space"
+      ]
+    },
+    {
+      "doc_id": "sputnik",
+      "title": "Sputnik 1",
+      "text": "Author: Lockhart, R. D.\nPublished: 2004\nSubjects: Science; Astronautics; Sputnik",
+      "url": null,
+      "tags": [
+        "science",
+        "space"
+      ]
+    },
+    {
+      "doc_id": "gagarin",
+      "title": "Yuri Gagarin",
+      "text": "Author: Merrick, K.\nPublished: 1983\nSubjects: History; Astronautics; Yuri -- Gagarin",
+      "url": null,
+      "tags": [
+        "history",
+        "space"
+      ]
+    },
+    {
+      "doc_id": "saturn-v",
+      "title": "The Saturn V Rocket",
+      "text": "Author: Lockhart, J. R.\nPublished: 1989\nSubjects: Engineering; Astronautics; Saturn -- Rocket",
+      "url": null,
+      "tags": [
+        "engineering",
+        "space"
+      ]
+    },
+    {
+      "doc_id": "space-race-politics",
+      "title": "Cold War Rivalry in Orbit",
+      "text": "Author: Pemberton, K.\nPublished: 1974\nSubjects: History; Political science; Cold -- Rivalry",
+      "url": null,
+      "tags": [
+        "history",
+        "politics"
+      ]
+    },
+    {
+      "doc_id": "lunar-samples",
+      "title": "What the Moon Rocks Told Us",
+      "text": "Author: Kenwright, P.\nPublished: 2013\nSubjects: Science; Astronautics; Moon -- Rocks",
+      "url": null,
+      "tags": [
+        "science",
+        "space"
+      ]
+    },
+    {
+      "doc_id": "chlorophyll",
+      "title": "Chlorophyll",
+      "text": "Author: Gallagher, C.\nPublished: 1979\nSubjects: Science; Life sciences; Chlorophyll",
+      "url": null,
+      "tags": [
+        "science",
+        "biology"
+      ]
+    },
+    {
+      "doc_id": "calvin-cycle",
+      "title": "The Calvin Cycle",
+      "text": "Author: Iremonger, M. L.\nPublished: 1969\nSubjects: Science; Life sciences; Calvin -- Cycle",
+      "url": null,
+      "tags": [
+        "science",
+        "biology"
+      ]
+    },
+    {
+      "doc_id": "stomata",
+      "title": "Stomata",
+      "text": "Author: Gallagher, A.\nPublished: 1993\nSubjects: Science; Life sciences; Stomata",
+      "url": null,
+      "tags": [
+        "science",
+        "biology"
+      ]
+    },
+    {
+      "doc_id": "carbon-fixation",
+      "title": "Carbon Fixation",
+      "text": "Author: Harkness, H.\nPublished: 1996\nSubjects: Science; Life sciences; Carbon -- Fixation",
+      "url": null,
+      "tags": [
+        "science",
+        "biology"
+      ]
+    },
+    {
+      "doc_id": "plant-respiration",
+      "title": "Respiration in Plants",
+      "text": "Author: Ellington, S.\nPublished: 1974\nSubjects: Science; Life sciences; Respiration -- Plants",
+      "url": null,
+      "tags": [
+        "science",
+        "biology"
+      ]
+    },
+    {
+      "doc_id": "darwin-beagle",
+      "title": "The Voyage of the Beagle",
+      "text": "Author: Ellington, K.\nPublished: 2002\nSubjects: Science; History; Voyage -- Beagle",
+      "url": null,
+      "tags": [
+        "science",
+        "history"
+      ]
+    },
+    {
+      "doc_id": "natural-selection",
+      "title": "Natural Selection",
+      "text": "Author: Gallagher, R. D.\nPublished: 2012\nSubjects: Science; Life sciences; Natural -- Selection",
+      "url": null,
+      "tags": [
+        "science",
+        "biology"
+      ]
+    },
+    {
+      "doc_id": "galapagos-finches",
+      "title": "The Galapagos Finches",
+      "text": "Author: Ormerod, P.\nPublished: 1997\nSubjects: Science; Life sciences; Galapagos -- Finches",
+      "url": null,
+      "tags": [
+        "science",
+        "biology"
+      ]
+    },
+    {
+      "doc_id": "mendel-peas",
+      "title": "Gregor Mendel and the Pea Plants",
+      "text": "Author: Whitmore, M. L.\nPublished: 1967\nSubjects: Science; Life sciences; Gregor -- Mendel",
+      "url": null,
+      "tags": [
+        "science",
+        "biology"
+      ]
+    },
+    {
+      "doc_id": "dna-structure",
+      "title": "The Structure of DNA",
+      "text": "Author: Quested, C.\nPublished: 1988\nSubjects: Science; Life sciences; Structure",
+      "url": null,
+      "tags": [
+        "science",
+        "biology"
+      ]
+    },
+    {
+      "doc_id": "human-genome",
+      "title": "The Human Genome Project",
+      "text": "Author: Merrick, C.\nPublished: 2021\nSubjects: Science; Life sciences; Human -- Genome",
+      "url": null,
+      "tags": [
+        "science",
+        "biology"
+      ]
+    },
+    {
+      "doc_id": "hadrians-wall",
+      "title": "Hadrian's Wall",
+      "text": "Author: Vaughan, R. D.\nPublished: 2004\nSubjects: History; Great Britain; Hadrian's -- Wall",
+      "url": null,
+      "tags": [
+        "history",
+        "britain"
+      ]
+    },
+    {
+      "doc_id": "boudica",
+      "title": "Boudica's Revolt",
+      "text": "Author: Iremonger, K.\nPublished: 1974\nSubjects: History; Great Britain; Boudica's -- Revolt",
+      "url": null,
+      "tags": [
+        "history",
+        "britain"
+      ]
+    },
+    {
+      "doc_id": "roman-roads",
+      "title": "Roman Roads in Britain",
+      "text": "Author: Jarrow, K.\nPublished: 2012\nSubjects: History; Engineering; Roman -- Roads",
+      "url": null,
+      "tags": [
+        "history",
+        "engineering"
+      ]
+    },
+    {
+      "doc_id": "londinium",
+      "title": "Londinium",
+      "text": "Author: Sandiford, H.\nPublished: 1969\nSubjects: History; Great Britain; Londinium",
+      "url": null,
+      "tags": [
+        "history",
+        "britain"
+      ]
+    },
+    {
+      "doc_id": "roman-baths",
+      "title": "Roman Bathing Culture",
+      "text": "Author: Iremonger, C.\nPublished: 1984\nSubjects: History; Social history; Roman -- Bathing",
+      "url": null,
+      "tags": [
+        "history",
+        "society"
+      ]
+    },
+    {
+      "doc_id": "steam-engine",
+      "title": "The Separate Condenser",
+      "text": "Author: Iremonger, R. D.\nPublished: 1966\nSubjects: Engineering; History; Separate -- Condenser",
+      "url": null,
+      "tags": [
+        "engineering",
+        "history"
+      ]
+    },
+    {
+      "doc_id": "spinning-jenny",
+      "title": "The Spinning Jenny",
+      "text": "Author: Kenwright, J. R.\nPublished: 1988\nSubjects: Engineering; History; Spinning -- Jenny",
+      "url": null,
+      "tags": [
+        "engineering",
+        "history"
+      ]
+    },
+    {
+      "doc_id": "railways",
+      "title": "The Coming of the Railways",
+      "text": "Author: Iremonger, A.\nPublished: 2022\nSubjects: Engineering; History; Coming -- Railways",
+      "url": null,
+      "tags": [
+        "engineering",
+        "history"
+      ]
+    },
+    {
+      "doc_id": "factory-acts",
+      "title": "The Factory Acts",
+      "text": "Author: Rutherford, K.\nPublished: 1986\nSubjects: History; Law; Factory -- Acts",
+      "url": null,
+      "tags": [
+        "history",
+        "law"
+      ]
+    },
+    {
+      "doc_id": "coal-mining",
+      "title": "Coal and Industrialisation",
+      "text": "Author: Pemberton, M. L.\nPublished: 1989\nSubjects: History; Power resources; Coal -- Industrialisation",
+      "url": null,
+      "tags": [
+        "history",
+        "energy"
+      ]
+    },
+    {
+      "doc_id": "canals",
+      "title": "The Canal Network",
+      "text": "Author: Underhill, M. L.\nPublished: 1981\nSubjects: Engineering; History; Canal -- Network",
+      "url": null,
+      "tags": [
+        "engineering",
+        "history"
+      ]
+    },
+    {
+      "doc_id": "d-day",
+      "title": "The Normandy Landings",
+      "text": "Author: Calloway, H.\nPublished: 1994\nSubjects: History; Military history; Normandy -- Landings",
+      "url": null,
+      "tags": [
+        "history",
+        "war"
+      ]
+    },
+    {
+      "doc_id": "bletchley",
+      "title": "Bletchley Park and the Enigma Machine",
+      "text": "Author: Sandiford, J. R.\nPublished: 2023\nSubjects: History; Cryptography; Bletchley -- Park",
+      "url": null,
+      "tags": [
+        "history",
+        "cryptography"
+      ]
+    },
+    {
+      "doc_id": "battle-of-britain",
+      "title": "The Battle of Britain",
+      "text": "Author: Ormerod, C.\nPublished: 1994\nSubjects: History; Military history; Battle -- Britain",
+      "url": null,
+      "tags": [
+        "history",
+        "war"
+      ]
+    },
+    {
+      "doc_id": "the-blitz",
+      "title": "The Blitz",
+      "text": "Author: Vaughan, S.\nPublished: 2017\nSubjects: History; Military history; Blitz",
+      "url": null,
+      "tags": [
+        "history",
+        "war"
+      ]
+    },
+    {
+      "doc_id": "dunkirk",
+      "title": "The Dunkirk Evacuation",
+      "text": "Author: Yardley, M. L.\nPublished: 1994\nSubjects: History; Military history; Dunkirk -- Evacuation",
+      "url": null,
+      "tags": [
+        "history",
+        "war"
+      ]
+    },
+    {
+      "doc_id": "chain-home",
+      "title": "Chain Home",
+      "text": "Author: Sandiford, J. R.\nPublished: 1968\nSubjects: Engineering; Military history; Chain -- Home",
+      "url": null,
+      "tags": [
+        "engineering",
+        "war"
+      ]
+    },
+    {
+      "doc_id": "turing",
+      "title": "Alan Turing",
+      "text": "Author: Fairbairn, J. R.\nPublished: 2009\nSubjects: Science; Computer science; Alan -- Turing",
+      "url": null,
+      "tags": [
+        "science",
+        "computing"
+      ]
+    },
+    {
+      "doc_id": "eniac",
+      "title": "ENIAC",
+      "text": "Author: Sandiford, P.\nPublished: 2022\nSubjects: History; Computer science; ENIAC",
+      "url": null,
+      "tags": [
+        "history",
+        "computing"
+      ]
+    },
+    {
+      "doc_id": "transistor",
+      "title": "The Transistor",
+      "text": "Author: Ormerod, C.\nPublished: 1976\nSubjects: Engineering; Computer science; Transistor",
+      "url": null,
+      "tags": [
+        "engineering",
+        "computing"
+      ]
+    },
+    {
+      "doc_id": "moores-law",
+      "title": "Moore's Law",
+      "text": "Author: Rutherford, M. L.\nPublished: 1968\nSubjects: Computer science; Economics; Moore's",
+      "url": null,
+      "tags": [
+        "computing",
+        "economics"
+      ]
+    },
+    {
+      "doc_id": "arpanet",
+      "title": "ARPANET",
+      "text": "Author: Whitmore, S.\nPublished: 1987\nSubjects: Computer science; History; ARPANET",
+      "url": null,
+      "tags": [
+        "computing",
+        "history"
+      ]
+    },
+    {
+      "doc_id": "world-wide-web",
+      "title": "The World Wide Web",
+      "text": "Author: Calloway, A.\nPublished: 1999\nSubjects: Computer science; History; World -- Wide",
+      "url": null,
+      "tags": [
+        "computing",
+        "history"
+      ]
+    },
+    {
+      "doc_id": "leonardo",
+      "title": "Leonardo da Vinci",
+      "text": "Author: Quested, R. D.\nPublished: 1993\nSubjects: Art; History; Leonardo -- Vinci",
+      "url": null,
+      "tags": [
+        "art",
+        "history"
+      ]
+    },
+    {
+      "doc_id": "printing-press",
+      "title": "Gutenberg's Printing Press",
+      "text": "Author: Pemberton, J. R.\nPublished: 2004\nSubjects: History; Technology; Gutenberg's -- Printing",
+      "url": null,
+      "tags": [
+        "history",
+        "technology"
+      ]
+    },
+    {
+      "doc_id": "medici",
+      "title": "The Medici",
+      "text": "Author: Underhill, P.\nPublished: 2017\nSubjects: History; Finance; Medici",
+      "url": null,
+      "tags": [
+        "history",
+        "finance"
+      ]
+    },
+    {
+      "doc_id": "linear-perspective",
+      "title": "Linear Perspective",
+      "text": "Author: Newbold, S.\nPublished: 2002\nSubjects: Art; Mathematics; Linear -- Perspective",
+      "url": null,
+      "tags": [
+        "art",
+        "mathematics"
+      ]
+    },
+    {
+      "doc_id": "michelangelo",
+      "title": "Michelangelo",
+      "text": "Author: Calloway, H.\nPublished: 1989\nSubjects: Art; History; Michelangelo",
+      "url": null,
+      "tags": [
+        "art",
+        "history"
+      ]
+    },
+    {
+      "doc_id": "bastille",
+      "title": "The Storming of the Bastille",
+      "text": "Author: Whitmore, M. L.\nPublished: 1979\nSubjects: History; France; Storming -- Bastille",
+      "url": null,
+      "tags": [
+        "history",
+        "france"
+      ]
+    },
+    {
+      "doc_id": "guillotine",
+      "title": "The Guillotine",
+      "text": "Author: Kenwright, P.\nPublished: 1962\nSubjects: History; France; Guillotine",
+      "url": null,
+      "tags": [
+        "history",
+        "france"
+      ]
+    },
+    {
+      "doc_id": "robespierre",
+      "title": "Maximilien Robespierre",
+      "text": "Author: Calloway, M. L.\nPublished: 1990\nSubjects: History; France; Maximilien -- Robespierre",
+      "url": null,
+      "tags": [
+        "history",
+        "france"
+      ]
+    },
+    {
+      "doc_id": "napoleon",
+      "title": "Napoleon Bonaparte",
+      "text": "Author: Pemberton, S.\nPublished: 2012\nSubjects: History; France; Napoleon -- Bonaparte",
+      "url": null,
+      "tags": [
+        "history",
+        "france"
+      ]
+    },
+    {
+      "doc_id": "declaration-rights",
+      "title": "The Declaration of the Rights of Man",
+      "text": "Author: Doyle, P.\nPublished: 1981\nSubjects: History; Law; Declaration -- Rights",
+      "url": null,
+      "tags": [
+        "history",
+        "law"
+      ]
+    },
+    {
+      "doc_id": "jenner",
+      "title": "Edward Jenner and Smallpox",
+      "text": "Author: Kenwright, K.\nPublished: 2004\nSubjects: Science; Medicine; Edward -- Jenner",
+      "url": null,
+      "tags": [
+        "science",
+        "medicine"
+      ]
+    },
+    {
+      "doc_id": "fleming",
+      "title": "Alexander Fleming and Penicillin",
+      "text": "Author: Thirlwell, S.\nPublished: 2008\nSubjects: Science; Medicine; Alexander -- Fleming",
+      "url": null,
+      "tags": [
+        "science",
+        "medicine"
+      ]
+    },
+    {
+      "doc_id": "pasteur",
+      "title": "Germ Theory",
+      "text": "Author: Rutherford, P.\nPublished: 1994\nSubjects: Science; Medicine; Germ -- Theory",
+      "url": null,
+      "tags": [
+        "science",
+        "medicine"
+      ]
+    },
+    {
+      "doc_id": "antibiotic-resistance",
+      "title": "Antibiotic Resistance",
+      "text": "Author: Lockhart, M. L.\nPublished: 1972\nSubjects: Science; Medicine; Antibiotic -- Resistance",
+      "url": null,
+      "tags": [
+        "science",
+        "medicine"
+      ]
+    },
+    {
+      "doc_id": "semmelweis",
+      "title": "Ignaz Semmelweis",
+      "text": "Author: Rutherford, S.\nPublished: 1981\nSubjects: Science; Medicine; Ignaz -- Semmelweis",
+      "url": null,
+      "tags": [
+        "science",
+        "medicine"
+      ]
+    },
+    {
+      "doc_id": "nightingale",
+      "title": "Florence Nightingale",
+      "text": "Author: Ashworth, R. D.\nPublished: 1996\nSubjects: History; Medicine; Florence -- Nightingale",
+      "url": null,
+      "tags": [
+        "history",
+        "medicine"
+      ]
+    },
+    {
+      "doc_id": "greenhouse-effect",
+      "title": "The Greenhouse Effect",
+      "text": "Author: Whitmore, A.\nPublished: 2008\nSubjects: Science; Climatology; Greenhouse -- Effect",
+      "url": null,
+      "tags": [
+        "science",
+        "climate"
+      ]
+    },
+    {
+      "doc_id": "ice-cores",
+      "title": "Ice Cores",
+      "text": "Author: Harkness, M. L.\nPublished: 2023\nSubjects: Science; Climatology; Cores",
+      "url": null,
+      "tags": [
+        "science",
+        "climate"
+      ]
+    },
+    {
+      "doc_id": "jet-stream",
+      "title": "The Jet Stream",
+      "text": "Author: Lockhart, J. R.\nPublished: 1987\nSubjects: Science; Meteorology; Stream",
+      "url": null,
+      "tags": [
+        "science",
+        "weather"
+      ]
+    },
+    {
+      "doc_id": "ocean-currents",
+      "title": "Ocean Circulation",
+      "text": "Author: Vaughan, C.\nPublished: 1992\nSubjects: Science; Climatology; Ocean -- Circulation",
+      "url": null,
+      "tags": [
+        "science",
+        "climate"
+      ]
+    },
+    {
+      "doc_id": "carbon-cycle",
+      "title": "The Carbon Cycle",
+      "text": "Author: Fairbairn, P.\nPublished: 2003\nSubjects: Science; Climatology; Carbon -- Cycle",
+      "url": null,
+      "tags": [
+        "science",
+        "climate"
+      ]
+    },
+    {
+      "doc_id": "beethoven",
+      "title": "Ludwig van Beethoven",
+      "text": "Author: Sandiford, P.\nPublished: 2004\nSubjects: Music; History; Ludwig -- Beethoven",
+      "url": null,
+      "tags": [
+        "music",
+        "history"
+      ]
+    },
+    {
+      "doc_id": "sonata-form",
+      "title": "Sonata Form",
+      "text": "Author: Pemberton, R. D.\nPublished: 1968\nSubjects: Music; Theory; Sonata -- Form",
+      "url": null,
+      "tags": [
+        "music",
+        "theory"
+      ]
+    },
+    {
+      "doc_id": "orchestra",
+      "title": "The Symphony Orchestra",
+      "text": "Author: Fairbairn, H.\nPublished: 2002\nSubjects: Music; Symphony -- Orchestra",
+      "url": null,
+      "tags": [
+        "music"
+      ]
+    },
+    {
+      "doc_id": "staff-notation",
+      "title": "Staff Notation",
+      "text": "Author: Merrick, P.\nPublished: 1962\nSubjects: Music; History; Staff -- Notation",
+      "url": null,
+      "tags": [
+        "music",
+        "history"
+      ]
+    },
+    {
+      "doc_id": "bach",
+      "title": "Johann Sebastian Bach",
+      "text": "Author: Sandiford, K.\nPublished: 1997\nSubjects: Music; History; Johann -- Sebastian",
+      "url": null,
+      "tags": [
+        "music",
+        "history"
+      ]
+    },
+    {
+      "doc_id": "everest-1953",
+      "title": "The First Ascent of Everest",
+      "text": "Author: Lockhart, A.\nPublished: 1977\nSubjects: Discoveries in geography; History; Ascent -- Everest",
+      "url": null,
+      "tags": [
+        "exploration",
+        "history"
+      ]
+    },
+    {
+      "doc_id": "shackleton",
+      "title": "The Endurance Expedition",
+      "text": "Author: Gallagher, M. L.\nPublished: 1993\nSubjects: Discoveries in geography; History; Endurance -- Expedition",
+      "url": null,
+      "tags": [
+        "exploration",
+        "history"
+      ]
+    },
+    {
+      "doc_id": "amundsen-scott",
+      "title": "The Race to the South Pole",
+      "text": "Author: Quested, C.\nPublished: 2003\nSubjects: Discoveries in geography; History; Race -- South",
+      "url": null,
+      "tags": [
+        "exploration",
+        "history"
+      ]
+    },
+    {
+      "doc_id": "magellan",
+      "title": "The First Circumnavigation",
+      "text": "Author: Quested, S.\nPublished: 1986\nSubjects: Discoveries in geography; History; Circumnavigation",
+      "url": null,
+      "tags": [
+        "exploration",
+        "history"
+      ]
+    },
+    {
+      "doc_id": "marco-polo",
+      "title": "Marco Polo",
+      "text": "Author: Harkness, P.\nPublished: 1967\nSubjects: Discoveries in geography; History; Marco -- Polo",
+      "url": null,
+      "tags": [
+        "exploration",
+        "history"
+      ]
+    },
+    {
+      "doc_id": "cook-pacific",
+      "title": "James Cook's Pacific Voyages",
+      "text": "Author: Quested, P.\nPublished: 2011\nSubjects: Discoveries in geography; History; James -- Cook's",
+      "url": null,
+      "tags": [
+        "exploration",
+        "history"
+      ]
+    },
+    {
+      "doc_id": "faraday",
+      "title": "Electromagnetic Induction",
+      "text": "Author: Gallagher, A.\nPublished: 1968\nSubjects: Science; Physics; Electromagnetic -- Induction",
+      "url": null,
+      "tags": [
+        "science",
+        "physics"
+      ]
+    },
+    {
+      "doc_id": "edison-tesla",
+      "title": "The War of the Currents",
+      "text": "Author: Yardley, R. D.\nPublished: 1981\nSubjects: History; Engineering; Currents",
+      "url": null,
+      "tags": [
+        "history",
+        "engineering"
+      ]
+    },
+    {
+      "doc_id": "transformer",
+      "title": "The Transformer",
+      "text": "Author: Fairbairn, J. R.\nPublished: 1981\nSubjects: Engineering; Physics; Transformer",
+      "url": null,
+      "tags": [
+        "engineering",
+        "physics"
+      ]
+    },
+    {
+      "doc_id": "national-grid",
+      "title": "The National Grid",
+      "text": "Author: Kenwright, K.\nPublished: 1991\nSubjects: Engineering; Public works; National -- Grid",
+      "url": null,
+      "tags": [
+        "engineering",
+        "infrastructure"
+      ]
+    },
+    {
+      "doc_id": "batteries",
+      "title": "How Batteries Work",
+      "text": "Author: Fairbairn, H.\nPublished: 1997\nSubjects: Science; Chemistry; Batteries -- Work",
+      "url": null,
+      "tags": [
+        "science",
+        "chemistry"
+      ]
+    },
+    {
+      "doc_id": "lightbulb",
+      "title": "The Incandescent Lamp",
+      "text": "Author: Vaughan, K.\nPublished: 2014\nSubjects: History; Engineering; Incandescent -- Lamp",
+      "url": null,
+      "tags": [
+        "history",
+        "engineering"
+      ]
+    },
+    {
+      "doc_id": "great-pyramid",
+      "title": "The Great Pyramid of Giza",
+      "text": "Author: Ellington, C.\nPublished: 1986\nSubjects: History; Egypt; Great -- Pyramid",
+      "url": null,
+      "tags": [
+        "history",
+        "egypt"
+      ]
+    },
+    {
+      "doc_id": "rosetta-stone",
+      "title": "The Rosetta Stone",
+      "text": "Author: Ellington, A.\nPublished: 2014\nSubjects: History; Language and languages; Rosetta -- Stone",
+      "url": null,
+      "tags": [
+        "history",
+        "language"
+      ]
+    },
+    {
+      "doc_id": "tutankhamun",
+      "title": "The Tomb of Tutankhamun",
+      "text": "Author: Ashworth, A.\nPublished: 1992\nSubjects: History; Egypt; Tomb -- Tutankhamun",
+      "url": null,
+      "tags": [
+        "history",
+        "egypt"
+      ]
+    },
+    {
+      "doc_id": "hieroglyphs",
+      "title": "Egyptian Hieroglyphs",
+      "text": "Author: Yardley, A.\nPublished: 1962\nSubjects: History; Language and languages; Egyptian -- Hieroglyphs",
+      "url": null,
+      "tags": [
+        "history",
+        "language"
+      ]
+    },
+    {
+      "doc_id": "mummification",
+      "title": "Mummification",
+      "text": "Author: Iremonger, S.\nPublished: 1990\nSubjects: History; Egypt; Mummification",
+      "url": null,
+      "tags": [
+        "history",
+        "egypt"
+      ]
+    },
+    {
+      "doc_id": "gold-standard",
+      "title": "The Gold Standard",
+      "text": "Author: Thirlwell, M. L.\nPublished: 1976\nSubjects: Economics; History; Gold -- Standard",
+      "url": null,
+      "tags": [
+        "economics",
+        "history"
+      ]
+    },
+    {
+      "doc_id": "inflation",
+      "title": "Inflation",
+      "text": "Author: Brennan, P.\nPublished: 1989\nSubjects: Economics; Inflation",
+      "url": null,
+      "tags": [
+        "economics"
+      ]
+    },
+    {
+      "doc_id": "central-banking",
+      "title": "Central Banking",
+      "text": "Author: Yardley, A.\nPublished: 1987\nSubjects: Economics; Finance; Central -- Banking",
+      "url": null,
+      "tags": [
+        "economics",
+        "finance"
+      ]
+    },
+    {
+      "doc_id": "bretton-woods",
+      "title": "The Bretton Woods System",
+      "text": "Author: Thirlwell, E. M.\nPublished: 1985\nSubjects: Economics; History; Bretton -- Woods",
+      "url": null,
+      "tags": [
+        "economics",
+        "history"
+      ]
+    },
+    {
+      "doc_id": "compound-interest",
+      "title": "Compound Interest",
+      "text": "Author: Iremonger, A.\nPublished: 2013\nSubjects: Economics; Mathematics; Compound -- Interest",
+      "url": null,
+      "tags": [
+        "economics",
+        "mathematics"
+      ]
+    },
+    {
+      "doc_id": "stock-market",
+      "title": "Stock Markets",
+      "text": "Author: Sandiford, M. L.\nPublished: 1970\nSubjects: Economics; Finance; Stock -- Markets",
+      "url": null,
+      "tags": [
+        "economics",
+        "finance"
+      ]
+    },
+    {
+      "doc_id": "black-holes",
+      "title": "Black Holes",
+      "text": "Author: Fairbairn, J. R.\nPublished: 1969\nSubjects: Science; Astronomy; Black -- Holes",
+      "url": null,
+      "tags": [
+        "science",
+        "astronomy"
+      ]
+    },
+    {
+      "doc_id": "hubble-expansion",
+      "title": "The Expanding Universe",
+      "text": "Author: Sandiford, S.\nPublished: 1962\nSubjects: Science; Astronomy; Expanding -- Universe",
+      "url": null,
+      "tags": [
+        "science",
+        "astronomy"
+      ]
+    },
+    {
+      "doc_id": "big-bang",
+      "title": "The Big Bang",
+      "text": "Author: Calloway, S.\nPublished: 2019\nSubjects: Science; Astronomy; Bang",
+      "url": null,
+      "tags": [
+        "science",
+        "astronomy"
+      ]
+    },
+    {
+      "doc_id": "exoplanets",
+      "title": "Exoplanets",
+      "text": "Author: Newbold, A.\nPublished: 1973\nSubjects: Science; Astronomy; Exoplanets",
+      "url": null,
+      "tags": [
+        "science",
+        "astronomy"
+      ]
+    },
+    {
+      "doc_id": "solar-system-formation",
+      "title": "How the Solar System Formed",
+      "text": "Author: Ellington, R. D.\nPublished: 2008\nSubjects: Science; Astronomy; Solar -- System",
+      "url": null,
+      "tags": [
+        "science",
+        "astronomy"
+      ]
+    },
+    {
+      "doc_id": "telescopes",
+      "title": "Telescopes",
+      "text": "Author: Vaughan, J. R.\nPublished: 1996\nSubjects: Science; Astronomy; Telescopes",
+      "url": null,
+      "tags": [
+        "science",
+        "astronomy"
+      ]
+    }
+  ]
+}

@@ -17,12 +17,13 @@ from pathlib import Path
 
 from .config import load_settings
 from .evaluate import evaluate_all, load_eval_queries, per_query_breakdown
-from .ingest import ingest_corpus
+from .ingest import ingest_corpus, ingest_documents, load_corpus
 from .search import MODES, Searcher
 from .types import EmptyIndexError, ModelMismatchError
 
 DEFAULT_CORPUS = "data/corpus_seed.json"
 DEFAULT_EVAL = "data/eval_queries.json"
+DEFAULT_ENRICHMENT_STORE = ".bettersearch/enrichment.jsonl"
 
 _SNIPPET_WIDTH = 96
 
@@ -134,6 +135,52 @@ def cmd_evaluate(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_enrich(args: argparse.Namespace) -> int:
+    """Generate enrichment for a thin catalogue, then optionally index it."""
+    from .enrichment import (
+        EnrichmentClient,
+        EnrichmentStore,
+        enrich,
+        enriched_documents,
+    )
+
+    settings = load_settings()
+    documents = load_corpus(args.corpus)
+    store = EnrichmentStore(args.store)
+    client = EnrichmentClient(model=args.model)
+
+    report = enrich(
+        documents,
+        store=store,
+        client=client,
+        use_batch=not args.sync,
+        progress=True,
+    )
+    print("\n" + json.dumps(report.to_dict(), indent=2))
+
+    if report.failed:
+        print(
+            f"\n{report.failed} item(s) failed. Re-run to retry only those.",
+            file=sys.stderr,
+        )
+    if report.enriched:
+        share = report.recognised / report.enriched
+        print(
+            f"\nRecognised {report.recognised}/{report.enriched} ({share:.0%}). "
+            f"The remaining {report.grounded} were expanded from the record "
+            f"alone, with no invented content."
+        )
+
+    if args.index:
+        rebuilt = enriched_documents(documents, store=store, model=args.model)
+        ingest_report = ingest_documents(rebuilt, settings=settings)
+        print(
+            f"\nIndexed {ingest_report.chunks_embedded} chunks "
+            f"({ingest_report.chunks_skipped} unchanged)."
+        )
+    return 0
+
+
 def cmd_stats(args: argparse.Namespace) -> int:
     settings = load_settings()
     searcher = Searcher(settings=settings)
@@ -180,6 +227,23 @@ def build_parser() -> argparse.ArgumentParser:
     p_eval.add_argument("--per-query", action="store_true")
     p_eval.set_defaults(func=cmd_evaluate)
 
+    p_enrich = sub.add_parser(
+        "enrich", help="generate LLM enrichment for a thin catalogue"
+    )
+    p_enrich.add_argument("--corpus", default="data/catalogue_thin.json")
+    p_enrich.add_argument("--store", default=DEFAULT_ENRICHMENT_STORE)
+    p_enrich.add_argument("--model", default="claude-opus-5")
+    p_enrich.add_argument(
+        "--sync",
+        action="store_true",
+        help="one request per item instead of the Batch API (half price); "
+        "use only for small runs",
+    )
+    p_enrich.add_argument(
+        "--index", action="store_true", help="ingest the enriched documents after"
+    )
+    p_enrich.set_defaults(func=cmd_enrich)
+
     p_stats = sub.add_parser("stats", help="describe the current index")
     p_stats.set_defaults(func=cmd_stats)
 
@@ -195,6 +259,9 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     except FileNotFoundError as exc:
         print(f"Error: file not found - {exc.filename}", file=sys.stderr)
+        return 1
+    except (ImportError, RuntimeError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
         return 1
 
 

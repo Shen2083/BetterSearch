@@ -15,6 +15,8 @@ dependencies = ["numpy>=1.26"]
 local = ["sentence-transformers>=3.0"]
 openai = ["openai>=1.40"]
 voyage = ["voyageai>=0.3"]
+# LLM enrichment of thin catalogue records.
+enrich = ["anthropic>=1.0"]
 # Storage backends. numpy is built in; pgvector is the production path.
 pgvector = ["psycopg[binary]>=3.2", "pgvector>=0.3"]
 api = ["fastapi>=0.115", "uvicorn[standard]>=0.30"]
