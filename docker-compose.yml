@@ -1,0 +1,28 @@
+# Local Postgres with the pgvector extension, for exercising the production
+# storage path. Port 5433 avoids clashing with a Postgres already on 5432.
+#
+#   docker compose up -d
+#   export BETTERSEARCH_DATABASE_URL="postgresql://bettersearch:bettersearch@localhost:5433/bettersearch"
+#   export BETTERSEARCH_INDEX=pgvector
+#   bettersearch ingest --corpus data/corpus_seed.json
+#
+# pg16 image ships pgvector >= 0.7, which is required for halfvec.
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: bettersearch
+      POSTGRES_PASSWORD: bettersearch
+      POSTGRES_DB: bettersearch
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bettersearch"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:

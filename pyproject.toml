@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "bettersearch"
+version = "0.1.0"
+description = "Semantic content search PoC - retrieval by meaning rather than keywords"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = ["numpy>=1.26"]
+
+[project.optional-dependencies]
+# Embedding backends. `local` is the default and needs no API key.
+local = ["sentence-transformers>=3.0"]
+openai = ["openai>=1.40"]
+voyage = ["voyageai>=0.3"]
+# Storage backends. numpy is built in; pgvector is the production path.
+pgvector = ["psycopg[binary]>=3.2", "pgvector>=0.3"]
+api = ["fastapi>=0.115", "uvicorn[standard]>=0.30"]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+bettersearch = "bettersearch.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/bettersearch"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

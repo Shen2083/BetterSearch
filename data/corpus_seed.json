@@ -1,0 +1,678 @@
+{
+  "name": "bettersearch-seed",
+  "description": "Curated general-knowledge corpus. Clusters are written so that conceptually related articles share little vocabulary - which is exactly where keyword search fails and semantic search should not.",
+  "documents": [
+    {
+      "doc_id": "hastings",
+      "title": "The Battle of Hastings",
+      "tags": ["history", "england"],
+      "text": "On 14 October 1066, an invading army under Duke William of Normandy met the English shield wall on Senlac Hill, a few miles inland from the coast of Sussex. The English held the ridge for most of the day, but repeated feigned retreats by the mounted knights drew defenders down from the high ground.\n\nBy dusk the English king lay dead and his army had broken. The battle decided the succession crisis that had gripped England all year, and it is conventionally treated as the moment one ruling culture displaced another across the whole country."
+    },
+    {
+      "doc_id": "william-duke",
+      "title": "William, Duke of Normandy",
+      "tags": ["history", "england"],
+      "text": "Born illegitimate in Falaise around 1028, William inherited his duchy as a child and spent two decades fighting to hold it. He claimed the English throne on the grounds of a promise he said had been made to him, and spent the summer of 1066 assembling a fleet on the French coast.\n\nCrowned at Westminster on Christmas Day 1066, he spent the rest of his reign suppressing revolts, redistributing land to his followers, and building fortifications across a country that never entirely accepted him."
+    },
+    {
+      "doc_id": "harold-godwinson",
+      "title": "Harold Godwinson",
+      "tags": ["history", "england"],
+      "text": "The last crowned Anglo-Saxon king of England, Harold was the most powerful nobleman in the kingdom before taking the throne in January 1066. His claim rested on the deathbed nomination of Edward the Confessor and the acclamation of the English council.\n\nHe faced two invasions in a single autumn. After marching north to destroy a Norwegian army, he turned his exhausted troops around and covered two hundred and fifty miles south in under a fortnight, arriving to fight the decisive battle of his reign."
+    },
+    {
+      "doc_id": "stamford-bridge",
+      "title": "Stamford Bridge",
+      "tags": ["history", "england"],
+      "text": "Three weeks before the fighting in Sussex, an English army surprised a Norwegian force under Harald Hardrada at a river crossing in Yorkshire. The Norwegians had left much of their armour at their ships and were caught unprepared.\n\nThe victory ended three centuries of Scandinavian ambition in England, but it cost the English king his best troops and left him hundreds of miles from the south coast at the worst possible moment."
+    },
+    {
+      "doc_id": "domesday",
+      "title": "The Domesday Book",
+      "tags": ["history", "england"],
+      "text": "Commissioned in 1085, this survey recorded who held every manor in England, how many ploughs and mills each contained, and what it was worth both before and after the events of 1066. Commissioners toured the shires taking sworn testimony from local juries.\n\nIt was compiled so the new landholding class could assess what it now owned and tax it accurately. As an accidental side effect it is the most complete portrait of an eleventh-century European society that survives anywhere."
+    },
+    {
+      "doc_id": "bayeux",
+      "title": "The Bayeux Tapestry",
+      "tags": ["history", "art"],
+      "text": "An embroidered linen strip nearly seventy metres long, worked in coloured wool, telling the story of the events of 1066 in a sequence of scenes with Latin captions. It shows shipbuilding, a Channel crossing, cavalry charges and the death of a king.\n\nIt was almost certainly made in England within a generation of the events it depicts, probably commissioned by Bishop Odo of Bayeux. It remains one of the very few narrative pictorial sources for eleventh-century warfare."
+    },
+    {
+      "doc_id": "motte-bailey",
+      "title": "Motte-and-Bailey Castles",
+      "tags": ["history", "architecture"],
+      "text": "A raised earth mound topped by a wooden tower, with an enclosed courtyard below protected by a ditch and palisade. Cheap, fast to build, and defensible by a small garrison, hundreds went up across England after 1066.\n\nThey were instruments of occupation rather than comfort. Placed at river crossings, road junctions and inside existing towns, they let a small foreign aristocracy dominate a hostile population, and many were later rebuilt in stone."
+    },
+    {
+      "doc_id": "titanic",
+      "title": "RMS Titanic",
+      "tags": ["history", "maritime"],
+      "text": "The largest ship afloat when she left Southampton on 10 April 1912, bound for New York on her first commercial crossing. Four days out she struck ice at around twenty-two knots and the collision opened her forward compartments to the sea.\n\nShe went down in under three hours. There were lifeboat places for barely half the two thousand two hundred people aboard, and around fifteen hundred died in water close to freezing point."
+    },
+    {
+      "doc_id": "white-star",
+      "title": "The White Star Line",
+      "tags": ["history", "maritime"],
+      "text": "A British shipping company that competed on the North Atlantic route by offering size and comfort rather than raw speed. Its Olympic-class vessels were designed to be the most luxurious afloat, with squash courts, Turkish baths and a heated swimming pool.\n\nThe loss of one of those three sister ships in 1912 permanently damaged the company's reputation. It merged with its principal rival, Cunard, in 1934 under pressure from the British government."
+    },
+    {
+      "doc_id": "north-atlantic-ice",
+      "title": "Icebergs of the North Atlantic",
+      "tags": ["geography", "maritime"],
+      "text": "Each spring, glaciers on the west coast of Greenland calve blocks of ice that drift south on the Labrador Current into the shipping lanes between Europe and North America. In a bad year several hundred reach the latitude of Newfoundland.\n\nOnly about a ninth of the mass shows above the waterline, and on a calm moonless night there is no breaking surf at the base to give one away. After the disaster of 1912 an international patrol was established to track them by ship and later by air."
+    },
+    {
+      "doc_id": "carpathia",
+      "title": "RMS Carpathia",
+      "tags": ["history", "maritime"],
+      "text": "A Cunard liner some fifty-eight miles away when her wireless operator, awake by chance, picked up a distress call shortly after midnight. Her captain ordered every spare boiler lit and drove the ship north through an ice field at well above her rated speed.\n\nShe arrived about four hours later and took on just over seven hundred survivors from the lifeboats. The rescue became the standard argument for keeping a wireless watch around the clock on every passenger vessel."
+    },
+    {
+      "doc_id": "solas",
+      "title": "The Safety of Life at Sea Convention",
+      "tags": ["law", "maritime"],
+      "text": "First adopted in 1914 and revised repeatedly since, this treaty sets the minimum construction, equipment and operating standards for merchant ships. It requires lifeboat capacity for every person aboard, regular drills, and continuous radio watch.\n\nIt was drafted directly in response to a single catastrophe two years earlier, and is often cited as the clearest case of maritime regulation being written in the aftermath of a disaster that exposed how inadequate the previous rules were."
+    },
+    {
+      "doc_id": "yeast",
+      "title": "Baker's Yeast",
+      "tags": ["science", "food"],
+      "text": "Saccharomyces cerevisiae is a single-celled fungus that consumes simple sugars and releases carbon dioxide and ethanol as waste. In a sealed dough matrix that gas cannot escape, so it inflates thousands of tiny pockets and the mass expands.\n\nActivity roughly doubles for every ten degrees Celsius of warmth up to about thirty-five degrees, above which the cells begin to die. This is why a dough left somewhere warm inflates far faster than one left in a cold kitchen."
+    },
+    {
+      "doc_id": "gluten",
+      "title": "Gluten",
+      "tags": ["science", "food"],
+      "text": "When wheat flour is hydrated and worked, two proteins called glutenin and gliadin link into an elastic three-dimensional network. This structure is what allows a dough to stretch without tearing and to trap gas rather than letting it escape.\n\nKneading develops it by aligning and cross-linking the strands. Without an adequate network, gas produced during fermentation simply escapes and the finished loaf stays dense and flat."
+    },
+    {
+      "doc_id": "sourdough",
+      "title": "Sourdough Starters",
+      "tags": ["science", "food"],
+      "text": "A stable culture of wild yeasts and lactic acid bacteria maintained by regularly discarding part of a flour-and-water mixture and refreshing the rest. The bacteria produce lactic and acetic acids, which give the characteristic tang.\n\nThe acidity also slows enzyme activity and strengthens the protein network, which is why loaves raised this way keep longer than those made with commercial yeast alone. A well-fed culture can be maintained for decades."
+    },
+    {
+      "doc_id": "maillard",
+      "title": "The Maillard Reaction",
+      "tags": ["science", "food"],
+      "text": "Above roughly 140 degrees Celsius, amino acids and reducing sugars react to produce hundreds of new aromatic compounds and brown pigments called melanoidins. It is not caramelisation, which involves sugar alone.\n\nThis reaction is responsible for the colour and flavour of crust, roasted coffee, seared meat and toasted malt. Steam injected early in baking delays it, letting a loaf expand fully before its surface sets."
+    },
+    {
+      "doc_id": "bakers-percentage",
+      "title": "Baker's Percentage",
+      "tags": ["food"],
+      "text": "A notation in which every ingredient is expressed as a percentage of the total flour weight, so flour is always one hundred percent. A formula at seventy percent hydration uses seven hundred grams of water per kilogram of flour.\n\nBecause the ratios stay constant, a recipe can be scaled from a single loaf to a commercial batch without recalculation, and two formulas can be compared directly regardless of the quantities each was written for."
+    },
+    {
+      "doc_id": "apollo-11",
+      "title": "Apollo 11",
+      "tags": ["science", "space"],
+      "text": "On 20 July 1969, a lunar module carrying two men separated from its orbiting command ship and descended to a basalt plain called the Sea of Tranquility, landing with under thirty seconds of fuel remaining after the crew took manual control to avoid a boulder field.\n\nNeil Armstrong stepped onto the surface some six hours later, followed by Buzz Aldrin. They spent about two and a quarter hours outside, collected twenty-two kilograms of rock, and left behind a seismometer and a laser reflector still in use today."
+    },
+    {
+      "doc_id": "sputnik",
+      "title": "Sputnik 1",
+      "tags": ["science", "space"],
+      "text": "A polished aluminium sphere fifty-eight centimetres across, carrying nothing but a radio transmitter and batteries, launched into orbit by the Soviet Union on 4 October 1957. Its beeping signal could be picked up by amateur radio operators worldwide.\n\nIt orbited for three months before burning up. Its real significance was political: a rocket able to place a satellite in orbit could deliver a warhead to any city on Earth, and the United States responded by pouring money into science education."
+    },
+    {
+      "doc_id": "gagarin",
+      "title": "Yuri Gagarin",
+      "tags": ["history", "space"],
+      "text": "A Soviet air force pilot who on 12 April 1961 became the first human being to leave the atmosphere, completing a single orbit in one hundred and eight minutes aboard a spherical capsule with no capability to steer.\n\nHe ejected at about seven kilometres altitude and descended by parachute, a detail concealed for years because the record rules required a pilot to land with the craft. He never flew in space again and died in a training crash in 1968."
+    },
+    {
+      "doc_id": "saturn-v",
+      "title": "The Saturn V Rocket",
+      "tags": ["engineering", "space"],
+      "text": "A three-stage launch vehicle standing one hundred and eleven metres tall and weighing nearly three thousand tonnes fully fuelled. Five first-stage engines burned kerosene and liquid oxygen at a combined fifteen tonnes per second.\n\nThirteen were launched between 1967 and 1973 without losing a crew. It remains the most powerful vehicle ever brought into operational service, and the manufacturing knowledge needed to rebuild one was largely lost when production ended."
+    },
+    {
+      "doc_id": "space-race-politics",
+      "title": "Cold War Rivalry in Orbit",
+      "tags": ["history", "politics"],
+      "text": "Between 1957 and 1975, two superpowers treated technical achievement beyond the atmosphere as a proxy for the superiority of their political systems. Each milestone was announced as evidence that one economic model out-performed the other.\n\nThe competition drove budgets to levels no peacetime research programme had seen, then collapsed almost as quickly once the headline goal was met. A joint docking mission in 1975 marked the symbolic end of the contest."
+    },
+    {
+      "doc_id": "lunar-samples",
+      "title": "What the Moon Rocks Told Us",
+      "tags": ["science", "space"],
+      "text": "The three hundred and eighty kilograms of material returned between 1969 and 1972 turned out to be chemically similar to Earth's mantle but severely depleted in volatile elements and water, and completely lacking any trace of past life.\n\nThat combination is difficult to explain unless the satellite formed from debris thrown off by a collision between the young Earth and a body roughly the size of Mars. The samples effectively settled a debate that telescopes could not."
+    },
+    {
+      "doc_id": "chlorophyll",
+      "title": "Chlorophyll",
+      "tags": ["science", "biology"],
+      "text": "A magnesium-centred pigment embedded in the membranes of chloroplasts. It absorbs strongly in the blue and red parts of the spectrum and reflects green, which is why the leaves containing it appear the colour they do.\n\nWhen a photon is absorbed, an electron is raised to a higher energy state and passed along a chain of carrier molecules. The energy released as it moves is captured as chemical energy that the cell can spend later."
+    },
+    {
+      "doc_id": "calvin-cycle",
+      "title": "The Calvin Cycle",
+      "tags": ["science", "biology"],
+      "text": "A sequence of enzyme-driven reactions in the fluid interior of the chloroplast that takes carbon dioxide from the air and builds it into three-carbon sugars, using the chemical energy captured by the light-dependent stage.\n\nThe central enzyme, rubisco, is almost certainly the most abundant protein on the planet. It is also remarkably inefficient, and much of a plant's leaf protein is invested simply in having enough of it."
+    },
+    {
+      "doc_id": "stomata",
+      "title": "Stomata",
+      "tags": ["science", "biology"],
+      "text": "Microscopic pores on a leaf surface, each flanked by a pair of guard cells that swell or slacken to open and close the gap. They are the route by which carbon dioxide enters and water vapour leaves.\n\nThis creates an unavoidable trade-off. A leaf cannot take in the gas it needs without losing water, so plants in dry climates evolved to open their pores at night and store the gas chemically until daylight."
+    },
+    {
+      "doc_id": "carbon-fixation",
+      "title": "Carbon Fixation",
+      "tags": ["science", "biology"],
+      "text": "The conversion of inorganic carbon from the atmosphere into organic molecules by living organisms. Globally it moves something like a hundred and twenty billion tonnes of carbon a year out of the air and into biological tissue.\n\nEverything higher up a food chain depends on it. Animals cannot perform it, so essentially all the chemical energy in an ecosystem traces back to organisms that can convert sunlight and air into sugar."
+    },
+    {
+      "doc_id": "plant-respiration",
+      "title": "Respiration in Plants",
+      "tags": ["science", "biology"],
+      "text": "Plants consume oxygen and release carbon dioxide continuously, breaking down stored sugars in their mitochondria to power growth, repair and transport. This happens day and night in every living cell.\n\nDuring daylight the sugar-building process usually runs faster than this consumption, so there is a net release of oxygen. In darkness only the consumption continues, which is why a sealed greenhouse loses oxygen overnight."
+    },
+    {
+      "doc_id": "darwin-beagle",
+      "title": "The Voyage of the Beagle",
+      "tags": ["science", "history"],
+      "text": "A five-year survey expedition beginning in 1831 that carried a young unpaid naturalist around South America and across the Pacific. He spent most of it ashore, collecting fossils, geological specimens and preserved animals.\n\nThe fossil giant mammals he dug up in Patagonia resembled smaller living species in the same region. That pattern, geographical rather than anatomical, was what first made him doubt that species were fixed."
+    },
+    {
+      "doc_id": "natural-selection",
+      "title": "Natural Selection",
+      "tags": ["science", "biology"],
+      "text": "Where individuals in a population vary, where that variation is inherited, and where it affects how many offspring an individual leaves, the composition of the population must change across generations. No external designer is required.\n\nThe mechanism was proposed independently by two naturalists and published jointly in 1858. It explains apparent purpose in living things as the accumulated residue of differential survival over very long periods."
+    },
+    {
+      "doc_id": "galapagos-finches",
+      "title": "The Galapagos Finches",
+      "tags": ["science", "biology"],
+      "text": "A group of closely related bird species on a Pacific archipelago, differing mainly in the size and shape of their beaks, each suited to a different food source: crushing seeds, probing cactus flowers, or picking insects from bark.\n\nDecades of measurement on one island showed beak dimensions shifting measurably within a few generations in response to drought. It is one of the few cases where the process has been observed happening in the field rather than inferred."
+    },
+    {
+      "doc_id": "mendel-peas",
+      "title": "Gregor Mendel and the Pea Plants",
+      "tags": ["science", "biology"],
+      "text": "An Augustinian friar in Brno who between 1856 and 1863 grew some twenty-eight thousand pea plants, tracking seven characteristics that each appeared in exactly two forms, and counting the offspring ratios with care nobody had applied before.\n\nHe showed that inheritance works through discrete units passed intact from each parent, rather than by the blending of parental traits. His paper was ignored for thirty-five years and rediscovered only after his death."
+    },
+    {
+      "doc_id": "dna-structure",
+      "title": "The Structure of DNA",
+      "tags": ["science", "biology"],
+      "text": "Two sugar-phosphate backbones wound into a right-handed helix, with pairs of bases forming the rungs between them: adenine always opposite thymine, guanine always opposite cytosine.\n\nThe pairing rule immediately suggests how the molecule is copied. Separate the strands and each carries the complete information needed to rebuild its partner, which is why the 1953 paper could note the copying mechanism in a single famously understated sentence."
+    },
+    {
+      "doc_id": "human-genome",
+      "title": "The Human Genome Project",
+      "tags": ["science", "biology"],
+      "text": "A thirteen-year international effort completed in 2003 to read the roughly three billion base pairs in a human cell. It cost around three billion dollars; the same work now takes hours and costs a few hundred.\n\nOne headline finding was how few protein-coding genes there are, around twenty thousand, far fewer than expected and no more than a nematode worm. Most of the sequence turned out to be regulatory or structural rather than instructions for proteins."
+    },
+    {
+      "doc_id": "hadrians-wall",
+      "title": "Hadrian's Wall",
+      "tags": ["history", "britain"],
+      "text": "A stone barrier one hundred and seventeen kilometres long running from the Solway Firth to the mouth of the Tyne, begun around AD 122 with a fort roughly every Roman mile and larger garrison forts behind it.\n\nIt probably functioned less as a defensive line than as a controlled frontier: a way to tax and monitor movement, and a visible statement about the northern limit of imperial administration in Britain."
+    },
+    {
+      "doc_id": "boudica",
+      "title": "Boudica's Revolt",
+      "tags": ["history", "britain"],
+      "text": "In AD 60 or 61 the widowed queen of the Iceni led a rising against the occupying power after her territory was annexed, her family assaulted and tribal debts abruptly called in. Her forces destroyed three towns including the provincial capital.\n\nThe rebellion was crushed at a battle whose location is still unknown, where disciplined infantry in a narrow position defeated a far larger but disorganised force. She is thought to have taken poison rather than be captured."
+    },
+    {
+      "doc_id": "roman-roads",
+      "title": "Roman Roads in Britain",
+      "tags": ["history", "engineering"],
+      "text": "Some twelve thousand kilometres of engineered highway were laid across the province, built in layers over a raised bank with ditches either side for drainage and surfaced with compacted gravel or paving.\n\nThey were built for the rapid movement of troops and official messengers, not for trade. Many modern British trunk roads still follow their alignments, which is why stretches of the network run implausibly straight across the landscape."
+    },
+    {
+      "doc_id": "londinium",
+      "title": "Londinium",
+      "tags": ["history", "britain"],
+      "text": "Founded around AD 47 as a trading settlement at the lowest bridgeable point on the Thames, it was burned to the ground during the revolt of AD 60 and rebuilt as the administrative capital of the province.\n\nAt its height it held perhaps sixty thousand people, with a forum, an amphitheatre and a defensive wall whose line still shapes the street plan of the modern City. Population collapsed after imperial administration withdrew in the early fifth century."
+    },
+    {
+      "doc_id": "roman-baths",
+      "title": "Roman Bathing Culture",
+      "tags": ["history", "society"],
+      "text": "A public bath complex ran a sequence of rooms from cold to hot, heated by a hypocaust in which hot air from a furnace circulated under a raised floor and up flues inside the walls.\n\nBathing was social rather than merely hygienic. Complexes included exercise yards, libraries and food stalls, and entry was cheap enough that most of the urban population could attend daily regardless of status."
+    },
+    {
+      "doc_id": "steam-engine",
+      "title": "The Separate Condenser",
+      "tags": ["engineering", "history"],
+      "text": "Early atmospheric engines wasted most of their fuel reheating the cylinder on every stroke after cold water had been sprayed in to create a vacuum. In 1765 James Watt realised the condensation could happen in a separate chamber kept permanently cold.\n\nThe cylinder could then stay hot throughout, cutting coal consumption by around three quarters. That efficiency gain made the technology worth installing far from coalfields, which is what turned it from a mine pump into a general power source."
+    },
+    {
+      "doc_id": "spinning-jenny",
+      "title": "The Spinning Jenny",
+      "tags": ["engineering", "history"],
+      "text": "A hand-powered frame patented in 1770 that let one operator work eight spindles at once, later many more, by drawing out and twisting multiple threads with a single movement of a bar.\n\nIt broke a long-standing bottleneck: weavers had been able to consume yarn faster than spinners could produce it. It also moved production out of cottages and into buildings large enough to hold the machinery."
+    },
+    {
+      "doc_id": "railways",
+      "title": "The Coming of the Railways",
+      "tags": ["engineering", "history"],
+      "text": "The Liverpool and Manchester line, opened in 1830, was the first to carry both passengers and freight on timetabled services hauled entirely by locomotives. Within twenty years Britain had over ten thousand kilometres of track.\n\nThe consequences went beyond transport. Perishable food could reach cities, seaside towns became reachable for ordinary workers, and the need for coordinated timetables forced the country to abandon local solar time for a single standard."
+    },
+    {
+      "doc_id": "factory-acts",
+      "title": "The Factory Acts",
+      "tags": ["history", "law"],
+      "text": "A series of nineteenth-century British statutes that progressively restricted the hours children and women could be made to work, required guarding of dangerous machinery, and eventually mandated schooling for young workers.\n\nThe 1833 Act mattered most, because it created a paid inspectorate with power to enter premises. Earlier legislation had set limits but relied on local magistrates to enforce them, which in practice meant they were ignored."
+    },
+    {
+      "doc_id": "coal-mining",
+      "title": "Coal and Industrialisation",
+      "tags": ["history", "energy"],
+      "text": "Britain's accessible coal reserves supplied an energy density that wood could not match and did not compete with farmland for space. Output rose from around ten million tonnes a year in 1800 to over two hundred and fifty million by 1900.\n\nDeeper seams required pumping, ventilation and haulage, which drove demand for exactly the machinery the fuel itself powered. That feedback loop is a large part of why industrialisation began where it did."
+    },
+    {
+      "doc_id": "canals",
+      "title": "The Canal Network",
+      "tags": ["engineering", "history"],
+      "text": "Between 1760 and 1830 Britain cut some six thousand kilometres of artificial waterway. A single horse on a towpath could pull a thirty-tonne barge, against perhaps two tonnes in a cart on an unmade road.\n\nThat fifteen-fold gain collapsed the cost of moving coal, stone and pottery. The network was largely obsolete within a generation of the railways, but it had already relocated British industry onto the routes it created."
+    },
+    {
+      "doc_id": "d-day",
+      "title": "The Normandy Landings",
+      "tags": ["history", "war"],
+      "text": "On 6 June 1944, around one hundred and fifty-six thousand Allied troops crossed the Channel and came ashore on five beaches in northern France, supported by twenty-four thousand airborne troops landed during the night.\n\nThe operation depended on an elaborate deception that kept German armoured reserves waiting at Calais for weeks, and on two prefabricated harbours towed across the Channel because no usable port could be captured intact."
+    },
+    {
+      "doc_id": "bletchley",
+      "title": "Bletchley Park and the Enigma Machine",
+      "tags": ["history", "cryptography"],
+      "text": "German forces encrypted signals with a rotor device that scrambled each letter differently depending on the machine's settings, which changed daily. The number of possible configurations ran to well over a hundred million million.\n\nBritish codebreakers at a country house in Buckinghamshire built electromechanical machines to test settings at speed, exploiting a design flaw whereby no letter was ever enciphered as itself, and predictable phrases in routine weather reports."
+    },
+    {
+      "doc_id": "battle-of-britain",
+      "title": "The Battle of Britain",
+      "tags": ["history", "war"],
+      "text": "Between July and October 1940 the Luftwaffe attempted to destroy British air defences as a precondition for invasion. Fighter Command was outnumbered but fought over home ground, so downed pilots could return to their squadrons.\n\nThe decisive advantage was an integrated system: coastal radar stations and ground observers fed a central plotting room that directed squadrons to intercept, rather than leaving them to patrol and hope."
+    },
+    {
+      "doc_id": "the-blitz",
+      "title": "The Blitz",
+      "tags": ["history", "war"],
+      "text": "From September 1940 German bombers switched from airfields to cities, attacking London for fifty-seven consecutive nights and later Coventry, Liverpool, Hull and Glasgow. Around forty-three thousand civilians were killed.\n\nThe strategy assumed sustained bombardment would break civilian morale and force a negotiated peace. It did neither, a conclusion later strategic bombing surveys applied uncomfortably to Allied campaigns as well."
+    },
+    {
+      "doc_id": "dunkirk",
+      "title": "The Dunkirk Evacuation",
+      "tags": ["history", "war"],
+      "text": "Between 26 May and 4 June 1940, around three hundred and thirty-eight thousand Allied soldiers were lifted from the beaches and harbour of a French port after a German armoured advance cut them off from the sea.\n\nAn assortment of around eight hundred civilian craft ferried men from the shallows to larger ships offshore. Almost all heavy equipment was abandoned, and the operation was a deliverance from catastrophe rather than a victory."
+    },
+    {
+      "doc_id": "chain-home",
+      "title": "Chain Home",
+      "tags": ["engineering", "war"],
+      "text": "A line of tall transmitting and receiving masts along the British coast that bounced radio pulses off approaching aircraft and measured the delay of the returning echo to estimate range and bearing.\n\nThe equipment was technically cruder than German equivalents, but it was wired into a reporting network that turned raw detections into usable instructions within minutes. The system mattered more than the hardware."
+    },
+    {
+      "doc_id": "turing",
+      "title": "Alan Turing",
+      "tags": ["science", "computing"],
+      "text": "A mathematician who in 1936 described an abstract device that reads and writes symbols on an infinite tape according to a finite table of rules, and proved that no such device can decide in general whether an arbitrary program will ever halt.\n\nThat abstraction defined what computation is, before any electronic computer existed. He later worked on wartime codebreaking and proposed an imitation game as a practical test for machine intelligence."
+    },
+    {
+      "doc_id": "eniac",
+      "title": "ENIAC",
+      "tags": ["history", "computing"],
+      "text": "Completed in 1945 at the University of Pennsylvania, it used around eighteen thousand vacuum tubes, filled a room, weighed thirty tonnes and drew one hundred and fifty kilowatts. It could perform roughly five thousand additions a second.\n\nReprogramming meant physically rewiring plugboards, a job that took days and was done almost entirely by a team of six women mathematicians whose contribution went uncredited for decades."
+    },
+    {
+      "doc_id": "transistor",
+      "title": "The Transistor",
+      "tags": ["engineering", "computing"],
+      "text": "Demonstrated at Bell Labs in December 1947, it used a small crystal of semiconducting material to switch or amplify a current with no heated filament, no vacuum and no warm-up time.\n\nCompared with the tube it replaced, it was smaller, needed a fraction of the power and lasted far longer. Every subsequent gain in computing density traces back to the fact that this component could be made progressively smaller."
+    },
+    {
+      "doc_id": "moores-law",
+      "title": "Moore's Law",
+      "tags": ["computing", "economics"],
+      "text": "An observation published in 1965 that the number of components economically placeable on an integrated circuit had been doubling roughly every year, later revised to every two years.\n\nIt was never a law of physics but a statement about industry economics, and it became self-fulfilling: manufacturers planned research budgets around maintaining the pace. Progress has slowed since around 2015 as feature sizes approach atomic scales."
+    },
+    {
+      "doc_id": "arpanet",
+      "title": "ARPANET",
+      "tags": ["computing", "history"],
+      "text": "The first operational network to use packet switching, connecting four American university sites in 1969. Messages were broken into small units routed independently and reassembled at the destination.\n\nThe design assumed links would fail, so no central controller was required and traffic could route around damage. The addressing and transport conventions worked out on it in the 1970s remain the foundation of everything built since."
+    },
+    {
+      "doc_id": "world-wide-web",
+      "title": "The World Wide Web",
+      "tags": ["computing", "history"],
+      "text": "Proposed at CERN in 1989 as a way for physicists to share documents across incompatible systems, it combined three simple ideas: a universal addressing scheme, a markup language, and a request protocol for retrieving pages.\n\nIt was placed in the public domain in 1993 with no licence fee, a decision that is usually credited with why it displaced the several commercial hypertext systems already competing at the time."
+    },
+    {
+      "doc_id": "leonardo",
+      "title": "Leonardo da Vinci",
+      "tags": ["art", "history"],
+      "text": "A Florentine painter, engineer and anatomist who left perhaps fifteen finished paintings and around thirteen thousand pages of notebooks written in mirror script, covering flight, hydraulics, geology and the structure of the human body.\n\nHis dissections produced anatomical drawings unmatched for two centuries, but he published none of it. The notebooks were dispersed after his death and much of the science had to be rediscovered independently."
+    },
+    {
+      "doc_id": "printing-press",
+      "title": "Gutenberg's Printing Press",
+      "tags": ["history", "technology"],
+      "text": "Around 1440 a Mainz goldsmith combined movable metal type cast in reusable moulds, an oil-based ink that would adhere to metal, and a screw press adapted from winemaking.\n\nA scribe might produce one book in a year. Within fifty years European presses had issued perhaps twenty million volumes. Cheap identical copies made it possible for scattered readers to argue over exactly the same text."
+    },
+    {
+      "doc_id": "medici",
+      "title": "The Medici",
+      "tags": ["history", "finance"],
+      "text": "A Florentine family whose bank, founded in 1397, built branches across Europe and pioneered double-entry bookkeeping and the bill of exchange, which let merchants move value between cities without carrying coin.\n\nThe commercial fortune was converted into political control of Florence and then into patronage, funding architects, sculptors and painters on a scale no individual city had previously sustained."
+    },
+    {
+      "doc_id": "linear-perspective",
+      "title": "Linear Perspective",
+      "tags": ["art", "mathematics"],
+      "text": "A geometric method, demonstrated in Florence around 1420, in which parallel lines receding from the viewer converge on a single vanishing point and objects shrink in proportion to their distance.\n\nIt gave painters a repeatable construction for depth rather than an intuitive approximation. It also connected picture-making to geometry, and the technique spread through printed treatises within a few decades."
+    },
+    {
+      "doc_id": "michelangelo",
+      "title": "Michelangelo",
+      "tags": ["art", "history"],
+      "text": "A sculptor who regarded painting as an inferior craft and was nonetheless pressed into decorating a chapel ceiling in Rome, working from 1508 to 1512 on scaffolding of his own design, standing rather than lying down.\n\nHe carved the David from a block of marble other sculptors had abandoned as flawed. In old age he turned to architecture and spent his final years directing the construction of a basilica dome."
+    },
+    {
+      "doc_id": "bastille",
+      "title": "The Storming of the Bastille",
+      "tags": ["history", "france"],
+      "text": "On 14 July 1789 a Paris crowd seeking gunpowder attacked a medieval fortress prison on the eastern edge of the city. It held only seven inmates, none of them political.\n\nThe practical gain was the powder; the symbolic gain was everything. A royal fortress had fallen to a city crowd, and within weeks provincial towns were forming their own militias and the king had lost control of the capital."
+    },
+    {
+      "doc_id": "guillotine",
+      "title": "The Guillotine",
+      "tags": ["history", "france"],
+      "text": "Adopted by the French National Assembly in 1792 on the argument that if the state was going to execute people it should at least do so quickly and identically, regardless of rank. Previously nobles were beheaded and commoners hanged.\n\nIt was proposed as a humanitarian reform and became the emblem of the Terror, during which some sixteen thousand death sentences were carried out. It remained France's method of execution until capital punishment was abolished in 1981."
+    },
+    {
+      "doc_id": "robespierre",
+      "title": "Maximilien Robespierre",
+      "tags": ["history", "france"],
+      "text": "A provincial lawyer who had argued against the death penalty before 1789 and who by 1793 dominated the Committee of Public Safety, defending emergency executions as a necessary instrument of a virtuous republic.\n\nHe was arrested and executed in July 1794 by colleagues who concluded that none of them was safe while he lived. His fall ended the Terror almost overnight."
+    },
+    {
+      "doc_id": "napoleon",
+      "title": "Napoleon Bonaparte",
+      "tags": ["history", "france"],
+      "text": "A Corsican artillery officer who rose through the revolutionary armies, seized power in a coup in 1799, and crowned himself emperor five years later. At his height he controlled or dominated most of continental Europe.\n\nHis lasting legacy is administrative rather than military: a codified civil law, a centralised bureaucracy, and a metric system of weights and measures, all of which outlived his empire across much of Europe."
+    },
+    {
+      "doc_id": "declaration-rights",
+      "title": "The Declaration of the Rights of Man",
+      "tags": ["history", "law"],
+      "text": "Adopted in August 1789, it asserted that men are born free and equal in rights, that sovereignty resides in the nation rather than the monarch, and that law may only prohibit actions harmful to society.\n\nIts silences were as consequential as its claims. It did not extend to women or to enslaved people in the colonies, and both omissions were being contested in print within months of publication."
+    },
+    {
+      "doc_id": "jenner",
+      "title": "Edward Jenner and Smallpox",
+      "tags": ["science", "medicine"],
+      "text": "A Gloucestershire physician who noticed that milkmaids who had caught a mild disease from cattle seemed not to contract the far deadlier one that scarred or killed a third of those infected.\n\nIn 1796 he deliberately exposed an eight-year-old boy to material from a cowpox sore, then to smallpox itself, and the boy did not fall ill. The disease he was working against was declared eradicated worldwide in 1980."
+    },
+    {
+      "doc_id": "fleming",
+      "title": "Alexander Fleming and Penicillin",
+      "tags": ["science", "medicine"],
+      "text": "Returning from holiday in 1928, Fleming found a culture plate contaminated by a mould, with a clear ring around it where the bacteria he had been growing had dissolved.\n\nHe published and moved on. It took a decade before an Oxford team led by Florey and Chain worked out how to purify and mass-produce the compound, in time for it to save large numbers of wounded soldiers."
+    },
+    {
+      "doc_id": "pasteur",
+      "title": "Germ Theory",
+      "tags": ["science", "medicine"],
+      "text": "The proposition that specific microorganisms cause specific illnesses, established through experiments showing that sterilised broth in a swan-necked flask stayed clear indefinitely while broth exposed to dust spoiled.\n\nIt displaced the older view that disease arose from foul air. Once accepted, it made sterile surgical technique, food preservation and water treatment obvious rather than eccentric, and mortality fell accordingly."
+    },
+    {
+      "doc_id": "antibiotic-resistance",
+      "title": "Antibiotic Resistance",
+      "tags": ["science", "medicine"],
+      "text": "Bacterial populations vary, and a drug that kills the susceptible members leaves the survivors to reproduce. Resistance genes also transfer directly between bacteria on plasmids, including across species.\n\nThe process is ordinary evolution running on a timescale of days. Widespread use in agriculture and incomplete courses of treatment both accelerate it, and few genuinely novel drug classes have reached the clinic in decades."
+    },
+    {
+      "doc_id": "semmelweis",
+      "title": "Ignaz Semmelweis",
+      "tags": ["science", "medicine"],
+      "text": "A Viennese obstetrician who in 1847 observed that the maternity ward staffed by doctors had a death rate several times that of the ward staffed by midwives. The doctors came directly from performing autopsies.\n\nHe imposed handwashing in chlorinated lime and mortality collapsed. Without a theory to explain why, colleagues rejected the finding as an insult, and he was dismissed. Vindication arrived after his death."
+    },
+    {
+      "doc_id": "nightingale",
+      "title": "Florence Nightingale",
+      "tags": ["history", "medicine"],
+      "text": "Sent to military hospitals in the Crimea in 1854, she found that far more soldiers were dying of infectious disease than of battlefield wounds, in wards without drainage or ventilation.\n\nHer most durable contribution was statistical. She invented a polar-area diagram to display cause of death by month, and used it to argue for sanitary reform to officials who would not read a table of figures."
+    },
+    {
+      "doc_id": "greenhouse-effect",
+      "title": "The Greenhouse Effect",
+      "tags": ["science", "climate"],
+      "text": "Sunlight passes through the atmosphere and warms the surface, which re-radiates energy at longer infrared wavelengths. Certain gases absorb that outgoing radiation and re-emit it in all directions, including downwards.\n\nWithout this the planetary surface would average around minus eighteen degrees Celsius. The mechanism was described in the nineteenth century and quantified for carbon dioxide by Arrhenius in 1896."
+    },
+    {
+      "doc_id": "ice-cores",
+      "title": "Ice Cores",
+      "tags": ["science", "climate"],
+      "text": "Snow falling on an ice sheet traps air bubbles as it compacts. Drilling down through the accumulated layers recovers a continuous sample of the ancient atmosphere, dated by counting annual bands like tree rings.\n\nCores from Antarctica reach back around eight hundred thousand years. Ratios of oxygen isotopes in the ice indicate the temperature at which the snow formed, so each sample records both composition and conditions."
+    },
+    {
+      "doc_id": "jet-stream",
+      "title": "The Jet Stream",
+      "tags": ["science", "weather"],
+      "text": "A narrow ribbon of fast-moving air about ten kilometres up, driven by the temperature contrast between polar and tropical air and bent into a westerly flow by the planet's rotation. Speeds regularly exceed two hundred kilometres per hour.\n\nIts meanders steer surface weather systems. When the flow becomes slow and wavy, the same conditions can sit over a region for weeks, producing prolonged heatwaves, droughts or flooding."
+    },
+    {
+      "doc_id": "ocean-currents",
+      "title": "Ocean Circulation",
+      "tags": ["science", "climate"],
+      "text": "Surface currents driven by prevailing winds connect to a slower flow driven by density: cold, salty water sinks in the North Atlantic and near Antarctica and creeps along the sea floor for centuries before rising elsewhere.\n\nThis overturning moves roughly as much heat poleward as the atmosphere does. It is why north-western Europe is far milder than other places at the same latitude."
+    },
+    {
+      "doc_id": "carbon-cycle",
+      "title": "The Carbon Cycle",
+      "tags": ["science", "climate"],
+      "text": "Carbon moves continuously between atmosphere, oceans, living things, soils and rock. The fast exchanges balance closely over a year; the slow ones, involving weathering and burial in sediments, operate over millions of years.\n\nBurning fossil fuel returns carbon buried over hundreds of millions of years within a couple of centuries. Roughly half is absorbed by oceans and vegetation; the remainder stays in the air."
+    },
+    {
+      "doc_id": "beethoven",
+      "title": "Ludwig van Beethoven",
+      "tags": ["music", "history"],
+      "text": "A composer whose hearing began to fail in his late twenties and who was effectively deaf for the last decade of his life, during which he produced the late quartets and the Ninth Symphony.\n\nHe stretched inherited forms until they broke: the Third Symphony runs roughly twice the length of a typical Haydn symphony, and the Ninth introduced voices into a genre that had been purely instrumental."
+    },
+    {
+      "doc_id": "sonata-form",
+      "title": "Sonata Form",
+      "tags": ["music", "theory"],
+      "text": "A three-part structure in which contrasting themes are stated in different keys, then fragmented and moved through remote keys, then restated with the tonal conflict resolved by bringing everything into the home key.\n\nIt is best understood as a dramatic argument rather than a template. Its logic depends on listeners hearing tonal distance as tension, which is why it emerged alongside the fully established major-minor system."
+    },
+    {
+      "doc_id": "orchestra",
+      "title": "The Symphony Orchestra",
+      "tags": ["music"],
+      "text": "An ensemble organised into four families: bowed strings, woodwind, brass and percussion. A classical-era group of around forty players had grown past a hundred by the end of the nineteenth century.\n\nThe expansion followed instrument technology. Valves gave brass players a full chromatic scale, and larger concert halls with paying audiences rewarded ensembles that could fill them with sound."
+    },
+    {
+      "doc_id": "staff-notation",
+      "title": "Staff Notation",
+      "tags": ["music", "history"],
+      "text": "A system in which pitch is shown by vertical position on a set of ruled lines and duration by the shape of the note head and its stem, developed in stages in European monasteries from around the ninth century.\n\nBefore it, music passed between people by memory and imitation. Once pitch could be fixed on a page, a composer could specify a work for performers they would never meet."
+    },
+    {
+      "doc_id": "bach",
+      "title": "Johann Sebastian Bach",
+      "tags": ["music", "history"],
+      "text": "A church musician in Leipzig who for years produced a new cantata most weeks, alongside teaching, running choirs and maintaining instruments. He was better known in his lifetime as an organist than as a composer.\n\nHis music fell out of fashion after his death in 1750 and was revived in the following century, largely through a Berlin performance of the St Matthew Passion conducted by the twenty-year-old Mendelssohn."
+    },
+    {
+      "doc_id": "everest-1953",
+      "title": "The First Ascent of Everest",
+      "tags": ["exploration", "history"],
+      "text": "On 29 May 1953 Edmund Hillary and Tenzing Norgay reached the highest point on Earth, at 8,849 metres, via the South Col route, using bottled oxygen and supported by a large expedition that stocked camps up the mountain.\n\nThey spent about fifteen minutes at the top. Neither ever said publicly which of them stepped there first, agreeing to describe the ascent as the achievement of a rope team rather than an individual."
+    },
+    {
+      "doc_id": "shackleton",
+      "title": "The Endurance Expedition",
+      "tags": ["exploration", "history"],
+      "text": "Shackleton's ship was trapped in pack ice in the Weddell Sea in 1915 and slowly crushed. Twenty-eight men camped on drifting floes for months before reaching a barren island in three small boats.\n\nSix then sailed a modified lifeboat thirteen hundred kilometres across the Southern Ocean to reach a whaling station and organise rescue. The expedition failed at every stated objective and every man survived."
+    },
+    {
+      "doc_id": "amundsen-scott",
+      "title": "The Race to the South Pole",
+      "tags": ["exploration", "history"],
+      "text": "Two parties set out in the summer of 1911. The Norwegian team used dogs and skis, ate their surplus animals, and reached the pole on 14 December. The British party manhauled their sledges and arrived five weeks later.\n\nAll five of the British group died on the return march. The contrast is usually read as a lesson about adopting local techniques rather than importing assumptions from home."
+    },
+    {
+      "doc_id": "magellan",
+      "title": "The First Circumnavigation",
+      "tags": ["exploration", "history"],
+      "text": "Five ships left Spain in 1519 seeking a westward route to the spice islands. One returned three years later with eighteen of the original two hundred and seventy crew. Magellan himself was killed in the Philippines.\n\nThe voyage established the true scale of the Pacific, which proved vastly wider than any European estimate, and produced the first documented case of a crew losing a calendar day by travelling west."
+    },
+    {
+      "doc_id": "marco-polo",
+      "title": "Marco Polo",
+      "tags": ["exploration", "history"],
+      "text": "A Venetian merchant who claimed to have spent seventeen years in the service of Kublai Khan, and dictated an account of Asia while imprisoned in Genoa in the 1290s.\n\nThe book was widely read and widely disbelieved. Its descriptions of paper money, coal as fuel and cities far larger than any in Europe were treated as invention, though most have since been corroborated."
+    },
+    {
+      "doc_id": "cook-pacific",
+      "title": "James Cook's Pacific Voyages",
+      "tags": ["exploration", "history"],
+      "text": "Three expeditions between 1768 and 1779 charted the coasts of New Zealand and eastern Australia, crossed the Antarctic Circle, and established that no habitable southern continent lay where cartographers had drawn one.\n\nCook also kept his crews largely free of scurvy through diet and enforced cleanliness. The voyages opened the Pacific to European settlement, with consequences for its existing populations that were severe and lasting."
+    },
+    {
+      "doc_id": "faraday",
+      "title": "Electromagnetic Induction",
+      "tags": ["science", "physics"],
+      "text": "In 1831 Michael Faraday showed that moving a magnet through a coil of wire produces a current in the wire, and that the effect depends on the rate of change of the magnetic field rather than its strength.\n\nEverything that generates electricity at scale, from a hydroelectric turbine to a wind generator, is an application of this single observation. Faraday had no formal mathematical training and described his results in terms of lines of force."
+    },
+    {
+      "doc_id": "edison-tesla",
+      "title": "The War of the Currents",
+      "tags": ["history", "engineering"],
+      "text": "A commercial and public dispute in the late 1880s between promoters of direct current, which could not be transmitted far without unacceptable losses, and alternating current, which could be stepped up to high voltage for transmission.\n\nAlternating current won on physics. The campaign against it included staged animal electrocutions intended to convince the public it was uniquely dangerous, which is remembered as an early example of a technical argument fought through publicity."
+    },
+    {
+      "doc_id": "transformer",
+      "title": "The Transformer",
+      "tags": ["engineering", "physics"],
+      "text": "Two coils wound on a shared iron core. An alternating current in one induces a voltage in the other, in proportion to the ratio of turns, allowing voltage to be raised or lowered with efficiency above ninety-nine percent.\n\nPower lost in a cable rises with the square of the current, so transmitting at high voltage and low current cuts losses dramatically. This device is the reason electricity can be generated far from where it is used."
+    },
+    {
+      "doc_id": "national-grid",
+      "title": "The National Grid",
+      "tags": ["engineering", "infrastructure"],
+      "text": "Britain's interconnected transmission network, begun in 1935, links generating stations to demand centres so that supply can be balanced nationally rather than locally, and so that a station failure does not black out its region.\n\nBecause electricity cannot be stored in bulk, generation must match consumption second by second. Operators forecast demand in half-hour blocks and famously plan for surges when a popular broadcast ends and millions of kettles switch on."
+    },
+    {
+      "doc_id": "batteries",
+      "title": "How Batteries Work",
+      "tags": ["science", "chemistry"],
+      "text": "Two electrodes of different materials sit in an electrolyte. A chemical reaction at one releases electrons and a reaction at the other consumes them, so electrons flow through an external circuit while ions move internally.\n\nIn a lithium-ion cell the process is reversible: applying a voltage drives the ions back. Capacity fades because side reactions gradually consume the electrolyte and deposit material that no longer participates."
+    },
+    {
+      "doc_id": "lightbulb",
+      "title": "The Incandescent Lamp",
+      "tags": ["history", "engineering"],
+      "text": "A thin filament in an evacuated glass bulb glows when current heats it past two thousand degrees. The engineering problem was not producing light but finding a filament that would not burn out within hours.\n\nDozens of inventors worked on it through the 1870s; the commercial breakthrough came from combining a durable filament with a good vacuum and a complete distribution system, not from the bulb alone."
+    },
+    {
+      "doc_id": "great-pyramid",
+      "title": "The Great Pyramid of Giza",
+      "tags": ["history", "egypt"],
+      "text": "Built around 2560 BC as a tomb for the pharaoh Khufu, originally 146 metres tall and faced in polished white limestone. It held the record as the tallest structure made by people for close to four thousand years.\n\nIt contains roughly 2.3 million blocks. The base is level to within a couple of centimetres and aligned to true north to within a fraction of a degree, achieved without iron tools or the wheel as we know it."
+    },
+    {
+      "doc_id": "rosetta-stone",
+      "title": "The Rosetta Stone",
+      "tags": ["history", "language"],
+      "text": "A granodiorite slab found in 1799 carrying the same priestly decree in three scripts: formal Egyptian picture writing, a cursive Egyptian script, and Greek.\n\nBecause scholars could read the Greek, the stone provided the parallel text that let Champollion establish in 1822 that the picture signs recorded sounds as well as ideas, unlocking a written language silent for fourteen centuries."
+    },
+    {
+      "doc_id": "tutankhamun",
+      "title": "The Tomb of Tutankhamun",
+      "tags": ["history", "egypt"],
+      "text": "Found by Howard Carter in 1922 in the Valley of the Kings, it was the only royal burial of its period discovered substantially intact, containing over five thousand objects packed into four small chambers.\n\nThe king himself was minor and died at around nineteen. The tomb's importance is entirely a matter of survival: it shows what every looted royal burial must once have contained."
+    },
+    {
+      "doc_id": "hieroglyphs",
+      "title": "Egyptian Hieroglyphs",
+      "tags": ["history", "language"],
+      "text": "A writing system of around a thousand signs combining three functions: some stand for sounds, some for whole words, and some are silent markers clarifying which meaning of an ambiguous word is intended.\n\nIt was used for monumental inscriptions for over three thousand years, alongside faster cursive scripts for everyday documents. The last dated inscription was carved in AD 394."
+    },
+    {
+      "doc_id": "mummification",
+      "title": "Mummification",
+      "tags": ["history", "egypt"],
+      "text": "A seventy-day process in which internal organs were removed and stored separately, the body was packed and covered in natron salt to draw out moisture, then oiled, resinated and wrapped in many layers of linen.\n\nThe purpose was to preserve a recognisable physical form for the spirit to return to. The practice was extended to cats, birds and crocodiles, and some animal cemeteries hold millions of specimens."
+    },
+    {
+      "doc_id": "gold-standard",
+      "title": "The Gold Standard",
+      "tags": ["economics", "history"],
+      "text": "A monetary arrangement in which a currency's value is fixed to a defined weight of metal and notes are redeemable for it on demand. Most major economies operated on this basis between the 1870s and 1914.\n\nIt held exchange rates stable and constrained governments from expanding the money supply. The same rigidity meant a country facing a downturn could not loosen policy, which is why the system was abandoned under pressure in the 1930s."
+    },
+    {
+      "doc_id": "inflation",
+      "title": "Inflation",
+      "tags": ["economics"],
+      "text": "A sustained rise in the general price level, so that each unit of currency buys less than it did. At three percent a year, purchasing power halves in roughly twenty-four years; at ten percent, in about seven.\n\nIt is measured by pricing a fixed basket of goods over time. Moderate rates are usually targeted deliberately, because falling prices encourage people to postpone spending and can entrench a downturn."
+    },
+    {
+      "doc_id": "central-banking",
+      "title": "Central Banking",
+      "tags": ["economics", "finance"],
+      "text": "An institution that issues the national currency, sets short-term interest rates, holds reserves for commercial banks and acts as lender of last resort during a panic to stop a solvent bank failing for want of ready cash.\n\nMost were granted independence from day-to-day political control in the late twentieth century, on the argument that governments facing elections have a standing incentive to keep rates lower than conditions warrant."
+    },
+    {
+      "doc_id": "bretton-woods",
+      "title": "The Bretton Woods System",
+      "tags": ["economics", "history"],
+      "text": "Agreed in 1944 by delegates from forty-four nations, it pegged participating currencies to the United States dollar, which was itself convertible into gold at thirty-five dollars an ounce, and created the IMF and the World Bank.\n\nThe arrangement lasted until 1971, when the United States suspended convertibility because its gold reserves no longer covered foreign dollar holdings. Major currencies have floated against one another ever since."
+    },
+    {
+      "doc_id": "compound-interest",
+      "title": "Compound Interest",
+      "tags": ["economics", "mathematics"],
+      "text": "Interest calculated on the accumulated balance rather than the original sum, so returns themselves earn returns. Growth is exponential, which makes it dramatically sensitive to time and only mildly sensitive to rate.\n\nA useful shortcut is that a balance doubles in roughly seventy-two divided by the percentage rate. The same arithmetic works against a borrower, which is how a modest debt at a high rate becomes unpayable."
+    },
+    {
+      "doc_id": "stock-market",
+      "title": "Stock Markets",
+      "tags": ["economics", "finance"],
+      "text": "Venues where fractional ownership of companies is traded. Their primary function is to let firms raise capital by selling shares; their secondary and far larger function is to let existing holders sell to one another.\n\nPrices reflect aggregate expectation of future earnings, which is why they can move sharply on news that changes no current cash flow at all. Liquidity is the real service being provided."
+    },
+    {
+      "doc_id": "black-holes",
+      "title": "Black Holes",
+      "tags": ["science", "astronomy"],
+      "text": "A region where mass is concentrated so densely that the escape velocity exceeds the speed of light. The boundary, the event horizon, is not a surface but the point past which no path leads back outward.\n\nThey are detected by their effects: stars orbiting an unseen mass, radiation from infalling matter, and since 2015 gravitational waves from merging pairs. The first direct image of one was published in 2019."
+    },
+    {
+      "doc_id": "hubble-expansion",
+      "title": "The Expanding Universe",
+      "tags": ["science", "astronomy"],
+      "text": "In 1929 Edwin Hubble showed that light from distant galaxies is shifted towards longer wavelengths in proportion to their distance, indicating that they are receding faster the further away they lie.\n\nThe galaxies are not flying through space so much as space itself is stretching between them. Measurements from 1998 showed the rate is increasing, which requires an unexplained component now labelled dark energy."
+    },
+    {
+      "doc_id": "big-bang",
+      "title": "The Big Bang",
+      "tags": ["science", "astronomy"],
+      "text": "The model in which the observable universe expanded from an extremely hot, dense state roughly 13.8 billion years ago. It is a description of expansion from an early condition, not an explosion within existing space.\n\nIts strongest evidence is a faint microwave glow arriving uniformly from every direction, discovered accidentally in 1964, together with the observed proportions of hydrogen and helium, which match the model's predictions closely."
+    },
+    {
+      "doc_id": "exoplanets",
+      "title": "Exoplanets",
+      "tags": ["science", "astronomy"],
+      "text": "Planets orbiting other stars. Most are found indirectly, either by the slight regular dimming as one passes in front of its star, or by the small wobble its gravity induces in the star's motion.\n\nOver five thousand are now confirmed. The surprise was how varied they are: gas giants orbiting closer than Mercury, planets circling two stars, and worlds with no host star at all."
+    },
+    {
+      "doc_id": "solar-system-formation",
+      "title": "How the Solar System Formed",
+      "tags": ["science", "astronomy"],
+      "text": "A cloud of gas and dust collapsed under its own gravity about 4.6 billion years ago, spinning faster as it shrank and flattening into a disc with a growing protostar at the centre.\n\nDust grains in the disc stuck together into progressively larger bodies. Close to the star only rock and metal could stay solid; beyond the frost line ices survived, which is why the outer planets grew large enough to hold onto hydrogen."
+    },
+    {
+      "doc_id": "telescopes",
+      "title": "Telescopes",
+      "tags": ["science", "astronomy"],
+      "text": "An instrument that gathers light over an area far larger than the pupil of an eye and brings it to a focus. Collecting power scales with the square of the aperture, so doubling the mirror diameter gathers four times the light.\n\nRefractors using lenses gave way to reflectors using mirrors, which avoid colour fringing and can be supported from behind. Placing them above the atmosphere removes both blurring and its absorption of ultraviolet and infrared."
+    }
+  ]
+}

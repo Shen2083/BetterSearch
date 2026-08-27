@@ -1,0 +1,26 @@
+# Built index (regenerate with `bettersearch ingest`)
+.bettersearch/
+
+# Corpora fetched at runtime rather than committed
+data/corpus_wikipedia.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.venv/
+venv/
+
+# Environment
+.env
+
+# OS
+.DS_Store
+
+# Node (only used ad hoc for screenshots)
+node_modules/
+package.json
+package-lock.json

@@ -1,0 +1,167 @@
+{
+  "name": "bettersearch-eval",
+  "description": "Hand-labelled queries for measuring retrieval quality. Deliberately weighted towards phrasings a user would actually type - questions, descriptions and concept names - rather than terms lifted from the documents, because searching for words that are already in the text is the case keyword search already handles.",
+  "caveat": "These labels and the seed corpus were written by the same author, so treat the absolute numbers as indicative and the mode-to-mode gaps as the signal. Re-run against scripts/fetch_wikipedia.py output for a non-circular check.",
+  "queries": [
+    {
+      "query": "Norman conquest",
+      "relevant_doc_ids": ["hastings", "william-duke", "harold-godwinson", "domesday", "bayeux", "motte-bailey", "stamford-bridge"],
+      "note": "The headline case. No document contains this phrase."
+    },
+    {
+      "query": "1066",
+      "relevant_doc_ids": ["hastings", "william-duke", "harold-godwinson", "stamford-bridge", "domesday", "bayeux"],
+      "note": "A bare year - keyword search can only match documents that print it."
+    },
+    {
+      "query": "the ship that sank on its maiden voyage",
+      "relevant_doc_ids": ["titanic", "white-star", "carpathia", "north-atlantic-ice", "solas"],
+      "note": "Descriptive phrasing; the word 'maiden' appears nowhere."
+    },
+    {
+      "query": "why does bread rise",
+      "relevant_doc_ids": ["yeast", "gluten", "sourdough", "bakers-percentage"],
+      "note": "Everyday question. 'Rise' is never used in the documents."
+    },
+    {
+      "query": "who first walked on the moon",
+      "relevant_doc_ids": ["apollo-11", "saturn-v", "lunar-samples"],
+      "note": "Natural-language question, not a title."
+    },
+    {
+      "query": "how plants make food from sunlight",
+      "relevant_doc_ids": ["chlorophyll", "calvin-cycle", "carbon-fixation", "stomata"],
+      "note": "The word 'photosynthesis' is deliberately absent from both query and corpus."
+    },
+    {
+      "query": "machine that broke German codes in the war",
+      "relevant_doc_ids": ["bletchley", "turing"],
+      "note": "Descriptive rather than named."
+    },
+    {
+      "query": "father of genetics",
+      "relevant_doc_ids": ["mendel-peas", "dna-structure", "human-genome"],
+      "note": "Epithet that appears in no document."
+    },
+    {
+      "query": "how do we know what the climate was like thousands of years ago",
+      "relevant_doc_ids": ["ice-cores", "carbon-cycle", "greenhouse-effect"],
+      "note": "Long conversational question."
+    },
+    {
+      "query": "money losing value over time",
+      "relevant_doc_ids": ["inflation", "compound-interest", "gold-standard"],
+      "note": "Plain description of a technical concept."
+    },
+    {
+      "query": "evolution by natural selection",
+      "relevant_doc_ids": ["natural-selection", "darwin-beagle", "galapagos-finches", "mendel-peas"],
+      "note": "Control: exact terminology. Keyword search should do well here."
+    },
+    {
+      "query": "Bayeux Tapestry",
+      "relevant_doc_ids": ["bayeux", "hastings", "william-duke"],
+      "note": "Control: exact proper noun. BM25 is expected to win or tie."
+    },
+    {
+      "query": "how electricity gets from a power station to your house",
+      "relevant_doc_ids": ["national-grid", "transformer", "edison-tesla", "faraday"],
+      "note": "Consumer framing of an engineering topic."
+    },
+    {
+      "query": "what killed most soldiers before modern medicine",
+      "relevant_doc_ids": ["nightingale", "pasteur", "semmelweis", "fleming"],
+      "note": "Requires connecting disease, sanitation and war."
+    },
+    {
+      "query": "first person in space",
+      "relevant_doc_ids": ["gagarin", "sputnik", "space-race-politics"],
+      "note": "Short factual query."
+    },
+    {
+      "query": "why is the sky not the only thing that keeps earth warm",
+      "relevant_doc_ids": ["greenhouse-effect", "ocean-currents", "carbon-cycle"],
+      "note": "Awkward phrasing, of the kind real users actually type."
+    },
+    {
+      "query": "how did people write before the alphabet",
+      "relevant_doc_ids": ["hieroglyphs", "rosetta-stone", "staff-notation"],
+      "note": "Cross-domain: includes music notation as a related concept."
+    },
+    {
+      "query": "surviving being stranded in the Antarctic",
+      "relevant_doc_ids": ["shackleton", "amundsen-scott"],
+      "note": "Situation rather than name."
+    },
+    {
+      "query": "what made the industrial revolution possible",
+      "relevant_doc_ids": ["steam-engine", "coal-mining", "spinning-jenny", "railways", "canals"],
+      "note": "Broad causal question over a whole cluster."
+    },
+    {
+      "query": "vaccination",
+      "relevant_doc_ids": ["jenner", "pasteur"],
+      "note": "Single concept word absent from the documents themselves."
+    },
+    {
+      "query": "how computers got smaller and faster",
+      "relevant_doc_ids": ["transistor", "moores-law", "eniac"],
+      "note": "Narrative framing of a technical trend."
+    },
+    {
+      "query": "packet switching and the origins of the internet",
+      "relevant_doc_ids": ["arpanet", "world-wide-web"],
+      "note": "Mixed: one exact term plus one conceptual."
+    },
+    {
+      "query": "the French Revolution",
+      "relevant_doc_ids": ["bastille", "guillotine", "robespierre", "declaration-rights", "napoleon"],
+      "note": "Named event; the phrase appears in almost none of the documents."
+    },
+    {
+      "query": "why is the moon there at all",
+      "relevant_doc_ids": ["lunar-samples", "solar-system-formation"],
+      "note": "Casual phrasing of an origins question."
+    },
+    {
+      "query": "how far away are the stars moving",
+      "relevant_doc_ids": ["hubble-expansion", "big-bang", "telescopes"],
+      "note": "Imprecise wording, as typed rather than as written."
+    },
+    {
+      "query": "art and money in Renaissance Florence",
+      "relevant_doc_ids": ["medici", "leonardo", "michelangelo", "linear-perspective"],
+      "note": "Requires linking finance to patronage to art."
+    },
+    {
+      "query": "Roman occupation of Britain",
+      "relevant_doc_ids": ["hadrians-wall", "boudica", "roman-roads", "londinium", "roman-baths"],
+      "note": "Cluster query with partial term overlap."
+    },
+    {
+      "query": "drugs that stop working",
+      "relevant_doc_ids": ["antibiotic-resistance", "fleming"],
+      "note": "Layperson description of a clinical problem."
+    },
+    {
+      "query": "storing energy in a chemical form",
+      "relevant_doc_ids": ["batteries", "carbon-fixation", "chlorophyll"],
+      "note": "Deliberately spans chemistry and biology."
+    },
+    {
+      "query": "planning a landing on a defended coast",
+      "relevant_doc_ids": ["d-day", "dunkirk", "hastings"],
+      "note": "Cross-era query - a good test of whether meaning beats period vocabulary."
+    },
+    {
+      "query": "what the government does when banks fail",
+      "relevant_doc_ids": ["central-banking", "bretton-woods", "gold-standard"],
+      "note": "Institutional question in plain words."
+    },
+    {
+      "query": "climbing the world's highest mountain",
+      "relevant_doc_ids": ["everest-1953"],
+      "note": "Single-target query; tests precision, not just recall."
+    }
+  ]
+}
