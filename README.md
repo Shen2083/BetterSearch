@@ -161,6 +161,8 @@ to switch provider or storage.
 | `BETTERSEARCH_EMBEDDING_DIMENSIONS` | `512` | Matryoshka width for API providers |
 | `BETTERSEARCH_CHUNK_TOKENS` | `450` | target chunk size |
 | `BETTERSEARCH_CHUNK_OVERLAP` | `60` | overlap between chunks |
+| `BETTERSEARCH_LOCAL_MODEL` | `sentence-transformers/all-MiniLM-L6-v2` | any sentence-transformers model |
+| `BETTERSEARCH_LOCAL_TRUST_REMOTE_CODE` | `0` | required by some long-context encoders; runs code from the model repo |
 
 API keys are read from `OPENAI_API_KEY` / `VOYAGE_API_KEY` at the point of use
 and never stored by this package.
@@ -202,19 +204,88 @@ index overhead. Three multiplicative fixes, all implemented:
 Together: ~6GB → ~500MB, which is the difference between needing a large managed
 Postgres instance and fitting comfortably on a small one.
 
-### Choosing a provider for a large library
+### 4. Scaling while staying self-hosted
 
-| Provider | Cost to embed 1M chunks (~400M tokens) | Input limit | Ops burden |
-|---|---|---|---|
-| `local` MiniLM | £0, but hours of CPU or a GPU box | **256 tokens** | you run and scale it; ~600MB RSS per worker |
-| `openai` text-embedding-3-small | ~$8 (~$4 batched) | 8,191 tokens | none |
-| `voyage` voyage-3.5-lite | ~$8 | 32,000 tokens | none, but a new vendor |
+Self-hosted embeddings are the default path here: no per-token cost, no vendor
+dependency, and no content leaving your infrastructure — which matters more than
+the money if the corpus is ever commercially or personally sensitive.
 
-The local model's **256-token input cap** is the quiet problem for a real
-content library: the chunker targets 450 tokens, so the encoder silently
-truncates most chunks. `bettersearch ingest` counts and warns about this rather
-than letting it degrade recall unnoticed. It is the correct default for a PoC
-and the wrong one at scale.
+**Measure before you optimise.** On this corpus the much-discussed 256-token cap
+costs exactly nothing:
+
+```
+$ # chunk token distribution, seed corpus
+  min 79   median 92   p90 106   max 128
+  chunks exceeding 256 tokens: 0 (0%)
+```
+
+The articles are short, so chunks never approach the 450-token target and
+MiniLM truncates nothing. `bettersearch ingest` reports `truncated_chunks`
+precisely so this is a measurement rather than an assumption — check it against
+*your* content before changing anything.
+
+**The cap is architectural, not a compute limit.** MiniLM stops at 256 tokens
+because its positional embeddings end there. More CPU or a bigger GPU makes it
+faster, never able to read more. If your chunks *do* exceed it, there are two
+fixes and only one of them costs anything:
+
+1. **Shrink the chunks** — `BETTERSEARCH_CHUNK_TOKENS=200`. Free, no model
+   change. Costs you more chunks (bigger index) and more fragmented context.
+2. **Swap the model** — one env var, no code change. Costs compute and RAM.
+
+```bash
+export BETTERSEARCH_LOCAL_MODEL="BAAI/bge-base-en-v1.5"
+bettersearch ingest --corpus data/corpus_seed.json    # re-embeds under the new model
+```
+
+Dimensions and the input limit are read off the loaded model, so the index,
+the truncation warning and the `model_id` guard all follow automatically.
+
+| Model | Input | Dims | Size | Notes |
+|---|---|---|---|---|
+| `all-MiniLM-L6-v2` | 256 | 384 | 80MB | current default |
+| `BAAI/bge-small-en-v1.5` | 512 | 384 | 130MB | 2× window, same index size |
+| `BAAI/bge-base-en-v1.5` | 512 | 768 | 440MB | 2× index size |
+| `intfloat/e5-large-v2` | 512 | 1024 | 1.3GB | |
+| `nomic-ai/nomic-embed-text-v1.5` | 8192 | 768 | 550MB | needs `BETTERSEARCH_LOCAL_TRUST_REMOTE_CODE=1` |
+| `Alibaba-NLP/gte-large-en-v1.5` | 8192 | 1024 | 1.7GB | needs trust-remote-code |
+| `BAAI/bge-m3` | 8192 | 1024 | 2.3GB | multilingual |
+
+**Bigger is not automatically better.** Measured on this corpus, the 512-token
+model scored *worse* than MiniLM (nDCG 0.851 vs 0.890) — because nothing was
+being truncated, so the longer window bought nothing while the model itself
+happened to suit short passages less well. Re-run `bettersearch evaluate` after
+any model change; that is what the eval harness is for.
+
+**Measured CPU throughput** on an ordinary container (no GPU), for a one-off
+backfill:
+
+| Model | chunks/sec (CPU) | 1M chunks |
+|---|---|---|
+| `all-MiniLM-L6-v2` | ~119 | ~2.3 hours |
+| `bge-small-en-v1.5` | ~74 | ~3.8 hours |
+
+A single modern GPU is roughly 20–50× that, turning a backfill into minutes.
+Note this is a **batch** cost paid once per re-embed; query time is one
+embedding per search and is negligible either way.
+
+The real steady-state cost of self-hosting is **RAM per web worker** (~600MB
+resident for MiniLM, more for larger models), not throughput. On a small Render
+instance that is the constraint that bites first — the usual fix is a separate
+embedding worker rather than loading the model into every web process.
+
+### If you ever do want a hosted provider
+
+`openai` and `voyage` backends exist behind the same interface and are selected
+with `BETTERSEARCH_EMBEDDING_PROVIDER`. **Neither has been exercised against a
+live API** — they are verified only as far as constructing, reporting correct
+dimensions, refusing to run without a key, and handling empty batches. Treat
+them as a starting point, not a supported path.
+
+| Provider | 1M chunks (~400M tokens) | Input limit |
+|---|---|---|
+| `openai` text-embedding-3-small | ~$8 (~$4 batched) | 8,191 tokens |
+| `voyage` voyage-3.5-lite | ~$8 | 32,000 tokens |
 
 Voyage additionally supports asymmetric encoding (`input_type` of `document` vs
 `query`), which is a real recall gain and is wired in.

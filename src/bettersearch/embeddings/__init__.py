@@ -25,7 +25,10 @@ def get_provider(
     if name == "local":
         from .local import LocalEmbeddingProvider
 
-        return LocalEmbeddingProvider(settings.local_model_name)
+        return LocalEmbeddingProvider(
+            settings.local_model_name,
+            trust_remote_code=settings.local_trust_remote_code,
+        )
 
     if name == "openai":
         from .openai_ import OpenAIEmbeddingProvider

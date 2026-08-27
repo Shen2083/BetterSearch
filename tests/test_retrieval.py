@@ -169,3 +169,23 @@ def test_keyword_and_semantic_search_the_same_corpus(index, provider, documents,
     indexed = {c.chunk_id for c in index.all_chunks()}
     assert indexed == {c.chunk_id for c in chunk_documents(documents)}
     assert len(searcher._keyword_index()) == len(indexed)
+
+
+# ------------------------------------------------- local provider capabilities
+def test_local_provider_reads_limits_from_the_model():
+    """The input cap must come from the model, not a constant.
+
+    Hardcoding it would silently misreport truncation the moment anyone swaps
+    to a longer-context encoder - which is the whole self-hosted upgrade path.
+    """
+    pytest.importorskip("sentence_transformers")
+    from bettersearch.embeddings.local import SUGGESTED_MODELS, LocalEmbeddingProvider
+
+    provider = LocalEmbeddingProvider("sentence-transformers/all-MiniLM-L6-v2")
+    expected_tokens, expected_dims, _ = SUGGESTED_MODELS[
+        "sentence-transformers/all-MiniLM-L6-v2"
+    ]
+    assert provider.max_input_tokens == expected_tokens
+    assert provider.dimensions == expected_dims
+    # model_id must carry the width, so a dimension change invalidates the index.
+    assert provider.model_id.endswith(f"@{expected_dims}")

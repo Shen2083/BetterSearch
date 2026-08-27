@@ -1,11 +1,15 @@
 """Local sentence-transformers backend - the default, and the only one that
 runs with no API key and no network after the first model download.
 
-Quality ceiling, stated plainly: all-MiniLM-L6-v2 accepts **256 tokens** of
-input and truncates the rest. The chunker targets 450 tokens, so this backend
-silently drops the tail of most chunks. It is fine for a PoC and for a small
-library; it is the wrong choice for a large content library, where one of the
-hosted providers should be used instead.
+Any sentence-transformers model works here; set ``BETTERSEARCH_LOCAL_MODEL``.
+Dimensions and the input limit are read from the loaded model rather than
+hardcoded, so swapping to a larger encoder needs no code change.
+
+**The input limit is architectural, not a throughput limit.** all-MiniLM-L6-v2
+accepts 256 tokens because its positional embeddings stop there; the chunker
+targets 450, so this model silently discards the tail of most chunks. More CPU
+or a bigger GPU makes it faster, never able to read more. The fix is a model
+with a longer context window - see SUGGESTED_MODELS below.
 """
 
 from __future__ import annotations
@@ -18,8 +22,20 @@ from .base import l2_normalize
 
 DEFAULT_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
-#: Input cap of the default model. Longer text is truncated by the encoder.
-MAX_INPUT_TOKENS = 256
+#: Fallback only, for the rare model that does not report its own limit.
+FALLBACK_MAX_INPUT_TOKENS = 512
+
+#: Self-hosted upgrade path, all drop-in via BETTERSEARCH_LOCAL_MODEL.
+#: (input tokens, dimensions, approximate download size)
+SUGGESTED_MODELS = {
+    "sentence-transformers/all-MiniLM-L6-v2": (256, 384, "80MB"),
+    "BAAI/bge-small-en-v1.5": (512, 384, "130MB"),
+    "BAAI/bge-base-en-v1.5": (512, 768, "440MB"),
+    "intfloat/e5-large-v2": (512, 1024, "1.3GB"),
+    "nomic-ai/nomic-embed-text-v1.5": (8192, 768, "550MB"),
+    "Alibaba-NLP/gte-large-en-v1.5": (8192, 1024, "1.7GB"),
+    "BAAI/bge-m3": (8192, 1024, "2.3GB"),
+}
 
 
 class LocalEmbeddingProvider:
@@ -28,6 +44,7 @@ class LocalEmbeddingProvider:
         model_name: str = DEFAULT_MODEL,
         *,
         batch_size: int = 64,
+        trust_remote_code: bool = False,
     ) -> None:
         try:
             from sentence_transformers import SentenceTransformer
@@ -37,11 +54,16 @@ class LocalEmbeddingProvider:
                 'Install it with: pip install "bettersearch[local]"'
             ) from exc
 
-        self._model = SentenceTransformer(model_name)
+        self._model = SentenceTransformer(model_name, trust_remote_code=trust_remote_code)
         self._batch_size = batch_size
         self.dimensions = int(self._model.get_sentence_embedding_dimension())
         self.model_id = f"{model_name}@{self.dimensions}"
-        self.max_input_tokens = MAX_INPUT_TOKENS
+        # Read the real limit off the model. Hardcoding it would silently
+        # misreport truncation the moment anyone swaps to a longer-context
+        # encoder, which is the whole upgrade path for a self-hosted setup.
+        self.max_input_tokens = int(
+            getattr(self._model, "max_seq_length", None) or FALLBACK_MAX_INPUT_TOKENS
+        )
 
     def _encode(self, texts: Sequence[str]) -> np.ndarray:
         vectors = self._model.encode(

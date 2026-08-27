@@ -26,6 +26,10 @@ class Settings:
     # vectors mean a proportionally smaller index; see README on storage cost.
     embedding_dimensions: int = 512
     local_model_name: str = "sentence-transformers/all-MiniLM-L6-v2"
+    # Some long-context encoders (nomic-embed, gte-*-v1.5) ship custom modelling
+    # code that transformers will only execute with this opted into explicitly.
+    # Off by default: it runs arbitrary code from the model repo.
+    local_trust_remote_code: bool = False
 
 
 def _int_env(name: str, default: int) -> int:
@@ -51,4 +55,8 @@ def load_settings() -> Settings:
         local_model_name=os.environ.get(
             "BETTERSEARCH_LOCAL_MODEL", "sentence-transformers/all-MiniLM-L6-v2"
         ),
+        local_trust_remote_code=os.environ.get(
+            "BETTERSEARCH_LOCAL_TRUST_REMOTE_CODE", ""
+        ).lower()
+        in {"1", "true", "yes"},
     )
