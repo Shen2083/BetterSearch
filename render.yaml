@@ -1,0 +1,62 @@
+# Render blueprint. Deploy with: New > Blueprint > point at this repo.
+#
+# Three things here are easy to get wrong and expensive to debug:
+#
+# 1. CPU-only torch is installed FIRST. The default torch wheel drags in ~2.7GB
+#    of NVIDIA CUDA packages that are dead weight on a CPU host and will blow
+#    the build image size.
+#
+# 2. `bettersearch ingest` runs in the BUILD command, not at startup. Render's
+#    filesystem is ephemeral and .bettersearch/ is gitignored, so an index built
+#    at runtime would vanish. Built here, it is baked into the deployed image.
+#
+# 3. plan: standard is deliberate. The local MiniLM model needs ~844MB resident;
+#    free and starter are 512MB and will OOM. If that cost is unwelcome, switch
+#    to an API embedding provider instead (see the alternative service below) -
+#    that runs in ~32MB because only the query is embedded at request time.
+services:
+  - type: web
+    name: bettersearch
+    runtime: python
+    plan: standard
+    region: frankfurt
+    healthCheckPath: /health
+    buildCommand: |
+      pip install --upgrade pip
+      pip install torch --index-url https://download.pytorch.org/whl/cpu
+      pip install -e ".[local,api]"
+      bettersearch ingest --corpus data/corpus_seed.json
+    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: BETTERSEARCH_EMBEDDING_PROVIDER
+        value: local
+      - key: BETTERSEARCH_INDEX
+        value: numpy
+      # Keep the model cache inside the build so the first request is not
+      # waiting on a HuggingFace download.
+      - key: HF_HOME
+        value: /opt/render/project/.cache/huggingface
+
+# ---------------------------------------------------------------------------
+# Alternative: API embeddings. ~32MB resident, fits the free tier, costs pennies
+# per ingest. Requires OPENAI_API_KEY set in the Render dashboard (never here).
+#
+# The index MUST be rebuilt with the same provider - a numpy index built by
+# MiniLM will refuse an OpenAI-embedded query with ModelMismatchError, by design.
+#
+#  - type: web
+#    name: bettersearch-api-embeddings
+#    runtime: python
+#    plan: free
+#    healthCheckPath: /health
+#    buildCommand: |
+#      pip install -e ".[openai,api]"
+#      bettersearch ingest --corpus data/corpus_seed.json
+#    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
+#    envVars:
+#      - key: BETTERSEARCH_EMBEDDING_PROVIDER
+#        value: openai
+#      - key: OPENAI_API_KEY
+#        sync: false          # set in the dashboard, never committed

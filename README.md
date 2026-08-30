@@ -1,5 +1,7 @@
 # BetterSearch
 
+[![tests](https://github.com/Shen2083/BetterSearch/actions/workflows/ci.yml/badge.svg)](https://github.com/Shen2083/BetterSearch/actions/workflows/ci.yml)
+
 Semantic content search: retrieval by **meaning** rather than by shared words.
 
 Search a content library for `Norman conquest` and get back articles about
@@ -41,7 +43,10 @@ uvicorn api.main:app --reload            # http://127.0.0.1:8000
 ```
 
 Nothing above needs an API key, a database, or network access after the first
-model download.
+model download. A fresh clone has **no index** — `.bettersearch/` is gitignored,
+so `ingest` must run before any search.
+
+For deployment, expected outputs and troubleshooting, see **[RUNBOOK.md](RUNBOOK.md)**.
 
 ---
 

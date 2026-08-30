@@ -1,0 +1,39 @@
+name: tests
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      # Only the `dev` extra. The test suite uses a fake embedding provider and
+      # a fake enrichment client, so it needs no model, no network and no API
+      # key - which keeps CI under a minute and means it cannot fail because
+      # HuggingFace is having a bad day. That property is worth protecting.
+      - name: Install
+        run: pip install -e ".[dev]"
+
+      - name: Test
+        run: pytest -q
+
+      # Cheap guard against the deployment trap: if the ingest step is ever
+      # dropped from the build command, the service boots with an empty index
+      # and every query 409s. Catch it here rather than in production.
+      - name: Render blueprint builds the index
+        run: |
+          grep -q "bettersearch ingest" render.yaml \
+            || { echo "render.yaml must ingest during build"; exit 1; }
+          grep -q "download.pytorch.org/whl/cpu" render.yaml \
+            || { echo "render.yaml must install CPU-only torch"; exit 1; }
