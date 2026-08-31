@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>Search by meaning: approach and scaling</title>
+<style>
+  :root {
+    --ink: #1A1F23; --muted: #55636B; --rule: #D9E0DE;
+    --accent: #1B4D3E; --warm: #A4462D; --panel: #F5F8F7;
+    /* Locally installed faces only - no webfont fetch, so rendering is
+       deterministic and works offline. Charter is a text serif Matthew Carter
+       drew for print at small sizes, which is exactly this document's job. */
+    --serif: 'Charter', 'Bitstream Charter', Georgia, 'Liberation Serif', serif;
+    --sans: 'Liberation Sans', 'DejaVu Sans', Helvetica, sans-serif;
+    --mono: 'DejaVu Sans Mono', 'Liberation Mono', monospace;
+  }
+  @page { size: A4; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: var(--ink); background: #fff;
+         font-family: var(--serif); font-size: 10.5pt; line-height: 1.55;
+         -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  h1 { font-family: var(--serif); font-weight: 600; font-size: 22pt; line-height: 1.15; margin: 0 0 5pt; }
+  h2 { font-family: var(--serif); font-weight: 600; font-size: 13.5pt; margin: 20pt 0 6pt;
+       break-after: avoid; page-break-after: avoid; }
+  h3 { font-family: var(--sans); font-weight: 600; font-size: 10.5pt; margin: 13pt 0 3pt;
+       break-after: avoid; page-break-after: avoid; }
+  p { margin: 0 0 8pt; }
+  .lede { font-size: 12pt; color: var(--muted); margin: 0 0 4pt; }
+  .rule { border: 0; border-top: 2px solid var(--ink); margin: 13pt 0 0; }
+  .meta { font-size: 8.5pt; color: var(--muted); border-top: 1px solid var(--rule);
+          padding-top: 6pt; margin-top: 14pt; }
+  code { font-family: var(--mono); font-size: 9pt; background: var(--panel); padding: 0 3px; }
+  table { border-collapse: collapse; width: 100%; font-size: 9.5pt; margin: 9pt 0;
+          break-inside: avoid; page-break-inside: avoid; }
+  th, td { text-align: left; padding: 4.5pt 9pt 4.5pt 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-weight: 600; font-size: 8.5pt; text-transform: uppercase; color: var(--muted); }
+  td.n { font-family: var(--mono); text-align: right; padding-right: 16pt; white-space: nowrap; }
+  th.n { text-align: right; padding-right: 16pt; }
+  tr.win td { color: var(--accent); font-weight: 600; }
+  .panel { background: var(--panel); padding: 9pt 12pt; margin: 10pt 0;
+           break-inside: avoid; page-break-inside: avoid; }
+  .panel p:last-child { margin: 0; }
+  .warn { border-left: 3px solid var(--warm); padding-left: 12pt; margin: 10pt 0;
+          break-inside: avoid; page-break-inside: avoid; }
+  .warn p:last-child { margin: 0; }
+  ul { margin: 0 0 8pt; padding-left: 15pt; }
+  li { margin-bottom: 3pt; }
+  .flow { font-family: var(--mono); font-size: 8.5pt; line-height: 1.5;
+          background: var(--panel); padding: 9pt 12pt; margin: 9pt 0; white-space: pre;
+          break-inside: avoid; page-break-inside: avoid; }
+  strong { font-weight: 600; }
+  .keep { break-inside: avoid; page-break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<h1>Search by meaning</h1>
+<p class="lede">How the prototype works, what it measures, and what breaks when the collection gets large.</p>
+<hr class="rule">
+
+<h2>The problem</h2>
+
+<p>Keyword search — BM25, Postgres full-text, Elasticsearch out of the box —
+ranks documents by term overlap. If the searcher's words do not appear in the
+document, the document scores zero and is not returned at any depth. It is not
+ranked poorly; it is invisible.</p>
+
+<p>That is the entire failure this addresses. Two measured examples from a
+112-document test collection:</p>
+
+<ul>
+  <li><code>"Norman conquest"</code> returns nothing. Seven relevant documents
+      exist; none contains either word.</li>
+  <li><code>"why does bread rise"</code> returns the article on
+      <strong>Inflation</strong>, which contains "a sustained <em>rise</em> in
+      the general price level". Term overlap without shared meaning.</li>
+</ul>
+
+<h2>How it works</h2>
+
+<p>Each document is split into passages, and each passage is converted into a
+list of numbers — a position in a space arranged so that text about similar
+things ends up nearby. A search query is converted the same way, and the
+closest passages are returned. No shared vocabulary is required.</p>
+
+<div class="flow">Document ──split──► Passage ──encode──► position + model id + content hash ──► index
+                    │                                              │
+                    └──────────── word index ──────────────────────┤
+                                                                   ▼
+                                              keyword │ meaning │ both, fused</div>
+
+<h3>The detail that matters most</h3>
+
+<p>Each passage has its document title attached before it is encoded. A passage
+reading "his army crossed the Channel in September" is nearly useless alone;
+with "The Battle of Hastings" attached it carries its subject. This one line
+does more for result quality than any other single decision in the pipeline, and
+costs nothing.</p>
+
+<h3>Three retrieval modes</h3>
+
+<table>
+  <thead><tr><th>Mode</th><th>Ranks by</th><th>Strong on</th><th>Blind to</th></tr></thead>
+  <tbody>
+    <tr><td>keyword</td><td>term overlap (BM25)</td><td>names, dates, figures, identifiers</td><td>anything phrased differently</td></tr>
+    <tr><td>meaning</td><td>closeness of position</td><td>paraphrase, concepts, questions</td><td>exact tokens it blurs together</td></tr>
+    <tr><td>fused</td><td>combined ranking</td><td>mixed traffic</td><td>—</td></tr>
+  </tbody>
+</table>
+
+<p>Fusion combines the two lists by <em>rank</em>, not by score. Term-overlap
+scores are unbounded while closeness scores sit between −1 and 1, so blending
+the numbers directly requires normalisation constants that must be re-tuned
+whenever the collection or the model changes. Ranks are comparable by
+construction.</p>
+
+<h2 class="keep">What was measured</h2>
+
+<p>32 questions, hand-labelled with the documents that genuinely answer each,
+run against the same 112 documents.</p>
+
+<table>
+  <thead><tr><th>Mode</th><th class="n">Recall@5</th><th class="n">MRR@10</th><th class="n">nDCG@10</th></tr></thead>
+  <tbody>
+    <tr><td>keyword</td><td class="n">0.355</td><td class="n">0.625</td><td class="n">0.415</td></tr>
+    <tr class="win"><td>meaning</td><td class="n">0.841</td><td class="n">0.984</td><td class="n">0.890</td></tr>
+    <tr><td>fused</td><td class="n">0.624</td><td class="n">0.826</td><td class="n">0.741</td></tr>
+  </tbody>
+</table>
+
+<p>Read those as: <em>Recall@5</em> is the share of relevant documents appearing
+in the top five. <em>MRR@10</em> rewards getting one right answer to the top.
+<em>nDCG@10</em> discounts by rank across all relevant documents and is the one
+to trust when they disagree.</p>
+
+<p>Per question, meaning-based retrieval gave the better result on <strong>30 of
+32</strong>, keyword on 1, with 1 tie. Keyword scored exactly zero — nothing
+relevant at any depth — on <strong>8</strong>.</p>
+
+<div class="warn">
+  <p><strong>The result that went against the design.</strong> Fusing the two
+  scored <em>worse</em> than meaning alone: 0.741 against 0.890. That is not a
+  bug in the fusion. It is what rank fusion does when one input list is mostly
+  empty, which is the case on a question set deliberately weighted towards
+  phrasings keyword search cannot handle.</p>
+  <p>The honest reading is to ship meaning-based retrieval as the default for
+  this kind of content, and revisit fusion against traffic containing more
+  exact-name and identifier lookups, where term overlap earns its half of the
+  merge. On a library catalogue — full of author, title and ISBN searches — we
+  would expect fusion to win. That should be re-measured, not assumed.</p>
+</div>
+
+<div class="panel">
+  <p><strong>On trusting these numbers.</strong> The test collection and the
+  question set share an author, so the absolute values are indicative rather
+  than authoritative. The gap between modes is the signal. A script is included
+  that builds a collection from real Wikipedia articles for a non-circular
+  re-run.</p>
+</div>
+
+<h2>What breaks at scale</h2>
+
+<p>The encoding model is not the bottleneck people expect. Three other things
+are, and each has a specific countermeasure in the code.</p>
+
+<h3>1. Changing the model invalidates everything</h3>
+
+<p>Positions produced by two different models occupy different spaces. Comparing
+them returns confident nonsense with no error raised — the worst failure mode,
+because nothing looks wrong. Every stored position therefore carries its
+<code>model_id</code>, and both storage backends refuse a query encoded by a
+different model. That field is also what makes a rolling re-encode possible
+instead of taking search offline.</p>
+
+<h3>2. Re-indexing must not redo everything</h3>
+
+<p>Every passage carries a hash of its content. Re-running over an unchanged
+collection encodes nothing at all; a content update costs only the passages that
+actually changed. Without this, every edit costs the full collection price.</p>
+
+<h3>3. Storage is the real wall</h3>
+
+<table>
+  <thead><tr><th>1,000,000 passages</th><th class="n">Raw size</th><th>Lever</th></tr></thead>
+  <tbody>
+    <tr><td>1536 values, 4 bytes each</td><td class="n">5.72 GB</td><td>—</td></tr>
+    <tr><td>truncated to 512 values</td><td class="n">1.91 GB</td><td>3× smaller</td></tr>
+    <tr class="win"><td>stored at half precision</td><td class="n">0.95 GB</td><td>a further 2×</td></tr>
+    <tr><td>384 values, half precision</td><td class="n">0.72 GB</td><td>the self-hosted default</td></tr>
+  </tbody>
+</table>
+
+<p>Six times smaller in total, which is the difference between needing a large
+managed database and fitting comfortably on a small one. Approximate-neighbour
+indexing keeps query time sub-linear as the collection grows.</p>
+
+<h2 class="keep">Thin catalogue records</h2>
+
+<p>A library catalogue typically holds title, author and subject headings —
+around fifteen words per item. That is not enough text to place meaningfully. We
+measured the cost by stripping the test collection down to exactly that and
+re-running the same questions:</p>
+
+<table>
+  <thead><tr><th>Content indexed</th><th class="n">Recall@5</th><th class="n">nDCG@10</th></tr></thead>
+  <tbody>
+    <tr><td>Full article text (ceiling)</td><td class="n">0.841</td><td class="n">0.890</td></tr>
+    <tr><td>Thin records only</td><td class="n">0.718</td><td class="n">0.789</td></tr>
+  </tbody>
+</table>
+
+<p>The aggregate drop understates it, because these titles are unusually
+descriptive. Per question the damage is severe and highly specific:</p>
+
+<table>
+  <thead><tr><th>Question</th><th class="n">Full text</th><th class="n">Thin</th></tr></thead>
+  <tbody>
+    <tr><td>planning a landing on a defended coast</td><td class="n">0.871</td><td class="n">0.296</td></tr>
+    <tr><td>1066</td><td class="n">0.876</td><td class="n">0.369</td></tr>
+    <tr><td>how electricity reaches a house</td><td class="n">1.000</td><td class="n">0.581</td></tr>
+    <tr><td>Norman conquest</td><td class="n">0.980</td><td class="n">0.709</td></tr>
+  </tbody>
+</table>
+
+<p>The pattern is consistent: <strong>questions collapse exactly when the
+relevant documents' titles do not name the concept.</strong> "1066" loses more
+than half because the Domesday Book, the Bayeux Tapestry, Stamford Bridge and
+Harold Godwinson never contain the string.</p>
+
+<h3>Closing that gap</h3>
+
+<p>A language model reads each record and writes a short description, which is
+indexed alongside the record rather than instead of it. This works because it
+can state concepts the record never contains — turning a subject heading of
+"Great Britain — History" into text naming the Norman Conquest, William the
+Conqueror and the Domesday survey. The vocabulary bridge is built deliberately
+instead of hoped for.</p>
+
+<p>Three rules carry the risk:</p>
+
+<ul>
+  <li><strong>Generated text is never shown to a reader.</strong> Match against
+      it, then display the real catalogue record. A library is an
+      authority-bearing institution; this demotes a fabrication from a false
+      statement by the library to a mildly poor search result.</li>
+  <li><strong>The model declares whether it knows the work.</strong> Given only
+      a title and a subject heading it is drawing on training knowledge, not the
+      record. If it recognises the work it may use that knowledge; if not, it
+      may expand only what the record already says and must invent nothing.</li>
+  <li><strong>The prompt is versioned like the model.</strong> A prompt change
+      invalidates every stored description, exactly as a model change
+      invalidates every position — except regenerating costs money rather than
+      processor time. Prompt version, model and a hash of the source record are
+      stored with every description, so re-runs are incremental.</li>
+</ul>
+
+<h2>What is not proven</h2>
+
+<p>Three parts of the system have never run against their real dependencies.
+They are written and unit-tested against substitutes, which is not the same as
+working:</p>
+
+<ul>
+  <li>Record enrichment against a live language-model API.</li>
+  <li>The Postgres storage backend against an actual database.</li>
+  <li>The two hosted encoding backends, which construct and validate correctly
+      but have never made a request.</li>
+</ul>
+
+<p>The single most valuable next step is small and cheap: run enrichment over
+the 112 thinned records at two or three quality levels and re-measure. That
+fills the one empty cell in the table above and settles the quality-versus-cost
+question with evidence rather than argument, for a few pounds.</p>
+
+<p class="meta">Every figure in this document is a measurement taken from the
+working prototype, not an estimate. The prototype is 44 files and roughly 4,100
+lines of Python with 59 tests, which run without a model, a network connection
+or an API key.</p>
+
+</body>
+</html>

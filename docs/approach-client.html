@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>Finding what you already have</title>
+<style>
+  :root {
+    --ink: #1A1F23;
+    --muted: #55636B;
+    --rule: #D9E0DE;
+    --accent: #1B4D3E;
+    --warm: #A4462D;
+    /* Locally installed faces only - no webfont fetch, so rendering is
+       deterministic and works offline. Charter is a text serif Matthew Carter
+       drew for print at small sizes, which is exactly this document's job. */
+    --serif: 'Charter', 'Bitstream Charter', Georgia, 'Liberation Serif', serif;
+    --sans: 'Liberation Sans', 'DejaVu Sans', Helvetica, sans-serif;
+    --mono: 'DejaVu Sans Mono', 'Liberation Mono', monospace;
+  }
+  @page { size: A4; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; color: var(--ink); background: #fff;
+    font-family: var(--serif); font-size: 11pt; line-height: 1.6;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  h1 { font-family: var(--serif); font-weight: 600; font-size: 24pt; line-height: 1.15; margin: 0 0 6pt; }
+  h2 { font-family: var(--serif); font-weight: 600; font-size: 14pt; margin: 22pt 0 7pt;
+       break-after: avoid; page-break-after: avoid; }
+  h3 { font-family: var(--sans); font-weight: 600; font-size: 11pt; margin: 14pt 0 4pt;
+       break-after: avoid; page-break-after: avoid; }
+  p { margin: 0 0 9pt; }
+  .lede { font-size: 12.5pt; color: var(--muted); margin: 0 0 4pt; }
+  .meta { font-size: 9pt; color: var(--muted); border-top: 1px solid var(--rule);
+          padding-top: 6pt; margin-top: 14pt; }
+  .rule { border: 0; border-top: 2px solid var(--ink); margin: 14pt 0 0; }
+
+  figure { margin: 12pt 0; break-inside: avoid; page-break-inside: avoid; }
+  figure img { width: 100%; border: 1px solid var(--rule); }
+  figcaption { font-size: 9pt; color: var(--muted); margin-top: 5pt; }
+
+  .example { border-left: 3px solid var(--warm); padding: 9pt 0 9pt 13pt;
+             margin: 11pt 0; break-inside: avoid; page-break-inside: avoid; }
+  .example p { margin: 0 0 5pt; }
+  .example p:last-child { margin: 0; }
+  .q { font-family: var(--mono); font-size: 10pt; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 10pt; margin: 10pt 0;
+          break-inside: avoid; page-break-inside: avoid; }
+  th, td { text-align: left; padding: 5pt 10pt 5pt 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-weight: 600; font-size: 9pt; text-transform: uppercase; color: var(--muted); }
+  td.n { font-family: var(--mono); white-space: nowrap; }
+
+  ul { margin: 0 0 9pt; padding-left: 16pt; }
+  li { margin-bottom: 4pt; }
+  strong { font-weight: 600; }
+  .accent { color: var(--accent); font-weight: 600; }
+  .keep { break-inside: avoid; page-break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<h1>Finding what you already have</h1>
+<p class="lede">A better way to search a large collection, and what it would take to run it.</p>
+<hr class="rule">
+
+<h2>The problem your readers already have</h2>
+
+<p>Someone searches your catalogue, gets nothing back, and concludes you do not
+hold anything on the subject. Often you do. They simply used different words
+from the ones in your records.</p>
+
+<p>This happens because ordinary search matches words. It compares what the
+reader typed against the text you hold, and ranks by how many words overlap. It
+is fast, predictable, and it has one blind spot: if the reader's words are not
+in your text, the item cannot be found at all. Not ranked low — not found.</p>
+
+<p>Your cataloguers and your readers rarely use the same vocabulary. That gap is
+invisible to you, because a search that returns nothing looks exactly like a
+collection that holds nothing.</p>
+
+<h2>Two examples from a real test collection</h2>
+
+<p>We built a test collection of 112 articles and ran real searches against it.
+These are actual results, not illustrations.</p>
+
+<div class="example">
+  <p class="q">"Norman conquest"</p>
+  <p><strong>Ordinary search returns nothing at all.</strong> The collection
+  holds seven relevant items — an account of the Battle of Hastings, a life of
+  William of Normandy, the Domesday Book, the Bayeux Tapestry and three more.
+  Not one of them contains the phrase "Norman conquest", so not one can be
+  found.</p>
+  <p>Searching by meaning returns all seven.</p>
+</div>
+
+<div class="example">
+  <p class="q">"why does bread rise"</p>
+  <p><strong>Ordinary search returns an article about inflation.</strong> Not a
+  mistake in the software — that article contains the sentence "a sustained
+  <em>rise</em> in the general price level". One shared word, no shared
+  meaning.</p>
+  <p>Searching by meaning returns the articles on yeast, gluten and sourdough.</p>
+</div>
+
+<p>The second example is the more damaging of the two in practice. A search that
+returns nothing at least tells the reader something is wrong. A search that
+returns something confidently irrelevant wastes their time and quietly erodes
+their trust in the catalogue.</p>
+
+<h2>What changes</h2>
+
+<figure>
+  <img src="figure-comparison.png" alt="The search Norman conquest run two ways over the same 112 items. Matching the words finds nothing. Matching the meaning returns the Battle of Hastings, Harold Godwinson, Motte-and-Bailey Castles, William Duke of Normandy and Stamford Bridge.">
+  <figcaption>The same search, run both ways over the same 112 items. These are
+  the actual results.</figcaption>
+</figure>
+
+<p>Instead of comparing words, the system compares meaning. Every item in the
+collection is read once, in advance, and placed according to what it is about.
+When a reader searches, their question is placed the same way, and the closest
+items are returned — whether or not they happen to share any words.</p>
+
+<p>Nothing about your records changes. Nothing is rewritten or replaced. This
+sits alongside what you already have.</p>
+
+<h2 class="keep">How we know it works</h2>
+
+<p>We wrote 32 test questions, phrased the way people actually type rather than
+the way cataloguers write, and recorded by hand which items in the collection
+genuinely answered each one. Then we ran all 32 both ways and compared.</p>
+
+<table>
+  <thead><tr><th>Across 32 test questions</th><th>Ordinary search</th><th>Searching by meaning</th></tr></thead>
+  <tbody>
+    <tr><td>Gave the better set of results</td><td class="n">1</td><td class="n accent">30</td></tr>
+    <tr><td>Equally good</td><td class="n" colspan="2">1 question, both methods perfect</td></tr>
+    <tr><td>Found nothing relevant at all</td><td class="n">8</td><td class="n accent">0</td></tr>
+  </tbody>
+</table>
+
+<p>Ordinary search was not useless on the rest — it often found something
+partly relevant. The decisive column is the last one: on a quarter of the
+questions it returned nothing usable whatsoever, and on one question it was
+genuinely the better of the two.</p>
+
+<p>One caveat worth stating plainly: we wrote both the test collection and the
+test questions. That is a fair way to compare two methods against each other on
+identical material, but it is not proof of how the system performs on
+<em>your</em> collection. Before committing to anything, we would repeat exactly
+this test on a sample of your own records and your own readers' searches. That
+result is the one that should decide it.</p>
+
+<h2>What it costs to run</h2>
+
+<p>The searching itself is inexpensive and predictable, because the work of
+reading the collection happens once, up front, rather than on every search.</p>
+
+<table>
+  <thead><tr><th>Item</th><th>Cost</th><th>When</th></tr></thead>
+  <tbody>
+    <tr><td>Hosting</td><td class="n">about £20 a month</td><td>ongoing</td></tr>
+    <tr><td>Preparing a collection of 100,000 items</td><td class="n">£70 – £350</td><td>once</td></tr>
+    <tr><td>Preparing a collection of 1,000,000 items</td><td class="n">£650 – £3,300</td><td>once</td></tr>
+    <tr><td>Adding new items later</td><td class="n">pennies</td><td>as you acquire</td></tr>
+  </tbody>
+</table>
+
+<p>The range on preparation reflects a quality choice we would make together and
+test before spending anything at scale. Adding items later is cheap because the
+system only ever looks at what has actually changed — re-running it over an
+unchanged collection costs nothing at all.</p>
+
+<h2>What we would need from you</h2>
+
+<ul>
+  <li>An export of your catalogue records. Title, author and subject headings is
+      enough — full text is welcome but not required.</li>
+  <li>A list of real searches your readers have run, especially ones that
+      returned nothing. These become the test set.</li>
+  <li>Roughly a day of a cataloguer's time to confirm which items genuinely
+      answer a sample of those searches.</li>
+</ul>
+
+<h2>What this does not do</h2>
+
+<p>It does not read minds, and it is not always right. Because it works by
+closeness of meaning, it can rank something related-but-wrong surprisingly
+highly. In our test, a search for "Norman conquest" returned an article on the
+Battle of Britain in fifth place — the system associated "invasion of Britain"
+without distinguishing the century.</p>
+
+<p>It is also not a replacement for exact lookup. If a reader searches an author
+name, a title or an ISBN, ordinary word matching is better, and the system keeps
+using it for exactly those searches.</p>
+
+<p>Finally, it will not fix records that are wrong. It finds what your catalogue
+describes. If a record is miscatalogued, this surfaces the mistake rather than
+correcting it.</p>
+
+<p class="meta">Prepared from a working prototype. All figures quoted are
+measured results from that prototype, not estimates. Costs are converted from
+US-dollar list prices and will vary with exchange rate and collection size.</p>
+
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en-GB"><head><meta charset="utf-8">
+<style>
+  :root { --ink:#1A1F23; --muted:#55636B; --rule:#D9E0DE; --accent:#1B4D3E; --warm:#A4462D;
+          --serif:'Charter','Bitstream Charter',Georgia,serif;
+          --sans:'Liberation Sans','DejaVu Sans',sans-serif; }
+  * { box-sizing:border-box; }
+  body { margin:0; width:1000px; background:#fff; color:var(--ink);
+         font-family:var(--sans); -webkit-print-color-adjust:exact; }
+  .wrap { padding:26px 30px 30px; }
+  .query { font-family:var(--serif); font-size:19px; margin:0 0 4px; }
+  .query span { color:var(--muted); font-size:15px; }
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:34px; margin-top:22px; }
+  h2 { font-family:var(--sans); font-size:12px; font-weight:700; text-transform:uppercase;
+       margin:0 0 3px; padding-bottom:7px; border-bottom:2px solid var(--ink); }
+  .sub { font-size:13px; color:var(--muted); margin:8px 0 14px; min-height:34px; }
+  ol { list-style:none; margin:0; padding:0; }
+  li { padding:9px 0; border-bottom:1px solid var(--rule); font-family:var(--serif); font-size:15px; }
+  li:last-child { border-bottom:0; }
+  .none { color:var(--warm); font-style:italic; font-family:var(--serif); font-size:15px; padding:9px 0; }
+  .found { color:var(--accent); font-weight:700; }
+</style></head>
+<body><div class="wrap">
+  <p class="query">Someone searches for <strong>“Norman conquest”</strong>
+     <span>— across the same 112 items</span></p>
+  <div class="cols">
+    <div>
+      <h2>Matching the words</h2>
+      <p class="sub">Looks for items containing the words that were typed.</p>
+      <p class="none">Nothing found.<br>No item contains either word.</p>
+    </div>
+    <div>
+      <h2 style="border-color:var(--accent)">Matching the meaning</h2>
+      <p class="sub">Looks for items about the same thing, whatever words they use.</p>
+      <ol>
+        <li>The Battle of Hastings</li>
+        <li>Harold Godwinson</li>
+        <li>Motte-and-Bailey Castles</li>
+        <li>William, Duke of Normandy</li>
+        <li>Stamford Bridge</li>
+      </ol>
+      <p class="sub" style="margin-top:12px"><span class="found">Seven relevant items in total</span>,
+         none of which contains the words “Norman” or “conquest”.</p>
+    </div>
+  </div>
+</div></body></html>
