@@ -24,3 +24,8 @@ venv/
 node_modules/
 package.json
 package-lock.json
+
+# Intermediate HTML from `render_pdf.py` on a markdown source (deleted on
+# success; this catches a crashed run)
+.mdprint-*.html
+*.print.html

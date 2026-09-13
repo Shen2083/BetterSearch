@@ -159,7 +159,37 @@ OpenAI-embedded query — by design, because the vectors are not comparable.
 
 ---
 
-## 5. What is not verified
+## 5. Regenerating the documents
+
+Three PDFs in `docs/` are generated artefacts, committed so they can be sent to
+someone without a checkout. They are built with the headless Chromium already on
+the box — its print engine, not a Python PDF library, so the documents get real
+fonts and controlled page breaks.
+
+```bash
+python scripts/render_pdf.py docs/approach-technical.html
+python scripts/render_pdf.py docs/approach-client.html
+python scripts/render_pdf.py README.md --out docs/README.pdf
+```
+
+The two approach documents are written as HTML and rendered directly.
+`docs/README.pdf` is converted from `README.md` — **rebuild it after any
+substantive README edit**, because nothing forces it and a stale PDF is not
+visible in a diff. Use `--keep-html` to inspect the generated HTML in a browser
+while changing the print stylesheet, which lives in `scripts/render_pdf.py`.
+
+Two things the markdown path does deliberately, both of which only matter in a
+PDF: it drops images it cannot fetch (the CI badge 403s and would otherwise
+print as a broken-image box), and it rewrites relative links such as
+`RUNBOOK.md` to full GitHub URLs, so they still work in a file that has been
+emailed away from the repository.
+
+The screenshots the README uses are themselves regenerated — see **The catalogue
+prototype** above.
+
+---
+
+## 6. What is not verified
 
 Three areas have never run against their real dependencies, so treat them as
 untested rather than working:
