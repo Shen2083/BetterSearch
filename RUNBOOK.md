@@ -77,6 +77,27 @@ uvicorn api.main:app --reload      # http://127.0.0.1:8000
 
 `GET /health` should report `chunk_count: 112` and the MiniLM `model_id`.
 
+### The catalogue prototype
+
+A library-catalogue version of the same search, for showing to a non-technical
+audience. It runs over its own 74-record demonstration catalogue:
+
+```bash
+export BETTERSEARCH_INDEX_PATH=.bettersearch/catalogue
+bettersearch ingest --corpus data/catalogue_library.json
+uvicorn api.main:app --reload      # http://127.0.0.1:8000/catalogue
+```
+
+Search `learning to be present` and switch between the two modes. **Catalogue
+search returns nothing; Search by meaning returns eight records.** Then try
+`anand`: catalogue search mixes a crime novelist into results plainly meant for
+a spirituality author, because the two share a surname. Meaning-based search
+does not.
+
+The catalogue is a fictional service with invented records, so it can be shown
+around without passing as a real library. Rebuild it with
+`python scripts/build_catalogue.py`.
+
 ---
 
 ## 3. Deploy to Render

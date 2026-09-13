@@ -1,0 +1,1793 @@
+{
+  "name": "northfield-libraries",
+  "description": "Demonstration catalogue for a fictional library service. Records are invented; availability figures are illustrative.",
+  "documents": [
+    {
+      "doc_id": "nl-00100",
+      "title": "Living Lightly",
+      "text": "Author: Anand, Prem, 1931-1990\nPublished: Wayfarer Press, 2011\nSubjects: Meditation; Spiritual life; Mind and body\nSummary: A collection drawn from forty years of talks, arguing that ordinary attention is the whole of the practice.",
+      "tags": [
+        "book"
+      ],
+      "author": "Anand, Prem",
+      "author_dates": "1931-1990",
+      "year": "2011",
+      "publisher": "Wayfarer Press",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Meditation",
+        "Spiritual life",
+        "Mind and body"
+      ],
+      "location": "Fenwick Road",
+      "available": 2,
+      "copies": 2,
+      "blurb": "A collection drawn from forty years of talks, arguing that ordinary attention is the whole of the practice.",
+      "cover": "#7A4A2B"
+    },
+    {
+      "doc_id": "nl-00101",
+      "title": "The Art of Stillness",
+      "text": "Author: Anand, Prem, 1931-1990\nPublished: Wayfarer Press, 2008\nSubjects: Meditation; Spiritual life",
+      "tags": [
+        "book"
+      ],
+      "author": "Anand, Prem",
+      "author_dates": "1931-1990",
+      "year": "2008",
+      "publisher": "Wayfarer Press",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Meditation",
+        "Spiritual life"
+      ],
+      "location": "Marsden Park",
+      "available": 3,
+      "copies": 5,
+      "blurb": null,
+      "cover": "#2C5A5A"
+    },
+    {
+      "doc_id": "nl-00102",
+      "title": "One Breath at a Time",
+      "text": "Author: Anand, Prem, 1931-1990\nPublished: Wayfarer Press, 2014\nSubjects: Breathing exercises; Meditation; Stress management",
+      "tags": [
+        "book"
+      ],
+      "author": "Anand, Prem",
+      "author_dates": "1931-1990",
+      "year": "2014",
+      "publisher": "Wayfarer Press",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Breathing exercises",
+        "Meditation",
+        "Stress management"
+      ],
+      "location": "Fenwick Road",
+      "available": 3,
+      "copies": 3,
+      "blurb": null,
+      "cover": "#7A4A2B"
+    },
+    {
+      "doc_id": "nl-00103",
+      "title": "Nothing to Do",
+      "text": "Author: Anand, Prem, 1931-1990\nPublished: Wayfarer Press, UUUU\nSubjects: Spiritual life",
+      "tags": [
+        "book"
+      ],
+      "author": "Anand, Prem",
+      "author_dates": "1931-1990",
+      "year": "UUUU",
+      "publisher": "Wayfarer Press",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Spiritual life"
+      ],
+      "location": "Fenwick Road",
+      "available": 3,
+      "copies": 5,
+      "blurb": null,
+      "cover": "#2C5A5A"
+    },
+    {
+      "doc_id": "nl-00104",
+      "title": "The Quiet Room",
+      "text": "Author: Halloran, Beatrice\nPublished: Kestrel & Vane, 2019\nSubjects: Contemplation; Solitude; Mind and body",
+      "tags": [
+        "book"
+      ],
+      "author": "Halloran, Beatrice",
+      "author_dates": "",
+      "year": "2019",
+      "publisher": "Kestrel & Vane",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Contemplation",
+        "Solitude",
+        "Mind and body"
+      ],
+      "location": "Marsden Park",
+      "available": 0,
+      "copies": 1,
+      "blurb": null,
+      "cover": "#6B3A4B"
+    },
+    {
+      "doc_id": "nl-00105",
+      "title": "Sitting Still",
+      "text": "Author: Okonjo, Adaeze\nPublished: Lantern House, 2021\nSubjects: Meditation; Mindfulness\nSummary: A working nurse's account of twenty minutes a day, and what changed.",
+      "tags": [
+        "book"
+      ],
+      "author": "Okonjo, Adaeze",
+      "author_dates": "",
+      "year": "2021",
+      "publisher": "Lantern House",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Meditation",
+        "Mindfulness"
+      ],
+      "location": "Marsden Park",
+      "available": 2,
+      "copies": 2,
+      "blurb": "A working nurse's account of twenty minutes a day, and what changed.",
+      "cover": "#3E4C5E"
+    },
+    {
+      "doc_id": "nl-00106",
+      "title": "Attention, and Other Small Miracles",
+      "text": "Author: Verhoeven, Sanne\nPublished: Bellwether, 2017\nSubjects: Contemplation; Psychology",
+      "tags": [
+        "book"
+      ],
+      "author": "Verhoeven, Sanne",
+      "author_dates": "",
+      "year": "2017",
+      "publisher": "Bellwether",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Contemplation",
+        "Psychology"
+      ],
+      "location": "Fenwick Road",
+      "available": 2,
+      "copies": 4,
+      "blurb": null,
+      "cover": "#553F2E"
+    },
+    {
+      "doc_id": "nl-00107",
+      "title": "The Unhurried Life",
+      "text": "Author: Bramwell, Douglas, 1944-2020\nPublished: Foxglove, 2003\nSubjects: Simplicity; Conduct of life",
+      "tags": [
+        "large print"
+      ],
+      "author": "Bramwell, Douglas",
+      "author_dates": "1944-2020",
+      "year": "2003",
+      "publisher": "Foxglove",
+      "format": "Large print",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Simplicity",
+        "Conduct of life"
+      ],
+      "location": "Ashcombe Branch",
+      "available": 2,
+      "copies": 3,
+      "blurb": null,
+      "cover": "#7A4A2B"
+    },
+    {
+      "doc_id": "nl-00108",
+      "title": "Sixty Seconds",
+      "text": "Author: Okonjo, Adaeze\nPublished: Lantern House, 2024\nSubjects: Meditation; Stress management",
+      "tags": [
+        "eaudiobook"
+      ],
+      "author": "Okonjo, Adaeze",
+      "author_dates": "",
+      "year": "2024",
+      "publisher": "Lantern House",
+      "format": "eAudiobook",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Meditation",
+        "Stress management"
+      ],
+      "location": "Online",
+      "available": 3,
+      "copies": 3,
+      "blurb": null,
+      "cover": "#4A4067"
+    },
+    {
+      "doc_id": "nl-00109",
+      "title": "After the Funeral",
+      "text": "Author: Restrick, Marian\nPublished: Coldharbour, 2018\nSubjects: Bereavement; Grief; Consolation\nSummary: Written in the year after her husband died, and deliberately offering no stages and no timetable.",
+      "tags": [
+        "book"
+      ],
+      "author": "Restrick, Marian",
+      "author_dates": "",
+      "year": "2018",
+      "publisher": "Coldharbour",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Bereavement",
+        "Grief",
+        "Consolation"
+      ],
+      "location": "Marsden Park",
+      "available": 3,
+      "copies": 5,
+      "blurb": "Written in the year after her husband died, and deliberately offering no stages and no timetable.",
+      "cover": "#2E4A62"
+    },
+    {
+      "doc_id": "nl-00110",
+      "title": "Carrying On",
+      "text": "Author: Restrick, Marian\nPublished: Coldharbour, 2022\nSubjects: Bereavement; Widows",
+      "tags": [
+        "book"
+      ],
+      "author": "Restrick, Marian",
+      "author_dates": "",
+      "year": "2022",
+      "publisher": "Coldharbour",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Bereavement",
+        "Widows"
+      ],
+      "location": "Marsden Park",
+      "available": 2,
+      "copies": 3,
+      "blurb": null,
+      "cover": "#3E4C5E"
+    },
+    {
+      "doc_id": "nl-00111",
+      "title": "The Empty Chair",
+      "text": "Author: Kealey, Dermot\nPublished: Bellwether, 2015\nSubjects: Grief; Family; Loss",
+      "tags": [
+        "book"
+      ],
+      "author": "Kealey, Dermot",
+      "author_dates": "",
+      "year": "2015",
+      "publisher": "Bellwether",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Grief",
+        "Family",
+        "Loss"
+      ],
+      "location": "Fenwick Road",
+      "available": 3,
+      "copies": 4,
+      "blurb": null,
+      "cover": "#1B4D3E"
+    },
+    {
+      "doc_id": "nl-00112",
+      "title": "What Nobody Tells You",
+      "text": "Author: Fairhead, Judith\nPublished: Coldharbour, 2020\nSubjects: Bereavement; Consolation",
+      "tags": [
+        "large print"
+      ],
+      "author": "Fairhead, Judith",
+      "author_dates": "",
+      "year": "2020",
+      "publisher": "Coldharbour",
+      "format": "Large print",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Bereavement",
+        "Consolation"
+      ],
+      "location": "Marsden Park",
+      "available": 2,
+      "copies": 2,
+      "blurb": null,
+      "cover": "#1B4D3E"
+    },
+    {
+      "doc_id": "nl-00113",
+      "title": "A Year of Thursdays",
+      "text": "Author: Kealey, Dermot\nPublished: Bellwether, 2023\nSubjects: Grief; Memoirs",
+      "tags": [
+        "eaudiobook"
+      ],
+      "author": "Kealey, Dermot",
+      "author_dates": "",
+      "year": "2023",
+      "publisher": "Bellwether",
+      "format": "eAudiobook",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Grief",
+        "Memoirs"
+      ],
+      "location": "Online",
+      "available": 3,
+      "copies": 3,
+      "blurb": null,
+      "cover": "#2C5A5A"
+    },
+    {
+      "doc_id": "nl-00114",
+      "title": "Night Shift",
+      "text": "Author: Corrigan, Estelle\nPublished: Meridian Health, 2019\nSubjects: Insomnia; Sleep disorders; Self-care\nSummary: Why so many of us wake at three in the morning, and what the evidence actually supports.",
+      "tags": [
+        "book"
+      ],
+      "author": "Corrigan, Estelle",
+      "author_dates": "",
+      "year": "2019",
+      "publisher": "Meridian Health",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Insomnia",
+        "Sleep disorders",
+        "Self-care"
+      ],
+      "location": "Marsden Park",
+      "available": 1,
+      "copies": 3,
+      "blurb": "Why so many of us wake at three in the morning, and what the evidence actually supports.",
+      "cover": "#1B4D3E"
+    },
+    {
+      "doc_id": "nl-00115",
+      "title": "The Tired Generation",
+      "text": "Author: Corrigan, Estelle\nPublished: Meridian Health, 2023\nSubjects: Fatigue; Sleep disorders; Public health",
+      "tags": [
+        "book"
+      ],
+      "author": "Corrigan, Estelle",
+      "author_dates": "",
+      "year": "2023",
+      "publisher": "Meridian Health",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Fatigue",
+        "Sleep disorders",
+        "Public health"
+      ],
+      "location": "Northfield Central",
+      "available": 2,
+      "copies": 4,
+      "blurb": null,
+      "cover": "#2E4A62"
+    },
+    {
+      "doc_id": "nl-00116",
+      "title": "Wide Awake at Four",
+      "text": "Author: Pelletier, Nina\nPublished: Kestrel & Vane, 2016\nSubjects: Insomnia; Cognitive therapy",
+      "tags": [
+        "book"
+      ],
+      "author": "Pelletier, Nina",
+      "author_dates": "",
+      "year": "2016",
+      "publisher": "Kestrel & Vane",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Insomnia",
+        "Cognitive therapy"
+      ],
+      "location": "Northfield Central",
+      "available": 0,
+      "copies": 1,
+      "blurb": null,
+      "cover": "#6B3A4B"
+    },
+    {
+      "doc_id": "nl-00117",
+      "title": "The Racing Mind",
+      "text": "Author: Ademola, Tunde\nPublished: Meridian Health, 2021\nSubjects: Anxiety; Cognitive therapy; Self-care",
+      "tags": [
+        "book"
+      ],
+      "author": "Ademola, Tunde",
+      "author_dates": "",
+      "year": "2021",
+      "publisher": "Meridian Health",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Anxiety",
+        "Cognitive therapy",
+        "Self-care"
+      ],
+      "location": "Fenwick Road",
+      "available": 3,
+      "copies": 5,
+      "blurb": null,
+      "cover": "#7A4A2B"
+    },
+    {
+      "doc_id": "nl-00118",
+      "title": "Small Steps Out",
+      "text": "Author: Ademola, Tunde\nPublished: Meridian Health, 2024\nSubjects: Anxiety; Phobias; Self-care\nSummary: A graded programme for leaving the house again, written for people who have stopped.",
+      "tags": [
+        "book"
+      ],
+      "author": "Ademola, Tunde",
+      "author_dates": "",
+      "year": "2024",
+      "publisher": "Meridian Health",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Anxiety",
+        "Phobias",
+        "Self-care"
+      ],
+      "location": "Northfield Central",
+      "available": 1,
+      "copies": 2,
+      "blurb": "A graded programme for leaving the house again, written for people who have stopped.",
+      "cover": "#2E4A62"
+    },
+    {
+      "doc_id": "nl-00119",
+      "title": "Your Back, Explained",
+      "text": "Author: Whittle, Gordon\nPublished: Meridian Health, 2014\nSubjects: Backache; Physical therapy",
+      "tags": [
+        "book"
+      ],
+      "author": "Whittle, Gordon",
+      "author_dates": "",
+      "year": "2014",
+      "publisher": "Meridian Health",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Backache",
+        "Physical therapy"
+      ],
+      "location": "Ashcombe Branch",
+      "available": 1,
+      "copies": 3,
+      "blurb": null,
+      "cover": "#1B4D3E"
+    },
+    {
+      "doc_id": "nl-00120",
+      "title": "The Change",
+      "text": "Author: Marsh-Ibori, Grace\nPublished: Lantern House, 2022\nSubjects: Menopause; Women's health",
+      "tags": [
+        "book"
+      ],
+      "author": "Marsh-Ibori, Grace",
+      "author_dates": "",
+      "year": "2022",
+      "publisher": "Lantern House",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Menopause",
+        "Women's health"
+      ],
+      "location": "Fenwick Road",
+      "available": 2,
+      "copies": 2,
+      "blurb": null,
+      "cover": "#3E4C5E"
+    },
+    {
+      "doc_id": "nl-00121",
+      "title": "Breathe Out",
+      "text": "Author: Pelletier, Nina\nPublished: Kestrel & Vane, 2020\nSubjects: Relaxation; Stress management",
+      "tags": [
+        "eaudiobook"
+      ],
+      "author": "Pelletier, Nina",
+      "author_dates": "",
+      "year": "2020",
+      "publisher": "Kestrel & Vane",
+      "format": "eAudiobook",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Relaxation",
+        "Stress management"
+      ],
+      "location": "Online",
+      "available": 3,
+      "copies": 3,
+      "blurb": null,
+      "cover": "#7A4A2B"
+    },
+    {
+      "doc_id": "nl-00122",
+      "title": "The Fussy Years",
+      "text": "Author: Delacroix-Bell, Hannah\nPublished: Rookery, 2021\nSubjects: Child rearing; Nutrition; Toddlers\nSummary: Refuses the phrase 'picky eater' and treats mealtime standoffs as a normal developmental stage.",
+      "tags": [
+        "book"
+      ],
+      "author": "Delacroix-Bell, Hannah",
+      "author_dates": "",
+      "year": "2021",
+      "publisher": "Rookery",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Child rearing",
+        "Nutrition",
+        "Toddlers"
+      ],
+      "location": "Rowley Green",
+      "available": 1,
+      "copies": 3,
+      "blurb": "Refuses the phrase 'picky eater' and treats mealtime standoffs as a normal developmental stage.",
+      "cover": "#1B4D3E"
+    },
+    {
+      "doc_id": "nl-00123",
+      "title": "Small Plates",
+      "text": "Author: Delacroix-Bell, Hannah\nPublished: Rookery, 2018\nSubjects: Cooking; Infants - Nutrition; Family",
+      "tags": [
+        "book"
+      ],
+      "author": "Delacroix-Bell, Hannah",
+      "author_dates": "",
+      "year": "2018",
+      "publisher": "Rookery",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Cooking",
+        "Infants - Nutrition",
+        "Family"
+      ],
+      "location": "Northfield Central",
+      "available": 3,
+      "copies": 4,
+      "blurb": null,
+      "cover": "#6B3A4B"
+    },
+    {
+      "doc_id": "nl-00124",
+      "title": "Will They Ever Eat Greens?",
+      "text": "Author: Nkemelu, Chidi\nPublished: Rookery, 2023\nSubjects: Child rearing; Nutrition",
+      "tags": [
+        "book"
+      ],
+      "author": "Nkemelu, Chidi",
+      "author_dates": "",
+      "year": "2023",
+      "publisher": "Rookery",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Child rearing",
+        "Nutrition"
+      ],
+      "location": "Rowley Green",
+      "available": 3,
+      "copies": 3,
+      "blurb": null,
+      "cover": "#4A4067"
+    },
+    {
+      "doc_id": "nl-00125",
+      "title": "The Long Bedtime",
+      "text": "Author: Delacroix-Bell, Hannah\nPublished: Rookery, 2019\nSubjects: Child rearing; Sleep; Toddlers",
+      "tags": [
+        "book"
+      ],
+      "author": "Delacroix-Bell, Hannah",
+      "author_dates": "",
+      "year": "2019",
+      "publisher": "Rookery",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Child rearing",
+        "Sleep",
+        "Toddlers"
+      ],
+      "location": "Rowley Green",
+      "available": 0,
+      "copies": 1,
+      "blurb": null,
+      "cover": "#2C5A5A"
+    },
+    {
+      "doc_id": "nl-00126",
+      "title": "Three and Furious",
+      "text": "Author: Nkemelu, Chidi\nPublished: Rookery, 2020\nSubjects: Child rearing; Temper tantrums",
+      "tags": [
+        "large print"
+      ],
+      "author": "Nkemelu, Chidi",
+      "author_dates": "",
+      "year": "2020",
+      "publisher": "Rookery",
+      "format": "Large print",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Child rearing",
+        "Temper tantrums"
+      ],
+      "location": "Fenwick Road",
+      "available": 1,
+      "copies": 1,
+      "blurb": null,
+      "cover": "#7A4A2B"
+    },
+    {
+      "doc_id": "nl-00127",
+      "title": "Murder at Marlowe Hall",
+      "text": "Author: Anand, Ravi\nPublished: Pennyfarthing, 2019\nSubjects: Detective and mystery stories; England - Fiction\nSummary: The first Hensleigh mystery. A country house, a missing will, and nothing more graphic than a cold teapot.",
+      "tags": [
+        "book"
+      ],
+      "author": "Anand, Ravi",
+      "author_dates": "",
+      "year": "2019",
+      "publisher": "Pennyfarthing",
+      "format": "Book",
+      "language": "English",
+      "fiction": true,
+      "subjects": [
+        "Detective and mystery stories",
+        "England - Fiction"
+      ],
+      "location": "Northfield Central",
+      "available": 2,
+      "copies": 3,
+      "blurb": "The first Hensleigh mystery. A country house, a missing will, and nothing more graphic than a cold teapot.",
+      "cover": "#2C5A5A"
+    },
+    {
+      "doc_id": "nl-00128",
+      "title": "The Knitting Circle Murders",
+      "text": "Author: Anand, Ravi\nPublished: Pennyfarthing, 2021\nSubjects: Detective and mystery stories",
+      "tags": [
+        "book"
+      ],
+      "author": "Anand, Ravi",
+      "author_dates": "",
+      "year": "2021",
+      "publisher": "Pennyfarthing",
+      "format": "Book",
+      "language": "English",
+      "fiction": true,
+      "subjects": [
+        "Detective and mystery stories"
+      ],
+      "location": "Ashcombe Branch",
+      "available": 1,
+      "copies": 1,
+      "blurb": null,
+      "cover": "#2C5A5A"
+    },
+    {
+      "doc_id": "nl-00129",
+      "title": "Death Takes the Bus",
+      "text": "Author: Anand, Ravi\nPublished: Pennyfarthing, 2023\nSubjects: Detective and mystery stories",
+      "tags": [
+        "book"
+      ],
+      "author": "Anand, Ravi",
+      "author_dates": "",
+      "year": "2023",
+      "publisher": "Pennyfarthing",
+      "format": "Book",
+      "language": "English",
+      "fiction": true,
+      "subjects": [
+        "Detective and mystery stories"
+      ],
+      "location": "Ashcombe Branch",
+      "available": 3,
+      "copies": 4,
+      "blurb": null,
+      "cover": "#4A4067"
+    },
+    {
+      "doc_id": "nl-00130",
+      "title": "A Body in the Bandstand",
+      "text": "Author: Cholmondeley, Pearl\nPublished: Pennyfarthing, 2020\nSubjects: Detective and mystery stories; Villages - Fiction",
+      "tags": [
+        "large print"
+      ],
+      "author": "Cholmondeley, Pearl",
+      "author_dates": "",
+      "year": "2020",
+      "publisher": "Pennyfarthing",
+      "format": "Large print",
+      "language": "English",
+      "fiction": true,
+      "subjects": [
+        "Detective and mystery stories",
+        "Villages - Fiction"
+      ],
+      "location": "Rowley Green",
+      "available": 2,
+      "copies": 4,
+      "blurb": null,
+      "cover": "#1B4D3E"
+    },
+    {
+      "doc_id": "nl-00131",
+      "title": "The Vicar's Last Sermon",
+      "text": "Author: Cholmondeley, Pearl\nPublished: Pennyfarthing, 2022\nSubjects: Detective and mystery stories; Clergy - Fiction",
+      "tags": [
+        "book"
+      ],
+      "author": "Cholmondeley, Pearl",
+      "author_dates": "",
+      "year": "2022",
+      "publisher": "Pennyfarthing",
+      "format": "Book",
+      "language": "English",
+      "fiction": true,
+      "subjects": [
+        "Detective and mystery stories",
+        "Clergy - Fiction"
+      ],
+      "location": "Ashcombe Branch",
+      "available": 3,
+      "copies": 5,
+      "blurb": null,
+      "cover": "#6B3A4B"
+    },
+    {
+      "doc_id": "nl-00132",
+      "title": "Tea, Cake and Arsenic",
+      "text": "Author: Cholmondeley, Pearl\nPublished: Pennyfarthing, 2024\nSubjects: Detective and mystery stories",
+      "tags": [
+        "eaudiobook"
+      ],
+      "author": "Cholmondeley, Pearl",
+      "author_dates": "",
+      "year": "2024",
+      "publisher": "Pennyfarthing",
+      "format": "eAudiobook",
+      "language": "English",
+      "fiction": true,
+      "subjects": [
+        "Detective and mystery stories"
+      ],
+      "location": "Online",
+      "available": 5,
+      "copies": 5,
+      "blurb": null,
+      "cover": "#553F2E"
+    },
+    {
+      "doc_id": "nl-00133",
+      "title": "The Cutting Room",
+      "text": "Author: Vasilenko, Irina\nPublished: Blackwater, 2018\nSubjects: Detective and mystery stories; Thrillers",
+      "tags": [
+        "book"
+      ],
+      "author": "Vasilenko, Irina",
+      "author_dates": "",
+      "year": "2018",
+      "publisher": "Blackwater",
+      "format": "Book",
+      "language": "English",
+      "fiction": true,
+      "subjects": [
+        "Detective and mystery stories",
+        "Thrillers"
+      ],
+      "location": "Ashcombe Branch",
+      "available": 3,
+      "copies": 3,
+      "blurb": null,
+      "cover": "#7A4A2B"
+    },
+    {
+      "doc_id": "nl-00134",
+      "title": "Nine Grams",
+      "text": "Author: Vasilenko, Irina\nPublished: Blackwater, 2020\nSubjects: Thrillers; Organized crime - Fiction",
+      "tags": [
+        "book"
+      ],
+      "author": "Vasilenko, Irina",
+      "author_dates": "",
+      "year": "2020",
+      "publisher": "Blackwater",
+      "format": "Book",
+      "language": "English",
+      "fiction": true,
+      "subjects": [
+        "Thrillers",
+        "Organized crime - Fiction"
+      ],
+      "location": "Marsden Park",
+      "available": 1,
+      "copies": 3,
+      "blurb": null,
+      "cover": "#4A4067"
+    },
+    {
+      "doc_id": "nl-00135",
+      "title": "Cold Frame",
+      "text": "Author: Obuya, Marcus\nPublished: Blackwater, 2022\nSubjects: Detective and mystery stories; Police procedural",
+      "tags": [
+        "book"
+      ],
+      "author": "Obuya, Marcus",
+      "author_dates": "",
+      "year": "2022",
+      "publisher": "Blackwater",
+      "format": "Book",
+      "language": "English",
+      "fiction": true,
+      "subjects": [
+        "Detective and mystery stories",
+        "Police procedural"
+      ],
+      "location": "Northfield Central",
+      "available": 0,
+      "copies": 1,
+      "blurb": null,
+      "cover": "#6B3A4B"
+    },
+    {
+      "doc_id": "nl-00136",
+      "title": "The Salt House",
+      "text": "Author: Trevanion, Bryony\nPublished: Aldgate, 2017\nSubjects: Domestic fiction; Wales - Fiction\nSummary: Three sisters return to a house on the estuary to decide what to do with it, and with each other.",
+      "tags": [
+        "book"
+      ],
+      "author": "Trevanion, Bryony",
+      "author_dates": "",
+      "year": "2017",
+      "publisher": "Aldgate",
+      "format": "Book",
+      "language": "English",
+      "fiction": true,
+      "subjects": [
+        "Domestic fiction",
+        "Wales - Fiction"
+      ],
+      "location": "Rowley Green",
+      "available": 0,
+      "copies": 1,
+      "blurb": "Three sisters return to a house on the estuary to decide what to do with it, and with each other.",
+      "cover": "#3E4C5E"
+    },
+    {
+      "doc_id": "nl-00137",
+      "title": "A Slight Delay",
+      "text": "Author: Trevanion, Bryony\nPublished: Aldgate, 2021\nSubjects: Domestic fiction",
+      "tags": [
+        "book"
+      ],
+      "author": "Trevanion, Bryony",
+      "author_dates": "",
+      "year": "2021",
+      "publisher": "Aldgate",
+      "format": "Book",
+      "language": "English",
+      "fiction": true,
+      "subjects": [
+        "Domestic fiction"
+      ],
+      "location": "Rowley Green",
+      "available": 2,
+      "copies": 2,
+      "blurb": null,
+      "cover": "#2E4A62"
+    },
+    {
+      "doc_id": "nl-00138",
+      "title": "The Understudy",
+      "text": "Author: Ferreira-Lynch, Dom\nPublished: Aldgate, 2019\nSubjects: Theatre - Fiction; Psychological fiction",
+      "tags": [
+        "book"
+      ],
+      "author": "Ferreira-Lynch, Dom",
+      "author_dates": "",
+      "year": "2019",
+      "publisher": "Aldgate",
+      "format": "Book",
+      "language": "English",
+      "fiction": true,
+      "subjects": [
+        "Theatre - Fiction",
+        "Psychological fiction"
+      ],
+      "location": "Northfield Central",
+      "available": 3,
+      "copies": 3,
+      "blurb": null,
+      "cover": "#1B4D3E"
+    },
+    {
+      "doc_id": "nl-00139",
+      "title": "Weather Permitting",
+      "text": "Author: Ferreira-Lynch, Dom\nPublished: Aldgate, 2023\nSubjects: Domestic fiction; Humorous fiction",
+      "tags": [
+        "book"
+      ],
+      "author": "Ferreira-Lynch, Dom",
+      "author_dates": "",
+      "year": "2023",
+      "publisher": "Aldgate",
+      "format": "Book",
+      "language": "English",
+      "fiction": true,
+      "subjects": [
+        "Domestic fiction",
+        "Humorous fiction"
+      ],
+      "location": "Northfield Central",
+      "available": 1,
+      "copies": 2,
+      "blurb": null,
+      "cover": "#2C5A5A"
+    },
+    {
+      "doc_id": "nl-00140",
+      "title": "The Loan",
+      "text": "Author: Sciacca, Emilia\nPublished: Aldgate, 2016\nSubjects: Domestic fiction; Debt - Fiction",
+      "tags": [
+        "large print"
+      ],
+      "author": "Sciacca, Emilia",
+      "author_dates": "",
+      "year": "2016",
+      "publisher": "Aldgate",
+      "format": "Large print",
+      "language": "English",
+      "fiction": true,
+      "subjects": [
+        "Domestic fiction",
+        "Debt - Fiction"
+      ],
+      "location": "Ashcombe Branch",
+      "available": 2,
+      "copies": 4,
+      "blurb": null,
+      "cover": "#3E4C5E"
+    },
+    {
+      "doc_id": "nl-00141",
+      "title": "Hold the Line",
+      "text": "Author: Obuya, Marcus\nPublished: Aldgate, 2024\nSubjects: Domestic fiction; Work - Fiction",
+      "tags": [
+        "book"
+      ],
+      "author": "Obuya, Marcus",
+      "author_dates": "",
+      "year": "2024",
+      "publisher": "Aldgate",
+      "format": "Book",
+      "language": "English",
+      "fiction": true,
+      "subjects": [
+        "Domestic fiction",
+        "Work - Fiction"
+      ],
+      "location": "Ashcombe Branch",
+      "available": 2,
+      "copies": 2,
+      "blurb": null,
+      "cover": "#2C5A5A"
+    },
+    {
+      "doc_id": "nl-00142",
+      "title": "Tuesday Dinners",
+      "text": "Author: Rasmussen, Kirsten\nPublished: Copper Pot, 2020\nSubjects: Cooking; Quick and easy cooking\nSummary: Forty meals that assume you got home at half past six and nobody has been to the shops.",
+      "tags": [
+        "book"
+      ],
+      "author": "Rasmussen, Kirsten",
+      "author_dates": "",
+      "year": "2020",
+      "publisher": "Copper Pot",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Cooking",
+        "Quick and easy cooking"
+      ],
+      "location": "Fenwick Road",
+      "available": 0,
+      "copies": 1,
+      "blurb": "Forty meals that assume you got home at half past six and nobody has been to the shops.",
+      "cover": "#7A4A2B"
+    },
+    {
+      "doc_id": "nl-00143",
+      "title": "One Pan, One Oven",
+      "text": "Author: Rasmussen, Kirsten\nPublished: Copper Pot, 2022\nSubjects: Cooking; Quick and easy cooking",
+      "tags": [
+        "book"
+      ],
+      "author": "Rasmussen, Kirsten",
+      "author_dates": "",
+      "year": "2022",
+      "publisher": "Copper Pot",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Cooking",
+        "Quick and easy cooking"
+      ],
+      "location": "Marsden Park",
+      "available": 1,
+      "copies": 2,
+      "blurb": null,
+      "cover": "#553F2E"
+    },
+    {
+      "doc_id": "nl-00144",
+      "title": "The Batch Book",
+      "text": "Author: Ferreira-Lynch, Dom\nPublished: Copper Pot, 2021\nSubjects: Cooking; Make-ahead cooking",
+      "tags": [
+        "book"
+      ],
+      "author": "Ferreira-Lynch, Dom",
+      "author_dates": "",
+      "year": "2021",
+      "publisher": "Copper Pot",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Cooking",
+        "Make-ahead cooking"
+      ],
+      "location": "Rowley Green",
+      "available": 2,
+      "copies": 4,
+      "blurb": null,
+      "cover": "#2E4A62"
+    },
+    {
+      "doc_id": "nl-00145",
+      "title": "Feeding Six for Forty Pounds",
+      "text": "Author: Marsh-Ibori, Grace\nPublished: Copper Pot, 2023\nSubjects: Cooking; Low budget cooking; Family",
+      "tags": [
+        "book"
+      ],
+      "author": "Marsh-Ibori, Grace",
+      "author_dates": "",
+      "year": "2023",
+      "publisher": "Copper Pot",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Cooking",
+        "Low budget cooking",
+        "Family"
+      ],
+      "location": "Ashcombe Branch",
+      "available": 2,
+      "copies": 2,
+      "blurb": null,
+      "cover": "#553F2E"
+    },
+    {
+      "doc_id": "nl-00146",
+      "title": "Bread, Slowly",
+      "text": "Author: Rasmussen, Kirsten\nPublished: Copper Pot, 2018\nSubjects: Baking; Bread",
+      "tags": [
+        "book"
+      ],
+      "author": "Rasmussen, Kirsten",
+      "author_dates": "",
+      "year": "2018",
+      "publisher": "Copper Pot",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Baking",
+        "Bread"
+      ],
+      "location": "Marsden Park",
+      "available": 1,
+      "copies": 2,
+      "blurb": null,
+      "cover": "#6B3A4B"
+    },
+    {
+      "doc_id": "nl-00147",
+      "title": "The Allotment Kitchen",
+      "text": "Author: Whittle, Gordon\nPublished: Copper Pot, 2019\nSubjects: Cooking; Vegetables; Gardening",
+      "tags": [
+        "large print"
+      ],
+      "author": "Whittle, Gordon",
+      "author_dates": "",
+      "year": "2019",
+      "publisher": "Copper Pot",
+      "format": "Large print",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Cooking",
+        "Vegetables",
+        "Gardening"
+      ],
+      "location": "Fenwick Road",
+      "available": 3,
+      "copies": 4,
+      "blurb": null,
+      "cover": "#2C5A5A"
+    },
+    {
+      "doc_id": "nl-00148",
+      "title": "The Year the Fields Changed Hands",
+      "text": "Author: Pemberton-Hyde, Alistair\nPublished: Thornbury, 2015\nSubjects: Great Britain - History - Medieval period; Land tenure\nSummary: How a single generation redrew who owned England, told through four manors and their surviving rolls.",
+      "tags": [
+        "book"
+      ],
+      "author": "Pemberton-Hyde, Alistair",
+      "author_dates": "",
+      "year": "2015",
+      "publisher": "Thornbury",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Great Britain - History - Medieval period",
+        "Land tenure"
+      ],
+      "location": "Marsden Park",
+      "available": 1,
+      "copies": 3,
+      "blurb": "How a single generation redrew who owned England, told through four manors and their surviving rolls.",
+      "cover": "#6B3A4B"
+    },
+    {
+      "doc_id": "nl-00149",
+      "title": "The Survey",
+      "text": "Author: Pemberton-Hyde, Alistair\nPublished: Thornbury, 2018\nSubjects: Great Britain - History - Medieval period; Land tenure",
+      "tags": [
+        "book"
+      ],
+      "author": "Pemberton-Hyde, Alistair",
+      "author_dates": "",
+      "year": "2018",
+      "publisher": "Thornbury",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Great Britain - History - Medieval period",
+        "Land tenure"
+      ],
+      "location": "Northfield Central",
+      "available": 0,
+      "copies": 2,
+      "blurb": null,
+      "cover": "#553F2E"
+    },
+    {
+      "doc_id": "nl-00150",
+      "title": "Castles of Earth and Timber",
+      "text": "Author: Pemberton-Hyde, Alistair\nPublished: Thornbury, 2012\nSubjects: Castles; Military architecture; Great Britain - History",
+      "tags": [
+        "book"
+      ],
+      "author": "Pemberton-Hyde, Alistair",
+      "author_dates": "",
+      "year": "2012",
+      "publisher": "Thornbury",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Castles",
+        "Military architecture",
+        "Great Britain - History"
+      ],
+      "location": "Northfield Central",
+      "available": 3,
+      "copies": 5,
+      "blurb": null,
+      "cover": "#2E4A62"
+    },
+    {
+      "doc_id": "nl-00151",
+      "title": "The Last Anglo-Saxon Court",
+      "text": "Author: Weatherall, Susannah\nPublished: Thornbury, 2020\nSubjects: Great Britain - History; Kings and rulers",
+      "tags": [
+        "book"
+      ],
+      "author": "Weatherall, Susannah",
+      "author_dates": "",
+      "year": "2020",
+      "publisher": "Thornbury",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Great Britain - History",
+        "Kings and rulers"
+      ],
+      "location": "Fenwick Road",
+      "available": 2,
+      "copies": 4,
+      "blurb": null,
+      "cover": "#4A4067"
+    },
+    {
+      "doc_id": "nl-00152",
+      "title": "Embroidered Histories",
+      "text": "Author: Weatherall, Susannah\nPublished: Thornbury, 2022\nSubjects: Textile fabrics; Great Britain - History; Art and history",
+      "tags": [
+        "book"
+      ],
+      "author": "Weatherall, Susannah",
+      "author_dates": "",
+      "year": "2022",
+      "publisher": "Thornbury",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Textile fabrics",
+        "Great Britain - History",
+        "Art and history"
+      ],
+      "location": "Northfield Central",
+      "available": 2,
+      "copies": 3,
+      "blurb": null,
+      "cover": "#6B3A4B"
+    },
+    {
+      "doc_id": "nl-00153",
+      "title": "The Crossing",
+      "text": "Author: Weatherall, Susannah\nPublished: Thornbury, 2024\nSubjects: Great Britain - History; Naval history",
+      "tags": [
+        "book"
+      ],
+      "author": "Weatherall, Susannah",
+      "author_dates": "",
+      "year": "2024",
+      "publisher": "Thornbury",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Great Britain - History",
+        "Naval history"
+      ],
+      "location": "Rowley Green",
+      "available": 3,
+      "copies": 3,
+      "blurb": null,
+      "cover": "#4A4067"
+    },
+    {
+      "doc_id": "nl-00154",
+      "title": "Roads Before Rails",
+      "text": "Author: Bramwell, Douglas, 1944-2020\nPublished: Thornbury, 2009\nSubjects: Roads - History; Transport; Great Britain - History",
+      "tags": [
+        "book"
+      ],
+      "author": "Bramwell, Douglas",
+      "author_dates": "1944-2020",
+      "year": "2009",
+      "publisher": "Thornbury",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Roads - History",
+        "Transport",
+        "Great Britain - History"
+      ],
+      "location": "Marsden Park",
+      "available": 1,
+      "copies": 3,
+      "blurb": null,
+      "cover": "#4A4067"
+    },
+    {
+      "doc_id": "nl-00155",
+      "title": "The Wall and the Frontier",
+      "text": "Author: Bramwell, Douglas, 1944-2020\nPublished: Thornbury, 2011\nSubjects: Romans; Great Britain - History; Fortification",
+      "tags": [
+        "large print"
+      ],
+      "author": "Bramwell, Douglas",
+      "author_dates": "1944-2020",
+      "year": "2011",
+      "publisher": "Thornbury",
+      "format": "Large print",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Romans",
+        "Great Britain - History",
+        "Fortification"
+      ],
+      "location": "Marsden Park",
+      "available": 2,
+      "copies": 4,
+      "blurb": null,
+      "cover": "#7A4A2B"
+    },
+    {
+      "doc_id": "nl-00156",
+      "title": "What the Hedgerow Knows",
+      "text": "Author: Fairhead, Judith\nPublished: Kestrel & Vane, 2021\nSubjects: Natural history; Hedges; Countryside",
+      "tags": [
+        "book"
+      ],
+      "author": "Fairhead, Judith",
+      "author_dates": "",
+      "year": "2021",
+      "publisher": "Kestrel & Vane",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Natural history",
+        "Hedges",
+        "Countryside"
+      ],
+      "location": "Ashcombe Branch",
+      "available": 3,
+      "copies": 3,
+      "blurb": null,
+      "cover": "#3E4C5E"
+    },
+    {
+      "doc_id": "nl-00157",
+      "title": "The Quiet Decline",
+      "text": "Author: Okonjo, Adaeze\nPublished: Kestrel & Vane, 2023\nSubjects: Insects; Biodiversity; Environmental protection\nSummary: What thirty years of one family's moth-trap records reveal about a landscape emptying out.",
+      "tags": [
+        "book"
+      ],
+      "author": "Okonjo, Adaeze",
+      "author_dates": "",
+      "year": "2023",
+      "publisher": "Kestrel & Vane",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Insects",
+        "Biodiversity",
+        "Environmental protection"
+      ],
+      "location": "Marsden Park",
+      "available": 2,
+      "copies": 4,
+      "blurb": "What thirty years of one family's moth-trap records reveal about a landscape emptying out.",
+      "cover": "#1B4D3E"
+    },
+    {
+      "doc_id": "nl-00158",
+      "title": "Reading the Sky",
+      "text": "Author: Corrigan, Estelle\nPublished: Kestrel & Vane, 2017\nSubjects: Meteorology; Weather forecasting",
+      "tags": [
+        "book"
+      ],
+      "author": "Corrigan, Estelle",
+      "author_dates": "",
+      "year": "2017",
+      "publisher": "Kestrel & Vane",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Meteorology",
+        "Weather forecasting"
+      ],
+      "location": "Marsden Park",
+      "available": 3,
+      "copies": 5,
+      "blurb": null,
+      "cover": "#7A4A2B"
+    },
+    {
+      "doc_id": "nl-00159",
+      "title": "Deep Water, Slow Time",
+      "text": "Author: Vasilenko, Irina\nPublished: Kestrel & Vane, 2022\nSubjects: Oceanography; Climate",
+      "tags": [
+        "book"
+      ],
+      "author": "Vasilenko, Irina",
+      "author_dates": "",
+      "year": "2022",
+      "publisher": "Kestrel & Vane",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Oceanography",
+        "Climate"
+      ],
+      "location": "Rowley Green",
+      "available": 2,
+      "copies": 4,
+      "blurb": null,
+      "cover": "#7A4A2B"
+    },
+    {
+      "doc_id": "nl-00160",
+      "title": "The Ice Record",
+      "text": "Author: Weatherall, Susannah\nPublished: Kestrel & Vane, 2019\nSubjects: Climatology; Glaciers; Palaeoclimatology",
+      "tags": [
+        "book"
+      ],
+      "author": "Weatherall, Susannah",
+      "author_dates": "",
+      "year": "2019",
+      "publisher": "Kestrel & Vane",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Climatology",
+        "Glaciers",
+        "Palaeoclimatology"
+      ],
+      "location": "Northfield Central",
+      "available": 3,
+      "copies": 3,
+      "blurb": null,
+      "cover": "#2C5A5A"
+    },
+    {
+      "doc_id": "nl-00161",
+      "title": "The Wednesday Garden",
+      "text": "Author: Sciacca, Emilia\nPublished: Rookery, 2018\nSubjects: Children's stories; Gardens - Fiction; Friendship - Fiction\nSummary: A girl inherits a walled garden nobody has opened in forty years. For readers of eight and up.",
+      "tags": [
+        "book"
+      ],
+      "author": "Sciacca, Emilia",
+      "author_dates": "",
+      "year": "2018",
+      "publisher": "Rookery",
+      "format": "Book",
+      "language": "English",
+      "fiction": true,
+      "subjects": [
+        "Children's stories",
+        "Gardens - Fiction",
+        "Friendship - Fiction"
+      ],
+      "location": "Fenwick Road",
+      "available": 1,
+      "copies": 2,
+      "blurb": "A girl inherits a walled garden nobody has opened in forty years. For readers of eight and up.",
+      "cover": "#4A4067"
+    },
+    {
+      "doc_id": "nl-00162",
+      "title": "The Boy Who Counted Rain",
+      "text": "Author: Sciacca, Emilia\nPublished: Rookery, 2021\nSubjects: Children's stories; Family - Fiction",
+      "tags": [
+        "book"
+      ],
+      "author": "Sciacca, Emilia",
+      "author_dates": "",
+      "year": "2021",
+      "publisher": "Rookery",
+      "format": "Book",
+      "language": "English",
+      "fiction": true,
+      "subjects": [
+        "Children's stories",
+        "Family - Fiction"
+      ],
+      "location": "Northfield Central",
+      "available": 2,
+      "copies": 4,
+      "blurb": null,
+      "cover": "#2E4A62"
+    },
+    {
+      "doc_id": "nl-00163",
+      "title": "Marigold and the Long Walk Home",
+      "text": "Author: Nkemelu, Chidi\nPublished: Rookery, 2022\nSubjects: Children's stories; Adventure stories",
+      "tags": [
+        "book"
+      ],
+      "author": "Nkemelu, Chidi",
+      "author_dates": "",
+      "year": "2022",
+      "publisher": "Rookery",
+      "format": "Book",
+      "language": "English",
+      "fiction": true,
+      "subjects": [
+        "Children's stories",
+        "Adventure stories"
+      ],
+      "location": "Ashcombe Branch",
+      "available": 2,
+      "copies": 2,
+      "blurb": null,
+      "cover": "#1B4D3E"
+    },
+    {
+      "doc_id": "nl-00164",
+      "title": "The Lighthouse at the End of Term",
+      "text": "Author: Trevanion, Bryony\nPublished: Rookery, 2020\nSubjects: Children's stories; Schools - Fiction",
+      "tags": [
+        "eaudiobook"
+      ],
+      "author": "Trevanion, Bryony",
+      "author_dates": "",
+      "year": "2020",
+      "publisher": "Rookery",
+      "format": "eAudiobook",
+      "language": "English",
+      "fiction": true,
+      "subjects": [
+        "Children's stories",
+        "Schools - Fiction"
+      ],
+      "location": "Online",
+      "available": 1,
+      "copies": 1,
+      "blurb": null,
+      "cover": "#553F2E"
+    },
+    {
+      "doc_id": "nl-00165",
+      "title": "Ten Things About Beetles",
+      "text": "Author: Fairhead, Judith\nPublished: Rookery, 2023\nSubjects: Children's non-fiction; Insects",
+      "tags": [
+        "book"
+      ],
+      "author": "Fairhead, Judith",
+      "author_dates": "",
+      "year": "2023",
+      "publisher": "Rookery",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Children's non-fiction",
+        "Insects"
+      ],
+      "location": "Rowley Green",
+      "available": 3,
+      "copies": 4,
+      "blurb": null,
+      "cover": "#553F2E"
+    },
+    {
+      "doc_id": "nl-00166",
+      "title": "The Salt House [DVD]",
+      "text": "Author: Trevanion, Bryony\nPublished: Aldgate Screen, 2022\nSubjects: Feature films; Domestic fiction",
+      "tags": [
+        "dvd"
+      ],
+      "author": "Trevanion, Bryony",
+      "author_dates": "",
+      "year": "2022",
+      "publisher": "Aldgate Screen",
+      "format": "DVD",
+      "language": "English",
+      "fiction": true,
+      "subjects": [
+        "Feature films",
+        "Domestic fiction"
+      ],
+      "location": "Northfield Central",
+      "available": 3,
+      "copies": 4,
+      "blurb": null,
+      "cover": "#3E4C5E"
+    },
+    {
+      "doc_id": "nl-00167",
+      "title": "Marlowe Hall [DVD]",
+      "text": "Author: Anand, Ravi\nPublished: Pennyfarthing Screen, 2023\nSubjects: Feature films; Detective and mystery films",
+      "tags": [
+        "dvd"
+      ],
+      "author": "Anand, Ravi",
+      "author_dates": "",
+      "year": "2023",
+      "publisher": "Pennyfarthing Screen",
+      "format": "DVD",
+      "language": "English",
+      "fiction": true,
+      "subjects": [
+        "Feature films",
+        "Detective and mystery films"
+      ],
+      "location": "Rowley Green",
+      "available": 3,
+      "copies": 5,
+      "blurb": null,
+      "cover": "#4A4067"
+    },
+    {
+      "doc_id": "nl-00168",
+      "title": "A Year on the Estuary [DVD]",
+      "text": "Author: Fairhead, Judith\nPublished: Kestrel Screen, 2021\nSubjects: Documentary films; Natural history",
+      "tags": [
+        "dvd"
+      ],
+      "author": "Fairhead, Judith",
+      "author_dates": "",
+      "year": "2021",
+      "publisher": "Kestrel Screen",
+      "format": "DVD",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Documentary films",
+        "Natural history"
+      ],
+      "location": "Fenwick Road",
+      "available": 3,
+      "copies": 5,
+      "blurb": null,
+      "cover": "#7A4A2B"
+    },
+    {
+      "doc_id": "nl-00169",
+      "title": "[Punjabi book]",
+      "text": "Author: Anand, Prem, 1931-1990\nPublished: UUUU\nSubjects: Spiritual life",
+      "tags": [
+        "book"
+      ],
+      "author": "Anand, Prem",
+      "author_dates": "1931-1990",
+      "year": "UUUU",
+      "publisher": "",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Spiritual life"
+      ],
+      "location": "Ashcombe Branch",
+      "available": 2,
+      "copies": 3,
+      "blurb": null,
+      "cover": "#3E4C5E"
+    },
+    {
+      "doc_id": "nl-00170",
+      "title": "[Sound recording]",
+      "text": "Author: [unknown]\nPublished: UUUU",
+      "tags": [
+        "eaudiobook"
+      ],
+      "author": "",
+      "author_dates": "",
+      "year": "UUUU",
+      "publisher": "",
+      "format": "eAudiobook",
+      "language": "English",
+      "fiction": false,
+      "subjects": [],
+      "location": "Online",
+      "available": 3,
+      "copies": 3,
+      "blurb": null,
+      "cover": "#3E4C5E"
+    },
+    {
+      "doc_id": "nl-00171",
+      "title": "Untitled volume 2",
+      "text": "Author: Bramwell, Douglas, 1944-2020\nPublished: Thornbury, 19??\nSubjects: Great Britain - History",
+      "tags": [
+        "book"
+      ],
+      "author": "Bramwell, Douglas",
+      "author_dates": "1944-2020",
+      "year": "19??",
+      "publisher": "Thornbury",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Great Britain - History"
+      ],
+      "location": "Fenwick Road",
+      "available": 1,
+      "copies": 3,
+      "blurb": null,
+      "cover": "#6B3A4B"
+    },
+    {
+      "doc_id": "nl-00172",
+      "title": "[Large print item]",
+      "text": "Author: [unknown]\nPublished: 2004\nSubjects: Fiction",
+      "tags": [
+        "large print"
+      ],
+      "author": "",
+      "author_dates": "",
+      "year": "2004",
+      "publisher": "",
+      "format": "Large print",
+      "language": "English",
+      "fiction": true,
+      "subjects": [
+        "Fiction"
+      ],
+      "location": "Northfield Central",
+      "available": 1,
+      "copies": 1,
+      "blurb": null,
+      "cover": "#7A4A2B"
+    },
+    {
+      "doc_id": "nl-00173",
+      "title": "Selected works",
+      "text": "Author: Anand, Prem, 1931-1990\nPublished: Wayfarer Press, 1998\nSubjects: Spiritual life; Collected works",
+      "tags": [
+        "book"
+      ],
+      "author": "Anand, Prem",
+      "author_dates": "1931-1990",
+      "year": "1998",
+      "publisher": "Wayfarer Press",
+      "format": "Book",
+      "language": "English",
+      "fiction": false,
+      "subjects": [
+        "Spiritual life",
+        "Collected works"
+      ],
+      "location": "Northfield Central",
+      "available": 0,
+      "copies": 2,
+      "blurb": null,
+      "cover": "#1B4D3E"
+    }
+  ]
+}

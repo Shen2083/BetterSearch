@@ -22,6 +22,8 @@ from bettersearch import Searcher, load_settings
 from bettersearch.search import MODES
 from bettersearch.types import EmptyIndexError, ModelMismatchError
 
+from .catalogue import load_catalogue, run_search
+
 WEB_DIR = Path(__file__).resolve().parent.parent / "web"
 
 app = FastAPI(
@@ -33,6 +35,8 @@ app = FastAPI(
 _settings = load_settings()
 # Module-level so the model loads once rather than on every request.
 _searcher = Searcher(settings=_settings)
+# Display metadata for the catalogue demo. Read once; the library never sees it.
+_catalogue = load_catalogue()
 
 
 class SearchRequest(BaseModel):
@@ -44,6 +48,15 @@ class SearchRequest(BaseModel):
 class CompareRequest(BaseModel):
     query: str = Field(min_length=1, max_length=1000)
     top_k: int = Field(default=5, ge=1, le=50)
+
+
+class CatalogueRequest(BaseModel):
+    query: str = Field(min_length=1, max_length=1000)
+    mode: Literal["keyword", "semantic"] = "keyword"
+    page: int = Field(default=1, ge=1, le=100)
+    per_page: int = Field(default=10, ge=1, le=50)
+    #: facet key -> selected values, e.g. {"format": ["Large print"]}
+    filters: dict[str, list[str]] = Field(default_factory=dict)
 
 
 def _ok(data: dict) -> JSONResponse:
@@ -93,6 +106,27 @@ def compare(request: CompareRequest) -> JSONResponse:
             "modes": {mode: r.to_dict() for mode, r in responses.items()},
         }
     )
+
+
+@app.post("/catalogue/search")
+def catalogue_search(request: CatalogueRequest) -> JSONResponse:
+    """Catalogue-shaped results: records, facet counts and availability."""
+    return _ok(
+        run_search(
+            _searcher,
+            _catalogue,
+            query=request.query,
+            mode=request.mode,
+            filters=request.filters,
+            page=request.page,
+            per_page=request.per_page,
+        )
+    )
+
+
+@app.get("/catalogue")
+def catalogue_page() -> FileResponse:
+    return FileResponse(WEB_DIR / "catalogue.html")
 
 
 @app.get("/")

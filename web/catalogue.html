@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Northfield Libraries — catalogue search</title>
+<style>
+  /*
+    A fictional library service. The layout follows ordinary catalogue
+    conventions - facet sidebar, result cards, availability, reservations - but
+    the identity, palette and records are invented, so this can be shown around
+    without passing as a real public library service.
+  */
+  :root {
+    --ink: #1B2228;
+    --muted: #5D6B74;
+    --faint: #8A959C;
+    --rule: #DEE4E7;
+    --page: #FFFFFF;
+    --panel: #F4F7F8;
+    --brand: #14484F;        /* deep teal, deliberately not a council red */
+    --link: #10525C;
+    --warm: #9C4221;
+    --ok: #1B6B3A;
+    --sans: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, sans-serif;
+    --serif: Charter, "Bitstream Charter", Georgia, serif;
+    --mono: "DejaVu Sans Mono", ui-monospace, Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink);
+         font-family: var(--sans); font-size: 15px; line-height: 1.5; }
+  a { color: var(--link); }
+
+  /* ---------- masthead ---------- */
+  .masthead { border-bottom: 3px solid var(--brand); }
+  .masthead-inner { max-width: 1180px; margin: 0 auto; padding: 14px 20px;
+                    display: flex; align-items: center; gap: 26px; flex-wrap: wrap; }
+  .wordmark { display: flex; align-items: center; gap: 11px; }
+  .wordmark svg { display: block; }
+  .wordmark b { font-family: var(--serif); font-size: 23px; font-weight: 600;
+                color: var(--brand); letter-spacing: -0.01em; }
+  .wordmark b span { font-weight: 400; color: var(--ink); }
+  .nav { display: flex; gap: 18px; font-size: 14px; color: var(--muted); }
+  .nav span { cursor: default; }
+  .who { margin-left: auto; font-size: 14px; color: var(--muted);
+         display: flex; align-items: center; gap: 8px; }
+  .avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--brand);
+            color: #fff; font-size: 11px; display: grid; place-items: center; }
+
+  /* ---------- search bar ---------- */
+  .searchbar { background: var(--panel); border-bottom: 1px solid var(--rule); }
+  .searchbar-inner { max-width: 1180px; margin: 0 auto; padding: 16px 20px 14px; }
+  form { display: flex; gap: 0; }
+  #q { flex: 1; min-width: 0; padding: 10px 13px; font: inherit; color: var(--ink);
+       background: #fff; border: 1px solid #A9B5BC; border-right: 0;
+       border-radius: 3px 0 0 3px; }
+  #scope { padding: 10px 11px; font: inherit; color: var(--muted); background: #fff;
+           border: 1px solid #A9B5BC; border-right: 0; }
+  button.go { padding: 10px 20px; font: inherit; font-weight: 600; color: #fff;
+              background: var(--brand); border: 1px solid var(--brand);
+              border-radius: 0 3px 3px 0; cursor: pointer; }
+  #q:focus-visible, #scope:focus-visible, button:focus-visible, .facet label:focus-within
+    { outline: 2px solid var(--brand); outline-offset: 1px; }
+
+  .presets { margin-top: 10px; font-size: 13.5px; color: var(--muted); }
+  .presets button { background: none; border: 0; padding: 0 0 1px; margin: 0 14px 5px 0;
+                    font: inherit; color: var(--link); border-bottom: 1px solid #B9C6CC;
+                    cursor: pointer; }
+
+  /* ---------- mode switch ---------- */
+  .modes { display: flex; gap: 0; margin-top: 13px; }
+  .modes button { padding: 7px 16px; font: inherit; font-size: 14px; cursor: pointer;
+                  background: #fff; color: var(--muted); border: 1px solid #A9B5BC; }
+  .modes button:first-child { border-radius: 3px 0 0 3px; }
+  .modes button:last-child { border-radius: 0 3px 3px 0; border-left: 0; }
+  .modes button[aria-pressed="true"] { background: var(--brand); border-color: var(--brand);
+                                       color: #fff; font-weight: 600; }
+
+  /* ---------- layout ---------- */
+  .shell { max-width: 1180px; margin: 0 auto; padding: 18px 20px 60px;
+           display: grid; grid-template-columns: 248px 1fr; gap: 30px; }
+  @media (max-width: 860px) { .shell { grid-template-columns: 1fr; } }
+
+  .crumbs { font-size: 13.5px; color: var(--muted); padding: 12px 20px 0;
+            max-width: 1180px; margin: 0 auto; }
+  .searched { max-width: 1180px; margin: 0 auto; padding: 3px 20px 0; }
+  .searched h1 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 4px 0 2px; }
+  .method { font-size: 13.5px; color: var(--muted); }
+  .method b { color: var(--warm); font-weight: 600; }
+  .method.meaning b { color: var(--ok); }
+
+  /* ---------- facets ---------- */
+  .facets h2 { font-size: 15px; margin: 0 0 8px; padding-bottom: 8px;
+               border-bottom: 2px solid var(--ink); }
+  .facet { border-bottom: 1px solid var(--rule); padding: 9px 0; }
+  .facet > button { width: 100%; display: flex; justify-content: space-between;
+                    align-items: center; background: none; border: 0; padding: 2px 0;
+                    font: inherit; font-weight: 600; font-size: 14px; color: var(--ink);
+                    cursor: pointer; text-align: left; }
+  .facet > button .chev { color: var(--faint); font-size: 11px; }
+  .facet ul { list-style: none; margin: 7px 0 2px; padding: 0; }
+  .facet li { margin: 0 0 4px; }
+  .facet label { display: flex; gap: 7px; align-items: baseline; font-size: 13.5px;
+                 color: var(--muted); cursor: pointer; }
+  .facet label:hover { color: var(--ink); }
+  .facet .n { margin-left: auto; color: var(--faint); font-size: 12.5px;
+              font-variant-numeric: tabular-nums; }
+  .clearall { margin-top: 12px; font-size: 13.5px; }
+  .clearall button { background:none;border:0;padding:0;font:inherit;color:var(--link);
+                     text-decoration:underline;cursor:pointer; }
+
+  /* ---------- results toolbar ---------- */
+  .toolbar { display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+             padding-bottom: 11px; border-bottom: 1px solid var(--rule); }
+  .count { font-size: 14px; }
+  .pager { margin-left: auto; display: flex; gap: 14px; align-items: center;
+           font-size: 14px; }
+  .pager button { background: none; border: 0; font: inherit; color: var(--link);
+                  cursor: pointer; padding: 0; }
+  .pager button[disabled] { color: var(--faint); cursor: default; }
+  .sort { font-size: 13.5px; color: var(--muted); border: 1px solid #A9B5BC;
+          border-radius: 3px; padding: 5px 9px; background: #fff; }
+
+  /* ---------- result cards ---------- */
+  ol.results { list-style: none; margin: 0; padding: 0; }
+  ol.results > li { display: grid; grid-template-columns: 26px 92px 1fr;
+                    gap: 16px; padding: 17px 0; border-bottom: 1px solid var(--rule); }
+  .idx { color: var(--faint); font-size: 13.5px; font-variant-numeric: tabular-nums;
+         padding-top: 2px; }
+  .cover { width: 92px; height: 126px; border-radius: 2px; color: #fff;
+           font-family: var(--serif); font-size: 12.5px; line-height: 1.3;
+           padding: 9px 8px; overflow: hidden; position: relative; }
+  .cover .fmt { position: absolute; left: 0; right: 0; bottom: 0; padding: 3px 8px;
+                background: rgba(0,0,0,.28); font-family: var(--sans);
+                font-size: 9.5px; text-transform: uppercase; letter-spacing: .04em; }
+  .title { font-family: var(--serif); font-size: 17.5px; font-weight: 600;
+           color: var(--link); margin: 0 0 2px; }
+  .title.placeholder { color: var(--warm); font-style: italic; }
+  .byline { font-size: 14px; color: var(--muted); margin: 0 0 1px; }
+  .publine { font-size: 13.5px; color: var(--faint); margin: 0 0 7px;
+             font-variant-numeric: tabular-nums; }
+  .publine .unknown { color: var(--warm); font-family: var(--mono); font-size: 12.5px; }
+  .blurb { font-size: 14px; color: var(--ink); margin: 0 0 8px; max-width: 62ch; }
+  .norec { font-size: 13.5px; color: var(--faint); font-style: italic; margin: 0 0 8px; }
+  .subjects { font-size: 13px; color: var(--muted); margin: 0 0 9px; }
+  .subjects span { display: inline-block; border: 1px solid var(--rule);
+                   border-radius: 2px; padding: 1px 7px; margin: 0 5px 5px 0; }
+  .actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .reserve { padding: 6px 15px; font: inherit; font-size: 13.5px; font-weight: 600;
+             color: #fff; background: var(--brand); border: 1px solid var(--brand);
+             border-radius: 3px; cursor: pointer; }
+  .reserve[disabled] { background: #fff; color: var(--faint); border-color: var(--rule);
+                       cursor: default; }
+  .avail { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .avail b { color: var(--ok); }
+  .avail b.none { color: var(--warm); }
+
+  .empty { padding: 40px 0 24px; max-width: 58ch; }
+  .empty p { margin: 0 0 9px; }
+  .empty .big { font-family: var(--serif); font-size: 19px; color: var(--warm); }
+  .status { font-size: 14px; color: var(--muted); padding: 14px 0; }
+
+  .footnote { max-width: 1180px; margin: 0 auto; padding: 0 20px 40px;
+              font-size: 12.5px; color: var(--faint); }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="wordmark">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true">
+        <rect x="2" y="4" width="11" height="22" rx="1.5" fill="#14484F"/>
+        <rect x="15" y="7" width="11" height="19" rx="1.5" fill="#4E8B84"/>
+        <rect x="5" y="8" width="5" height="1.6" fill="#fff" opacity=".65"/>
+        <rect x="18" y="11" width="5" height="1.6" fill="#fff" opacity=".65"/>
+      </svg>
+      <b>Northfield <span>Libraries</span></b>
+    </div>
+    <nav class="nav" aria-label="Main">
+      <span>My account</span><span>Events</span><span>Help</span>
+    </nav>
+    <div class="who"><span class="avatar">RS</span> R. Sandiford</div>
+  </div>
+</header>
+
+<div class="searchbar">
+  <div class="searchbar-inner">
+    <form id="form" role="search">
+      <label class="visually-hidden" for="q" style="position:absolute;left:-9999px">Search the catalogue</label>
+      <input id="q" name="q" type="search" value="learning to be present" autocomplete="off" spellcheck="false" />
+      <select id="scope" aria-label="Search scope">
+        <option>Full catalogue</option>
+        <option>Books only</option>
+        <option>Available now</option>
+      </select>
+      <button class="go" type="submit">Search</button>
+    </form>
+
+    <div class="modes" role="group" aria-label="Search method">
+      <button type="button" id="m-keyword" aria-pressed="false">Catalogue search</button>
+      <button type="button" id="m-semantic" aria-pressed="true">Search by meaning</button>
+    </div>
+
+    <p class="presets">
+      Try:
+      <button type="button" data-q="learning to be present">learning to be present</button>
+      <button type="button" data-q="gentle crime novels nothing too gory">gentle crime novels, nothing too gory</button>
+      <button type="button" data-q="anand">anand</button>
+      <button type="button" data-q="getting my toddler to eat vegetables">getting my toddler to eat vegetables</button>
+      <button type="button" data-q="books to help me sleep better">books to help me sleep better</button>
+    </p>
+  </div>
+</div>
+
+<p class="crumbs">Home &rsaquo; Search results</p>
+<div class="searched">
+  <h1 id="heading">Search results</h1>
+  <p class="method" id="method"></p>
+</div>
+
+<div class="shell">
+  <aside class="facets">
+    <h2>Filter results</h2>
+    <div id="facets"></div>
+    <p class="clearall" id="clearall" hidden><button type="button">Clear all filters</button></p>
+  </aside>
+
+  <main>
+    <div class="toolbar">
+      <span class="count" id="count">&nbsp;</span>
+      <span class="pager">
+        <button type="button" id="prev" disabled>&lsaquo; Previous</button>
+        <span id="pageno"></span>
+        <button type="button" id="next" disabled>Next &rsaquo;</button>
+      </span>
+    </div>
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+    <ol class="results" id="results"></ol>
+  </main>
+</div>
+
+<p class="footnote">
+  Demonstration catalogue for a fictional library service. Records, availability
+  figures and borrower details are invented.
+</p>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"']/g, c =>
+  ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+
+let mode = "semantic";
+let page = 1;
+let filters = {};
+let collapsed = {};
+
+function facetHtml(f) {
+  const isOpen = !collapsed[f.key];
+  const rows = f.values.map(v => {
+    const on = (filters[f.key] || []).includes(v.value);
+    return `<li><label>
+      <input type="checkbox" data-facet="${esc(f.key)}" value="${esc(v.value)}" ${on ? "checked" : ""}>
+      <span>${esc(v.value)}</span><span class="n">${v.count}</span>
+    </label></li>`;
+  }).join("");
+  return `<div class="facet">
+    <button type="button" data-toggle="${esc(f.key)}" aria-expanded="${isOpen}">
+      ${esc(f.label)} <span class="chev">${isOpen ? "▾" : "▸"}</span>
+    </button>
+    ${isOpen ? `<ul>${rows}</ul>` : ""}
+  </div>`;
+}
+
+function cardHtml(r) {
+  const placeholder = /^\[.*\]$/.test(r.title) || /^untitled/i.test(r.title);
+  const unknownYear = !r.year || !/^\d{4}$/.test(r.year);
+  const who = r.author
+    ? `${esc(r.author)}${r.author_dates ? ", " + esc(r.author_dates) : ""}`
+    : "Author not recorded";
+  const pub = [r.publisher, r.year].filter(Boolean).join(", ");
+  const subs = (r.subjects || []).slice(0, 4)
+    .map(s => `<span>${esc(s)}</span>`).join("");
+  const online = r.format === "eAudiobook";
+  return `<li>
+    <div class="idx">${r.rank}.</div>
+    <div class="cover" style="background:${esc(r.cover)}">
+      ${esc(r.title).slice(0, 44)}
+      <div class="fmt">${esc(r.format)}</div>
+    </div>
+    <div>
+      <p class="title ${placeholder ? "placeholder" : ""}">${esc(r.title)}</p>
+      <p class="byline">${who}</p>
+      <p class="publine">${pub ? esc(pub) : ""}${unknownYear
+        ? ` <span class="unknown">${esc(r.year || "no date")}</span>` : ""}</p>
+      ${r.blurb
+        ? `<p class="blurb">${esc(r.blurb)}</p>`
+        : `<p class="norec">No summary in this record.</p>`}
+      <p class="subjects">${subs || "<span>No subject headings</span>"}</p>
+      <div class="actions">
+        <button class="reserve" type="button" ${r.available ? "" : "disabled"}>
+          ${online ? "Borrow" : (r.available ? "Place reservation" : "Join waiting list")}
+        </button>
+        <span class="avail">
+          ${online ? "Available online"
+            : `Available: <b class="${r.available ? "" : "none"}">${r.available}</b> &nbsp; Copies: ${r.copies}`}
+          &nbsp;·&nbsp; ${esc(r.location)}
+        </span>
+      </div>
+    </div>
+  </li>`;
+}
+
+async function run() {
+  const query = $("q").value.trim();
+  if (!query) return;
+  $("status").textContent = "Searching…";
+  try {
+    const res = await fetch("/catalogue/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query, mode, page, per_page: 10, filters })
+    });
+    const payload = await res.json();
+    if (payload.status !== "success") throw new Error(payload.message || "Search failed");
+    render(payload.data);
+  } catch (err) {
+    $("status").textContent = err.message;
+  }
+}
+
+function render(d) {
+  $("status").textContent = "";
+  $("heading").textContent = `Anywhere: ${d.query}`;
+
+  const m = $("method");
+  m.className = "method" + (d.mode === "semantic" ? " meaning" : "");
+  m.innerHTML = d.mode === "semantic"
+    ? `Matched by <b>meaning</b> — records about this subject, whatever words they use.`
+    : `Matched by <b>keywords</b> — records containing the words you typed.`;
+
+  $("count").textContent = d.total
+    ? `Showing ${d.showing[0]} – ${d.showing[1]} of ${d.total}`
+    : "No results";
+  $("pageno").textContent = d.total ? `Page ${d.page}` : "";
+  $("prev").disabled = d.page <= 1;
+  $("next").disabled = d.page * d.per_page >= d.total;
+
+  $("facets").innerHTML = d.facets.map(facetHtml).join("");
+  $("clearall").hidden = Object.keys(filters).length === 0;
+
+  if (!d.total) {
+    $("results").innerHTML = "";
+    $("status").innerHTML = `<div class="empty">
+      <p class="big">Nothing in the catalogue matched those words.</p>
+      <p>The catalogue holds 74 items. A keyword search can only return a record
+      that literally contains what you typed — if a reader's wording differs from
+      the cataloguer's, the item cannot be found at all.</p>
+      <p>Switch to <strong>Search by meaning</strong> to see what is actually here.</p>
+    </div>`;
+    return;
+  }
+  $("results").innerHTML = d.results.map(cardHtml).join("");
+}
+
+function setMode(next) {
+  mode = next; page = 1;
+  $("m-keyword").setAttribute("aria-pressed", String(next === "keyword"));
+  $("m-semantic").setAttribute("aria-pressed", String(next === "semantic"));
+  run();
+}
+
+$("form").addEventListener("submit", (e) => { e.preventDefault(); page = 1; run(); });
+$("m-keyword").addEventListener("click", () => setMode("keyword"));
+$("m-semantic").addEventListener("click", () => setMode("semantic"));
+$("prev").addEventListener("click", () => { if (page > 1) { page--; run(); } });
+$("next").addEventListener("click", () => { page++; run(); });
+
+document.querySelectorAll(".presets button").forEach(b =>
+  b.addEventListener("click", () => { $("q").value = b.dataset.q; page = 1; filters = {}; run(); }));
+
+$("facets").addEventListener("click", (e) => {
+  const toggle = e.target.closest("[data-toggle]");
+  if (toggle) { const k = toggle.dataset.toggle; collapsed[k] = !collapsed[k]; run(); }
+});
+$("facets").addEventListener("change", (e) => {
+  const box = e.target.closest("[data-facet]");
+  if (!box) return;
+  const key = box.dataset.facet, val = box.value;
+  const set = new Set(filters[key] || []);
+  box.checked ? set.add(val) : set.delete(val);
+  set.size ? (filters[key] = [...set]) : delete filters[key];
+  page = 1; run();
+});
+$("clearall").addEventListener("click", () => { filters = {}; page = 1; run(); });
+
+run();
+</script>
+</body>
+</html>
