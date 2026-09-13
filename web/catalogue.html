@@ -278,7 +278,9 @@ function cardHtml(r) {
   const who = r.author
     ? `${esc(r.author)}${r.author_dates ? ", " + esc(r.author_dates) : ""}`
     : "Author not recorded";
-  const pub = [r.publisher, r.year].filter(Boolean).join(", ");
+  // Only fold the year into the publisher line when it is a real year -
+  // otherwise it prints twice, once here and once as the flagged unknown.
+  const pub = [r.publisher, unknownYear ? null : r.year].filter(Boolean).join(", ");
   const subs = (r.subjects || []).slice(0, 4)
     .map(s => `<span>${esc(s)}</span>`).join("");
   const online = r.format === "eAudiobook";
@@ -292,7 +294,7 @@ function cardHtml(r) {
       <p class="title ${placeholder ? "placeholder" : ""}">${esc(r.title)}</p>
       <p class="byline">${who}</p>
       <p class="publine">${pub ? esc(pub) : ""}${unknownYear
-        ? ` <span class="unknown">${esc(r.year || "no date")}</span>` : ""}</p>
+        ? `${pub ? ", " : ""}<span class="unknown">${esc(r.year || "no date")}</span>` : ""}</p>
       ${r.blurb
         ? `<p class="blurb">${esc(r.blurb)}</p>`
         : `<p class="norec">No summary in this record.</p>`}

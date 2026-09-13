@@ -8,11 +8,20 @@ Search a content library for `Norman conquest` and get back articles about
 *1066*, the *Battle of Hastings* and the *Domesday Book* — none of which
 contain the phrase you typed.
 
-```
-$ bettersearch compare "Norman conquest"
-```
+Here is the same idea in a library catalogue. One reader, one phrasing, the same
+74 records, and the only difference is which button is pressed.
 
-![Side-by-side comparison: the keyword column is empty while the semantic column returns Hastings, Harold Godwinson and William of Normandy](demo.png)
+**Catalogue search — 0 results.**
+
+![A library catalogue search results page. The query "learning to be present" under the "Catalogue search" tab returns "No results", with the explanation that a keyword search can only return a record that literally contains what you typed](docs/screenshots/catalogue-keyword.png)
+
+**Search by meaning — 8 results.**
+
+![The same catalogue and the same query under the "Search by meaning" tab, now showing 1-8 of 8 records with working facets for availability, format and location. The first result is "Attention, and Other Small Miracles" by Sanne Verhoeven, whose record contains no summary at all](docs/screenshots/catalogue-meaning.png)
+
+Not one of those eight records contains the word *learning* or the word
+*present*. Six of the eight have no summary at all — nothing but a title, an
+author and a subject heading.
 
 ---
 
@@ -47,6 +56,46 @@ model download. A fresh clone has **no index** — `.bettersearch/` is gitignore
 so `ingest` must run before any search.
 
 For deployment, expected outputs and troubleshooting, see **[RUNBOOK.md](RUNBOOK.md)**.
+
+---
+
+## The catalogue prototype
+
+The screenshots above come from a working page, not a mockup. It is the same
+library, the same index and the same `Searcher` — a catalogue-shaped front end
+over it, for showing the idea to people who will never read an nDCG table.
+
+```bash
+export BETTERSEARCH_INDEX_PATH=.bettersearch/catalogue
+bettersearch ingest --corpus data/catalogue_library.json
+uvicorn api.main:app --reload      # http://127.0.0.1:8000/catalogue
+```
+
+Three queries are worth trying, in this order:
+
+1. **`learning to be present`** — the pair above. Catalogue search cannot return
+   a record that does not contain the words; meaning-based search returns eight.
+2. **`gentle crime novels, nothing too gory`** — a request phrased the way a
+   reader actually asks. Keyword search finds three records and gets the point
+   exactly backwards: it leads with *Nine Grams*, an organised-crime thriller,
+   and picks up a book on spiritual life called *Nothing to Do* because the
+   record contains the word "nothing". Meaning-based search opens with *The
+   Knitting Circle Murders* and *Tea, Cake and Arsenic*.
+3. **`anand`** — the failure that is easiest to miss, because it looks like it
+   worked:
+
+![Catalogue search results for "anand", showing 10 records. The first two are by "Anand, Prem, 1931-1990", a spirituality author; the third, "The Knitting Circle Murders", is by "Anand, Ravi", an unrelated crime novelist. The first record has no title of its own and is listed as "[Punjabi book]" with an unknown publication date](docs/screenshots/catalogue-collision.png)
+
+A surname is not an identity. Two unrelated authors share one, so keyword search
+files a crime novel in among books on spiritual life and looks perfectly healthy
+doing it. Notice the first record as well: no real title, no summary, no
+publication date. That record is not a contrived example — a catalogue of any
+size is full of them, and there is nothing there for a keyword search to match.
+
+The catalogue is a fictional service with invented records, so it can be shown
+around without passing as a real library. Rebuild it with
+`python scripts/build_catalogue.py`, and regenerate these screenshots with
+`python scripts/capture_screenshots.py` against a running server.
 
 ---
 
@@ -144,12 +193,24 @@ src/bettersearch/
   evaluate.py         Recall@5, MRR@10, nDCG@10
   enrichment/         LLM enrichment of thin catalogue records
   cli.py
-api/main.py           FastAPI wrapper (~80 lines)
-web/index.html        side-by-side demo page
+api/main.py           FastAPI wrapper - holds no retrieval logic
+api/catalogue.py      catalogue-shaped presentation: facets, availability
+web/index.html        developer comparison page
+web/catalogue.html    the catalogue prototype
 ```
 
 The library is framework-agnostic. `api/` and `cli.py` are thin callers, and
 neither is imported by the core.
+
+`web/index.html` is the view for working on retrieval rather than for showing
+anyone — all three modes on one screen, scored, so a change in chunking or model
+is visible immediately:
+
+![A developer comparison view running the query "Norman conquest" through all three modes at once. The keyword column is empty; the semantic column returns the Battle of Hastings, Harold Godwinson and William of Normandy with cosine scores; the hybrid column fuses the two by rank](docs/screenshots/comparison-view.png)
+
+```
+$ bettersearch compare "Norman conquest"      # the same thing at the terminal
+```
 
 ---
 
