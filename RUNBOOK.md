@@ -89,8 +89,8 @@ uvicorn api.main:app --reload      # http://127.0.0.1:8000/catalogue
 ```
 
 Search `learning to be present` and switch between the two modes. **Catalogue
-search returns nothing; Search by meaning returns eight records.** Then try
-`anand`: catalogue search mixes a crime novelist into results plainly meant for
+search returns nothing; Search by meaning returns six records.** Then try
+`grewal`: catalogue search mixes a crime novelist into results plainly meant for
 a spirituality author, because the two share a surname. Meaning-based search
 does not.
 

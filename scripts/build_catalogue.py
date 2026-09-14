@@ -42,14 +42,14 @@ BRANCHES = ["Northfield Central", "Ashcombe Branch", "Rowley Green",
 # title | author | dates | year | publisher | format | subjects | fiction | blurb
 R = [
     # ---- spirituality / wellbeing -------------------------------------------
-    ("Living Lightly", "Anand, Prem", "1931-1990", "2011", "Wayfarer Press", "Book",
+    ("Living Lightly", "Grewal, Prem", "1931-1990", "2011", "Wayfarer Press", "Book",
      ["Meditation", "Spiritual life", "Mind and body"], False,
      "A collection drawn from forty years of talks, arguing that ordinary attention is the whole of the practice."),
-    ("The Art of Stillness", "Anand, Prem", "1931-1990", "2008", "Wayfarer Press", "Book",
+    ("The Art of Stillness", "Grewal, Prem", "1931-1990", "2008", "Wayfarer Press", "Book",
      ["Meditation", "Spiritual life"], False, None),
-    ("One Breath at a Time", "Anand, Prem", "1931-1990", "2014", "Wayfarer Press", "Book",
+    ("One Breath at a Time", "Grewal, Prem", "1931-1990", "2014", "Wayfarer Press", "Book",
      ["Breathing exercises", "Meditation", "Stress management"], False, None),
-    ("Nothing to Do", "Anand, Prem", "1931-1990", "UUUU", "Wayfarer Press", "Book",
+    ("Nothing to Do", "Grewal, Prem", "1931-1990", "UUUU", "Wayfarer Press", "Book",
      ["Spiritual life"], False, None),
     ("The Quiet Room", "Halloran, Beatrice", "", "2019", "Kestrel & Vane", "Book",
      ["Contemplation", "Solitude", "Mind and body"], False, None),
@@ -110,12 +110,12 @@ R = [
      ["Child rearing", "Temper tantrums"], False, None),
 
     # ---- cosy / gentle crime --------------------------------------------------
-    ("Murder at Marlowe Hall", "Anand, Ravi", "", "2019", "Pennyfarthing", "Book",
+    ("Murder at Marlowe Hall", "Grewal, Ravi", "", "2019", "Pennyfarthing", "Book",
      ["Detective and mystery stories", "England - Fiction"], True,
      "The first Hensleigh mystery. A country house, a missing will, and nothing more graphic than a cold teapot."),
-    ("The Knitting Circle Murders", "Anand, Ravi", "", "2021", "Pennyfarthing", "Book",
+    ("The Knitting Circle Murders", "Grewal, Ravi", "", "2021", "Pennyfarthing", "Book",
      ["Detective and mystery stories"], True, None),
-    ("Death Takes the Bus", "Anand, Ravi", "", "2023", "Pennyfarthing", "Book",
+    ("Death Takes the Bus", "Grewal, Ravi", "", "2023", "Pennyfarthing", "Book",
      ["Detective and mystery stories"], True, None),
     ("A Body in the Bandstand", "Cholmondeley, Pearl", "", "2020", "Pennyfarthing", "Large print",
      ["Detective and mystery stories", "Villages - Fiction"], True, None),
@@ -210,19 +210,19 @@ R = [
     # ---- DVDs ----------------------------------------------------------------------
     ("The Salt House [DVD]", "Trevanion, Bryony", "", "2022", "Aldgate Screen", "DVD",
      ["Feature films", "Domestic fiction"], True, None),
-    ("Marlowe Hall [DVD]", "Anand, Ravi", "", "2023", "Pennyfarthing Screen", "DVD",
+    ("Marlowe Hall [DVD]", "Grewal, Ravi", "", "2023", "Pennyfarthing Screen", "DVD",
      ["Feature films", "Detective and mystery films"], True, None),
     ("A Year on the Estuary [DVD]", "Fairhead, Judith", "", "2021", "Kestrel Screen", "DVD",
      ["Documentary films", "Natural history"], False, None),
 
     # ---- degraded records, as found in every real catalogue -------------------------
-    ("[Punjabi book]", "Anand, Prem", "1931-1990", "UUUU", "", "Book",
+    ("[Punjabi book]", "Grewal, Prem", "1931-1990", "UUUU", "", "Book",
      ["Spiritual life"], False, None),
     ("[Sound recording]", "", "", "UUUU", "", "eAudiobook", [], False, None),
     ("Untitled volume 2", "Bramwell, Douglas", "1944-2020", "19??", "Thornbury", "Book",
      ["Great Britain - History"], False, None),
     ("[Large print item]", "", "", "2004", "", "Large print", ["Fiction"], True, None),
-    ("Selected works", "Anand, Prem", "1931-1990", "1998", "Wayfarer Press", "Book",
+    ("Selected works", "Grewal, Prem", "1931-1990", "1998", "Wayfarer Press", "Book",
      ["Spiritual life", "Collected works"], False, None),
 ]
 

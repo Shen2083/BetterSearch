@@ -30,7 +30,7 @@ SHOTS = [
     ("catalogue-meaning", "learning to be present", "semantic", 720, 0),
     # Offset past the masthead, clear of the breadcrumb, so the author lines
     # carry the frame.
-    ("catalogue-collision", "anand", "keyword", 760, 272),
+    ("catalogue-collision", "grewal", "keyword", 760, 272),
 ]
 
 

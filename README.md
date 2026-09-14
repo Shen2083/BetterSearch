@@ -15,12 +15,12 @@ Here is the same idea in a library catalogue. One reader, one phrasing, the same
 
 ![A library catalogue search results page. The query "learning to be present" under the "Catalogue search" tab returns "No results", with the explanation that a keyword search can only return a record that literally contains what you typed](docs/screenshots/catalogue-keyword.png)
 
-**Search by meaning — 8 results.**
+**Search by meaning — 6 results.**
 
-![The same catalogue and the same query under the "Search by meaning" tab, now showing 1-8 of 8 records with working facets for availability, format and location. The first result is "Attention, and Other Small Miracles" by Sanne Verhoeven, whose record contains no summary at all](docs/screenshots/catalogue-meaning.png)
+![The same catalogue and the same query under the "Search by meaning" tab, now showing 1-6 of 6 records with working facets for availability, format and location. The first result is "Attention, and Other Small Miracles" by Sanne Verhoeven, whose record contains no summary at all](docs/screenshots/catalogue-meaning.png)
 
-Not one of those eight records contains the word *learning* or the word
-*present*. Six of the eight have no summary at all — nothing but a title, an
+Not one of those six records contains the word *learning* or the word
+*present*. Four of the six have no summary at all — nothing but a title, an
 author and a subject heading.
 
 ---
@@ -74,17 +74,19 @@ uvicorn api.main:app --reload      # http://127.0.0.1:8000/catalogue
 Three queries are worth trying, in this order:
 
 1. **`learning to be present`** — the pair above. Catalogue search cannot return
-   a record that does not contain the words; meaning-based search returns eight.
+   a record that does not contain the words; meaning-based search returns six.
 2. **`gentle crime novels, nothing too gory`** — a request phrased the way a
    reader actually asks. Keyword search finds three records and gets the point
    exactly backwards: it leads with *Nine Grams*, an organised-crime thriller,
    and picks up a book on spiritual life called *Nothing to Do* because the
    record contains the word "nothing". Meaning-based search opens with *The
-   Knitting Circle Murders* and *Tea, Cake and Arsenic*.
-3. **`anand`** — the failure that is easiest to miss, because it looks like it
+   Knitting Circle Murders* and has *Tea, Cake and Arsenic* third — but *Nine
+   Grams* still lands second, because "crime novels" is a far stronger signal
+   than "nothing too gory". Better here, not magic.
+3. **`grewal`** — the failure that is easiest to miss, because it looks like it
    worked:
 
-![Catalogue search results for "anand", showing 10 records. The first two are by "Anand, Prem, 1931-1990", a spirituality author; the third, "The Knitting Circle Murders", is by "Anand, Ravi", an unrelated crime novelist. The first record has no title of its own and is listed as "[Punjabi book]" with an unknown publication date](docs/screenshots/catalogue-collision.png)
+![Catalogue search results for "grewal", showing 10 records. The first two are by "Grewal, Prem, 1931-1990", a spirituality author; the third, "The Knitting Circle Murders", is by "Grewal, Ravi", an unrelated crime novelist. The first record has no title of its own and is listed as "[Punjabi book]" with an unknown publication date](docs/screenshots/catalogue-collision.png)
 
 A surname is not an identity. Two unrelated authors share one, so keyword search
 files a crime novel in among books on spiritual life and looks perfectly healthy
