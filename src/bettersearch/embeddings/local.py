@@ -6,10 +6,16 @@ Dimensions and the input limit are read from the loaded model rather than
 hardcoded, so swapping to a larger encoder needs no code change.
 
 **The input limit is architectural, not a throughput limit.** all-MiniLM-L6-v2
-accepts 256 tokens because its positional embeddings stop there; the chunker
-targets 450, so this model silently discards the tail of most chunks. More CPU
-or a bigger GPU makes it faster, never able to read more. The fix is a model
-with a longer context window - see SUGGESTED_MODELS below.
+accepts 256 tokens because its positional embeddings stop there. More CPU or a
+bigger GPU makes it faster, never able to read more.
+
+Whether that cap costs anything depends entirely on the content, so measure
+rather than assume. The chunker targets 450 tokens, but a chunk only gets near
+that if the source paragraphs are long enough to fill it; on both corpora in
+this repo nothing reaches even half the cap. ``bettersearch ingest`` counts and
+reports ``truncated_chunks`` for exactly this reason - check it against your own
+content. If it is not zero, lower ``BETTERSEARCH_CHUNK_TOKENS`` (free) or move
+to a longer-context model - see SUGGESTED_MODELS below.
 """
 
 from __future__ import annotations

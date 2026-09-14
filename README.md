@@ -280,19 +280,22 @@ Self-hosted embeddings are the default path here: no per-token cost, no vendor
 dependency, and no content leaving your infrastructure — which matters more than
 the money if the corpus is ever commercially or personally sensitive.
 
-**Measure before you optimise.** On this corpus the much-discussed 256-token cap
-costs exactly nothing:
+**Measure before you optimise.** On this content the much-discussed 256-token
+cap costs exactly nothing:
 
 ```
-$ # chunk token distribution, seed corpus
-  min 79   median 92   p90 106   max 128
-  chunks exceeding 256 tokens: 0 (0%)
+$ # chunk length as all-MiniLM-L6-v2 itself tokenises it
+  seed corpus (112 chunks)      min 75   median 87   p90 98   max 115
+  catalogue    (74 chunks)      min 17   median 29   p90 49   max 57
+  chunks exceeding the 256 cap: 0 (0%)
 ```
 
-The articles are short, so chunks never approach the 450-token target and
-MiniLM truncates nothing. `bettersearch ingest` reports `truncated_chunks`
-precisely so this is a measurement rather than an assumption — check it against
-*your* content before changing anything.
+Measured with the model's own tokeniser, not the chunker's word-based estimate —
+the cap is the model's, so the model's count is the one that decides. Both
+corpora are short enough that no chunk reaches even half the cap, let alone the
+450-token chunk target, so MiniLM truncates nothing. `bettersearch ingest`
+reports `truncated_chunks` precisely so this is a measurement rather than an
+assumption — check it against *your* content before changing anything.
 
 **The cap is architectural, not a compute limit.** MiniLM stops at 256 tokens
 because its positional embeddings end there. More CPU or a bigger GPU makes it
