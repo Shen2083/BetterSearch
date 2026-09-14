@@ -98,6 +98,29 @@ The catalogue is a fictional service with invented records, so it can be shown
 around without passing as a real library. Rebuild it with
 `python scripts/build_catalogue.py`.
 
+#### Showing it to someone without a server
+
+`web/catalogue.html` is only a front end — every search POSTs to
+`/catalogue/search`, so opening it from disk gives "Failed to fetch" (Safari
+says "Load failed"). **`docs/catalogue-standalone.html` is the file to send.**
+It opens on a double-click, works offline, and needs no Python.
+
+Only retrieval needs the service, so the example searches are run through the
+real `Searcher` at build time and saved into the file; facets, filtering and
+paging still run live in the browser. It therefore answers **the example queries
+only** — anything else says so plainly rather than showing an empty result set,
+which would wrongly read as "the catalogue holds nothing on that".
+
+```bash
+export BETTERSEARCH_INDEX_PATH=.bettersearch/catalogue
+bettersearch ingest --corpus data/catalogue_library.json   # if not already built
+python scripts/build_standalone.py
+```
+
+Rebuild it after changing `web/catalogue.html`, the catalogue data, or the
+example queries. The build reads the queries out of the page's own preset
+buttons, so those two cannot drift apart.
+
 ---
 
 ## 3. Deploy to Render
@@ -170,6 +193,7 @@ fonts and controlled page breaks.
 python scripts/render_pdf.py docs/approach-technical.html
 python scripts/render_pdf.py docs/approach-client.html
 python scripts/render_pdf.py README.md --out docs/README.pdf
+python scripts/build_standalone.py          # docs/catalogue-standalone.html
 ```
 
 The two approach documents are written as HTML and rendered directly.

@@ -317,6 +317,9 @@ async function run() {
   const query = $("q").value.trim();
   if (!query) return;
   $("status").textContent = "Searching…";
+  // Undefined when served normally. The standalone build defines it, so the
+  // file works from file:// with no search service behind it.
+  if (window.OFFLINE) { runOffline(query); return; }
   try {
     const res = await fetch("/catalogue/search", {
       method: "POST",
@@ -363,6 +366,26 @@ function render(d) {
     return;
   }
   $("results").innerHTML = d.results.map(cardHtml).join("");
+}
+
+function runOffline(query) {
+  const data = window.OFFLINE.search(query, mode, filters, page, 10);
+  if (data) { render(data); return; }
+  $("count").textContent = "";
+  $("pageno").textContent = "";
+  $("prev").disabled = $("next").disabled = true;
+  $("facets").innerHTML = "";
+  $("results").innerHTML = "";
+  $("clearall").hidden = true;
+  $("status").innerHTML = `<div class="empty">
+    <p class="big">This offline copy cannot answer that one.</p>
+    <p>Searching by meaning has to run the query through the search service,
+    and this is a single file with no service behind it — the example searches
+    were worked out in advance and saved into it. That is a limit of this copy,
+    <strong>not</strong> a statement that the catalogue holds nothing on the
+    subject.</p>
+    <p>Try one of the examples above the results.</p>
+  </div>`;
 }
 
 function setMode(next) {

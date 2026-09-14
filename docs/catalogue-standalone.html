@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<!-- Self-contained offline build. Regenerate with scripts/build_standalone.py -->
+<title>Northfield Libraries — catalogue search</title>
+<style>
+  /*
+    A fictional library service. The layout follows ordinary catalogue
+    conventions - facet sidebar, result cards, availability, reservations - but
+    the identity, palette and records are invented, so this can be shown around
+    without passing as a real public library service.
+  */
+  :root {
+    --ink: #1B2228;
+    --muted: #5D6B74;
+    --faint: #8A959C;
+    --rule: #DEE4E7;
+    --page: #FFFFFF;
+    --panel: #F4F7F8;
+    --brand: #14484F;        /* deep teal, deliberately not a council red */
+    --link: #10525C;
+    --warm: #9C4221;
+    --ok: #1B6B3A;
+    --sans: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, sans-serif;
+    --serif: Charter, "Bitstream Charter", Georgia, serif;
+    --mono: "DejaVu Sans Mono", ui-monospace, Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink);
+         font-family: var(--sans); font-size: 15px; line-height: 1.5; }
+  a { color: var(--link); }
+
+  /* ---------- masthead ---------- */
+  .masthead { border-bottom: 3px solid var(--brand); }
+  .masthead-inner { max-width: 1180px; margin: 0 auto; padding: 14px 20px;
+                    display: flex; align-items: center; gap: 26px; flex-wrap: wrap; }
+  .wordmark { display: flex; align-items: center; gap: 11px; }
+  .wordmark svg { display: block; }
+  .wordmark b { font-family: var(--serif); font-size: 23px; font-weight: 600;
+                color: var(--brand); letter-spacing: -0.01em; }
+  .wordmark b span { font-weight: 400; color: var(--ink); }
+  .nav { display: flex; gap: 18px; font-size: 14px; color: var(--muted); }
+  .nav span { cursor: default; }
+  .who { margin-left: auto; font-size: 14px; color: var(--muted);
+         display: flex; align-items: center; gap: 8px; }
+  .avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--brand);
+            color: #fff; font-size: 11px; display: grid; place-items: center; }
+
+  /* ---------- search bar ---------- */
+  .searchbar { background: var(--panel); border-bottom: 1px solid var(--rule); }
+  .searchbar-inner { max-width: 1180px; margin: 0 auto; padding: 16px 20px 14px; }
+  form { display: flex; gap: 0; }
+  #q { flex: 1; min-width: 0; padding: 10px 13px; font: inherit; color: var(--ink);
+       background: #fff; border: 1px solid #A9B5BC; border-right: 0;
+       border-radius: 3px 0 0 3px; }
+  #scope { padding: 10px 11px; font: inherit; color: var(--muted); background: #fff;
+           border: 1px solid #A9B5BC; border-right: 0; }
+  button.go { padding: 10px 20px; font: inherit; font-weight: 600; color: #fff;
+              background: var(--brand); border: 1px solid var(--brand);
+              border-radius: 0 3px 3px 0; cursor: pointer; }
+  #q:focus-visible, #scope:focus-visible, button:focus-visible, .facet label:focus-within
+    { outline: 2px solid var(--brand); outline-offset: 1px; }
+
+  .presets { margin-top: 10px; font-size: 13.5px; color: var(--muted); }
+  .presets button { background: none; border: 0; padding: 0 0 1px; margin: 0 14px 5px 0;
+                    font: inherit; color: var(--link); border-bottom: 1px solid #B9C6CC;
+                    cursor: pointer; }
+
+  /* ---------- mode switch ---------- */
+  .modes { display: flex; gap: 0; margin-top: 13px; }
+  .modes button { padding: 7px 16px; font: inherit; font-size: 14px; cursor: pointer;
+                  background: #fff; color: var(--muted); border: 1px solid #A9B5BC; }
+  .modes button:first-child { border-radius: 3px 0 0 3px; }
+  .modes button:last-child { border-radius: 0 3px 3px 0; border-left: 0; }
+  .modes button[aria-pressed="true"] { background: var(--brand); border-color: var(--brand);
+                                       color: #fff; font-weight: 600; }
+
+  /* ---------- layout ---------- */
+  .shell { max-width: 1180px; margin: 0 auto; padding: 18px 20px 60px;
+           display: grid; grid-template-columns: 248px 1fr; gap: 30px; }
+  @media (max-width: 860px) { .shell { grid-template-columns: 1fr; } }
+
+  .crumbs { font-size: 13.5px; color: var(--muted); padding: 12px 20px 0;
+            max-width: 1180px; margin: 0 auto; }
+  .searched { max-width: 1180px; margin: 0 auto; padding: 3px 20px 0; }
+  .searched h1 { font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 4px 0 2px; }
+  .method { font-size: 13.5px; color: var(--muted); }
+  .method b { color: var(--warm); font-weight: 600; }
+  .method.meaning b { color: var(--ok); }
+
+  /* ---------- facets ---------- */
+  .facets h2 { font-size: 15px; margin: 0 0 8px; padding-bottom: 8px;
+               border-bottom: 2px solid var(--ink); }
+  .facet { border-bottom: 1px solid var(--rule); padding: 9px 0; }
+  .facet > button { width: 100%; display: flex; justify-content: space-between;
+                    align-items: center; background: none; border: 0; padding: 2px 0;
+                    font: inherit; font-weight: 600; font-size: 14px; color: var(--ink);
+                    cursor: pointer; text-align: left; }
+  .facet > button .chev { color: var(--faint); font-size: 11px; }
+  .facet ul { list-style: none; margin: 7px 0 2px; padding: 0; }
+  .facet li { margin: 0 0 4px; }
+  .facet label { display: flex; gap: 7px; align-items: baseline; font-size: 13.5px;
+                 color: var(--muted); cursor: pointer; }
+  .facet label:hover { color: var(--ink); }
+  .facet .n { margin-left: auto; color: var(--faint); font-size: 12.5px;
+              font-variant-numeric: tabular-nums; }
+  .clearall { margin-top: 12px; font-size: 13.5px; }
+  .clearall button { background:none;border:0;padding:0;font:inherit;color:var(--link);
+                     text-decoration:underline;cursor:pointer; }
+
+  /* ---------- results toolbar ---------- */
+  .toolbar { display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+             padding-bottom: 11px; border-bottom: 1px solid var(--rule); }
+  .count { font-size: 14px; }
+  .pager { margin-left: auto; display: flex; gap: 14px; align-items: center;
+           font-size: 14px; }
+  .pager button { background: none; border: 0; font: inherit; color: var(--link);
+                  cursor: pointer; padding: 0; }
+  .pager button[disabled] { color: var(--faint); cursor: default; }
+  .sort { font-size: 13.5px; color: var(--muted); border: 1px solid #A9B5BC;
+          border-radius: 3px; padding: 5px 9px; background: #fff; }
+
+  /* ---------- result cards ---------- */
+  ol.results { list-style: none; margin: 0; padding: 0; }
+  ol.results > li { display: grid; grid-template-columns: 26px 92px 1fr;
+                    gap: 16px; padding: 17px 0; border-bottom: 1px solid var(--rule); }
+  .idx { color: var(--faint); font-size: 13.5px; font-variant-numeric: tabular-nums;
+         padding-top: 2px; }
+  .cover { width: 92px; height: 126px; border-radius: 2px; color: #fff;
+           font-family: var(--serif); font-size: 12.5px; line-height: 1.3;
+           padding: 9px 8px; overflow: hidden; position: relative; }
+  .cover .fmt { position: absolute; left: 0; right: 0; bottom: 0; padding: 3px 8px;
+                background: rgba(0,0,0,.28); font-family: var(--sans);
+                font-size: 9.5px; text-transform: uppercase; letter-spacing: .04em; }
+  .title { font-family: var(--serif); font-size: 17.5px; font-weight: 600;
+           color: var(--link); margin: 0 0 2px; }
+  .title.placeholder { color: var(--warm); font-style: italic; }
+  .byline { font-size: 14px; color: var(--muted); margin: 0 0 1px; }
+  .publine { font-size: 13.5px; color: var(--faint); margin: 0 0 7px;
+             font-variant-numeric: tabular-nums; }
+  .publine .unknown { color: var(--warm); font-family: var(--mono); font-size: 12.5px; }
+  .blurb { font-size: 14px; color: var(--ink); margin: 0 0 8px; max-width: 62ch; }
+  .norec { font-size: 13.5px; color: var(--faint); font-style: italic; margin: 0 0 8px; }
+  .subjects { font-size: 13px; color: var(--muted); margin: 0 0 9px; }
+  .subjects span { display: inline-block; border: 1px solid var(--rule);
+                   border-radius: 2px; padding: 1px 7px; margin: 0 5px 5px 0; }
+  .actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .reserve { padding: 6px 15px; font: inherit; font-size: 13.5px; font-weight: 600;
+             color: #fff; background: var(--brand); border: 1px solid var(--brand);
+             border-radius: 3px; cursor: pointer; }
+  .reserve[disabled] { background: #fff; color: var(--faint); border-color: var(--rule);
+                       cursor: default; }
+  .avail { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .avail b { color: var(--ok); }
+  .avail b.none { color: var(--warm); }
+
+  .empty { padding: 40px 0 24px; max-width: 58ch; }
+  .empty p { margin: 0 0 9px; }
+  .empty .big { font-family: var(--serif); font-size: 19px; color: var(--warm); }
+  .status { font-size: 14px; color: var(--muted); padding: 14px 0; }
+
+  .footnote { max-width: 1180px; margin: 0 auto; padding: 0 20px 40px;
+              font-size: 12.5px; color: var(--faint); }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="wordmark">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true">
+        <rect x="2" y="4" width="11" height="22" rx="1.5" fill="#14484F"/>
+        <rect x="15" y="7" width="11" height="19" rx="1.5" fill="#4E8B84"/>
+        <rect x="5" y="8" width="5" height="1.6" fill="#fff" opacity=".65"/>
+        <rect x="18" y="11" width="5" height="1.6" fill="#fff" opacity=".65"/>
+      </svg>
+      <b>Northfield <span>Libraries</span></b>
+    </div>
+    <nav class="nav" aria-label="Main">
+      <span>My account</span><span>Events</span><span>Help</span>
+    </nav>
+    <div class="who"><span class="avatar">RS</span> R. Sandiford</div>
+  </div>
+</header>
+
+<div class="searchbar">
+  <div class="searchbar-inner">
+    <form id="form" role="search">
+      <label class="visually-hidden" for="q" style="position:absolute;left:-9999px">Search the catalogue</label>
+      <input id="q" name="q" type="search" value="learning to be present" autocomplete="off" spellcheck="false" />
+      <select id="scope" aria-label="Search scope">
+        <option>Full catalogue</option>
+        <option>Books only</option>
+        <option>Available now</option>
+      </select>
+      <button class="go" type="submit">Search</button>
+    </form>
+
+    <div class="modes" role="group" aria-label="Search method">
+      <button type="button" id="m-keyword" aria-pressed="false">Catalogue search</button>
+      <button type="button" id="m-semantic" aria-pressed="true">Search by meaning</button>
+    </div>
+
+    <p class="presets">
+      Try:
+      <button type="button" data-q="learning to be present">learning to be present</button>
+      <button type="button" data-q="gentle crime novels nothing too gory">gentle crime novels, nothing too gory</button>
+      <button type="button" data-q="anand">anand</button>
+      <button type="button" data-q="getting my toddler to eat vegetables">getting my toddler to eat vegetables</button>
+      <button type="button" data-q="books to help me sleep better">books to help me sleep better</button>
+    </p>
+  </div>
+</div>
+
+<p class="crumbs">Home &rsaquo; Search results</p>
+<div class="searched">
+  <h1 id="heading">Search results</h1>
+  <p class="method" id="method"></p>
+</div>
+
+<div class="shell">
+  <aside class="facets">
+    <h2>Filter results</h2>
+    <div id="facets"></div>
+    <p class="clearall" id="clearall" hidden><button type="button">Clear all filters</button></p>
+  </aside>
+
+  <main>
+    <div class="toolbar">
+      <span class="count" id="count">&nbsp;</span>
+      <span class="pager">
+        <button type="button" id="prev" disabled>&lsaquo; Previous</button>
+        <span id="pageno"></span>
+        <button type="button" id="next" disabled>Next &rsaquo;</button>
+      </span>
+    </div>
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+    <ol class="results" id="results"></ol>
+  </main>
+</div>
+
+<p class="footnote">
+  Demonstration catalogue for a fictional library service. Records, availability
+  figures and borrower details are invented.
+</p>
+
+<script>
+window.__OFFLINE_RECORDS__ = {"nl-00100":{"doc_id":"nl-00100","title":"Living Lightly","text":"Author: Anand, Prem, 1931-1990\nPublished: Wayfarer Press, 2011\nSubjects: Meditation; Spiritual life; Mind and body\nSummary: A collection drawn from forty years of talks, arguing that ordinary attention is the whole of the practice.","tags":["book"],"author":"Anand, Prem","author_dates":"1931-1990","year":"2011","publisher":"Wayfarer Press","format":"Book","language":"English","fiction":false,"subjects":["Meditation","Spiritual life","Mind and body"],"location":"Fenwick Road","available":2,"copies":2,"blurb":"A collection drawn from forty years of talks, arguing that ordinary attention is the whole of the practice.","cover":"#7A4A2B"},"nl-00101":{"doc_id":"nl-00101","title":"The Art of Stillness","text":"Author: Anand, Prem, 1931-1990\nPublished: Wayfarer Press, 2008\nSubjects: Meditation; Spiritual life","tags":["book"],"author":"Anand, Prem","author_dates":"1931-1990","year":"2008","publisher":"Wayfarer Press","format":"Book","language":"English","fiction":false,"subjects":["Meditation","Spiritual life"],"location":"Marsden Park","available":3,"copies":5,"blurb":null,"cover":"#2C5A5A"},"nl-00102":{"doc_id":"nl-00102","title":"One Breath at a Time","text":"Author: Anand, Prem, 1931-1990\nPublished: Wayfarer Press, 2014\nSubjects: Breathing exercises; Meditation; Stress management","tags":["book"],"author":"Anand, Prem","author_dates":"1931-1990","year":"2014","publisher":"Wayfarer Press","format":"Book","language":"English","fiction":false,"subjects":["Breathing exercises","Meditation","Stress management"],"location":"Fenwick Road","available":3,"copies":3,"blurb":null,"cover":"#7A4A2B"},"nl-00103":{"doc_id":"nl-00103","title":"Nothing to Do","text":"Author: Anand, Prem, 1931-1990\nPublished: Wayfarer Press, UUUU\nSubjects: Spiritual life","tags":["book"],"author":"Anand, Prem","author_dates":"1931-1990","year":"UUUU","publisher":"Wayfarer Press","format":"Book","language":"English","fiction":false,"subjects":["Spiritual life"],"location":"Fenwick Road","available":3,"copies":5,"blurb":null,"cover":"#2C5A5A"},"nl-00104":{"doc_id":"nl-00104","title":"The Quiet Room","text":"Author: Halloran, Beatrice\nPublished: Kestrel & Vane, 2019\nSubjects: Contemplation; Solitude; Mind and body","tags":["book"],"author":"Halloran, Beatrice","author_dates":"","year":"2019","publisher":"Kestrel & Vane","format":"Book","language":"English","fiction":false,"subjects":["Contemplation","Solitude","Mind and body"],"location":"Marsden Park","available":0,"copies":1,"blurb":null,"cover":"#6B3A4B"},"nl-00105":{"doc_id":"nl-00105","title":"Sitting Still","text":"Author: Okonjo, Adaeze\nPublished: Lantern House, 2021\nSubjects: Meditation; Mindfulness\nSummary: A working nurse's account of twenty minutes a day, and what changed.","tags":["book"],"author":"Okonjo, Adaeze","author_dates":"","year":"2021","publisher":"Lantern House","format":"Book","language":"English","fiction":false,"subjects":["Meditation","Mindfulness"],"location":"Marsden Park","available":2,"copies":2,"blurb":"A working nurse's account of twenty minutes a day, and what changed.","cover":"#3E4C5E"},"nl-00106":{"doc_id":"nl-00106","title":"Attention, and Other Small Miracles","text":"Author: Verhoeven, Sanne\nPublished: Bellwether, 2017\nSubjects: Contemplation; Psychology","tags":["book"],"author":"Verhoeven, Sanne","author_dates":"","year":"2017","publisher":"Bellwether","format":"Book","language":"English","fiction":false,"subjects":["Contemplation","Psychology"],"location":"Fenwick Road","available":2,"copies":4,"blurb":null,"cover":"#553F2E"},"nl-00107":{"doc_id":"nl-00107","title":"The Unhurried Life","text":"Author: Bramwell, Douglas, 1944-2020\nPublished: Foxglove, 2003\nSubjects: Simplicity; Conduct of life","tags":["large print"],"author":"Bramwell, Douglas","author_dates":"1944-2020","year":"2003","publisher":"Foxglove","format":"Large print","language":"English","fiction":false,"subjects":["Simplicity","Conduct of life"],"location":"Ashcombe Branch","available":2,"copies":3,"blurb":null,"cover":"#7A4A2B"},"nl-00108":{"doc_id":"nl-00108","title":"Sixty Seconds","text":"Author: Okonjo, Adaeze\nPublished: Lantern House, 2024\nSubjects: Meditation; Stress management","tags":["eaudiobook"],"author":"Okonjo, Adaeze","author_dates":"","year":"2024","publisher":"Lantern House","format":"eAudiobook","language":"English","fiction":false,"subjects":["Meditation","Stress management"],"location":"Online","available":3,"copies":3,"blurb":null,"cover":"#4A4067"},"nl-00109":{"doc_id":"nl-00109","title":"After the Funeral","text":"Author: Restrick, Marian\nPublished: Coldharbour, 2018\nSubjects: Bereavement; Grief; Consolation\nSummary: Written in the year after her husband died, and deliberately offering no stages and no timetable.","tags":["book"],"author":"Restrick, Marian","author_dates":"","year":"2018","publisher":"Coldharbour","format":"Book","language":"English","fiction":false,"subjects":["Bereavement","Grief","Consolation"],"location":"Marsden Park","available":3,"copies":5,"blurb":"Written in the year after her husband died, and deliberately offering no stages and no timetable.","cover":"#2E4A62"},"nl-00110":{"doc_id":"nl-00110","title":"Carrying On","text":"Author: Restrick, Marian\nPublished: Coldharbour, 2022\nSubjects: Bereavement; Widows","tags":["book"],"author":"Restrick, Marian","author_dates":"","year":"2022","publisher":"Coldharbour","format":"Book","language":"English","fiction":false,"subjects":["Bereavement","Widows"],"location":"Marsden Park","available":2,"copies":3,"blurb":null,"cover":"#3E4C5E"},"nl-00111":{"doc_id":"nl-00111","title":"The Empty Chair","text":"Author: Kealey, Dermot\nPublished: Bellwether, 2015\nSubjects: Grief; Family; Loss","tags":["book"],"author":"Kealey, Dermot","author_dates":"","year":"2015","publisher":"Bellwether","format":"Book","language":"English","fiction":false,"subjects":["Grief","Family","Loss"],"location":"Fenwick Road","available":3,"copies":4,"blurb":null,"cover":"#1B4D3E"},"nl-00112":{"doc_id":"nl-00112","title":"What Nobody Tells You","text":"Author: Fairhead, Judith\nPublished: Coldharbour, 2020\nSubjects: Bereavement; Consolation","tags":["large print"],"author":"Fairhead, Judith","author_dates":"","year":"2020","publisher":"Coldharbour","format":"Large print","language":"English","fiction":false,"subjects":["Bereavement","Consolation"],"location":"Marsden Park","available":2,"copies":2,"blurb":null,"cover":"#1B4D3E"},"nl-00113":{"doc_id":"nl-00113","title":"A Year of Thursdays","text":"Author: Kealey, Dermot\nPublished: Bellwether, 2023\nSubjects: Grief; Memoirs","tags":["eaudiobook"],"author":"Kealey, Dermot","author_dates":"","year":"2023","publisher":"Bellwether","format":"eAudiobook","language":"English","fiction":false,"subjects":["Grief","Memoirs"],"location":"Online","available":3,"copies":3,"blurb":null,"cover":"#2C5A5A"},"nl-00114":{"doc_id":"nl-00114","title":"Night Shift","text":"Author: Corrigan, Estelle\nPublished: Meridian Health, 2019\nSubjects: Insomnia; Sleep disorders; Self-care\nSummary: Why so many of us wake at three in the morning, and what the evidence actually supports.","tags":["book"],"author":"Corrigan, Estelle","author_dates":"","year":"2019","publisher":"Meridian Health","format":"Book","language":"English","fiction":false,"subjects":["Insomnia","Sleep disorders","Self-care"],"location":"Marsden Park","available":1,"copies":3,"blurb":"Why so many of us wake at three in the morning, and what the evidence actually supports.","cover":"#1B4D3E"},"nl-00115":{"doc_id":"nl-00115","title":"The Tired Generation","text":"Author: Corrigan, Estelle\nPublished: Meridian Health, 2023\nSubjects: Fatigue; Sleep disorders; Public health","tags":["book"],"author":"Corrigan, Estelle","author_dates":"","year":"2023","publisher":"Meridian Health","format":"Book","language":"English","fiction":false,"subjects":["Fatigue","Sleep disorders","Public health"],"location":"Northfield Central","available":2,"copies":4,"blurb":null,"cover":"#2E4A62"},"nl-00116":{"doc_id":"nl-00116","title":"Wide Awake at Four","text":"Author: Pelletier, Nina\nPublished: Kestrel & Vane, 2016\nSubjects: Insomnia; Cognitive therapy","tags":["book"],"author":"Pelletier, Nina","author_dates":"","year":"2016","publisher":"Kestrel & Vane","format":"Book","language":"English","fiction":false,"subjects":["Insomnia","Cognitive therapy"],"location":"Northfield Central","available":0,"copies":1,"blurb":null,"cover":"#6B3A4B"},"nl-00117":{"doc_id":"nl-00117","title":"The Racing Mind","text":"Author: Ademola, Tunde\nPublished: Meridian Health, 2021\nSubjects: Anxiety; Cognitive therapy; Self-care","tags":["book"],"author":"Ademola, Tunde","author_dates":"","year":"2021","publisher":"Meridian Health","format":"Book","language":"English","fiction":false,"subjects":["Anxiety","Cognitive therapy","Self-care"],"location":"Fenwick Road","available":3,"copies":5,"blurb":null,"cover":"#7A4A2B"},"nl-00118":{"doc_id":"nl-00118","title":"Small Steps Out","text":"Author: Ademola, Tunde\nPublished: Meridian Health, 2024\nSubjects: Anxiety; Phobias; Self-care\nSummary: A graded programme for leaving the house again, written for people who have stopped.","tags":["book"],"author":"Ademola, Tunde","author_dates":"","year":"2024","publisher":"Meridian Health","format":"Book","language":"English","fiction":false,"subjects":["Anxiety","Phobias","Self-care"],"location":"Northfield Central","available":1,"copies":2,"blurb":"A graded programme for leaving the house again, written for people who have stopped.","cover":"#2E4A62"},"nl-00119":{"doc_id":"nl-00119","title":"Your Back, Explained","text":"Author: Whittle, Gordon\nPublished: Meridian Health, 2014\nSubjects: Backache; Physical therapy","tags":["book"],"author":"Whittle, Gordon","author_dates":"","year":"2014","publisher":"Meridian Health","format":"Book","language":"English","fiction":false,"subjects":["Backache","Physical therapy"],"location":"Ashcombe Branch","available":1,"copies":3,"blurb":null,"cover":"#1B4D3E"},"nl-00120":{"doc_id":"nl-00120","title":"The Change","text":"Author: Marsh-Ibori, Grace\nPublished: Lantern House, 2022\nSubjects: Menopause; Women's health","tags":["book"],"author":"Marsh-Ibori, Grace","author_dates":"","year":"2022","publisher":"Lantern House","format":"Book","language":"English","fiction":false,"subjects":["Menopause","Women's health"],"location":"Fenwick Road","available":2,"copies":2,"blurb":null,"cover":"#3E4C5E"},"nl-00121":{"doc_id":"nl-00121","title":"Breathe Out","text":"Author: Pelletier, Nina\nPublished: Kestrel & Vane, 2020\nSubjects: Relaxation; Stress management","tags":["eaudiobook"],"author":"Pelletier, Nina","author_dates":"","year":"2020","publisher":"Kestrel & Vane","format":"eAudiobook","language":"English","fiction":false,"subjects":["Relaxation","Stress management"],"location":"Online","available":3,"copies":3,"blurb":null,"cover":"#7A4A2B"},"nl-00122":{"doc_id":"nl-00122","title":"The Fussy Years","text":"Author: Delacroix-Bell, Hannah\nPublished: Rookery, 2021\nSubjects: Child rearing; Nutrition; Toddlers\nSummary: Refuses the phrase 'picky eater' and treats mealtime standoffs as a normal developmental stage.","tags":["book"],"author":"Delacroix-Bell, Hannah","author_dates":"","year":"2021","publisher":"Rookery","format":"Book","language":"English","fiction":false,"subjects":["Child rearing","Nutrition","Toddlers"],"location":"Rowley Green","available":1,"copies":3,"blurb":"Refuses the phrase 'picky eater' and treats mealtime standoffs as a normal developmental stage.","cover":"#1B4D3E"},"nl-00123":{"doc_id":"nl-00123","title":"Small Plates","text":"Author: Delacroix-Bell, Hannah\nPublished: Rookery, 2018\nSubjects: Cooking; Infants - Nutrition; Family","tags":["book"],"author":"Delacroix-Bell, Hannah","author_dates":"","year":"2018","publisher":"Rookery","format":"Book","language":"English","fiction":false,"subjects":["Cooking","Infants - Nutrition","Family"],"location":"Northfield Central","available":3,"copies":4,"blurb":null,"cover":"#6B3A4B"},"nl-00124":{"doc_id":"nl-00124","title":"Will They Ever Eat Greens?","text":"Author: Nkemelu, Chidi\nPublished: Rookery, 2023\nSubjects: Child rearing; Nutrition","tags":["book"],"author":"Nkemelu, Chidi","author_dates":"","year":"2023","publisher":"Rookery","format":"Book","language":"English","fiction":false,"subjects":["Child rearing","Nutrition"],"location":"Rowley Green","available":3,"copies":3,"blurb":null,"cover":"#4A4067"},"nl-00125":{"doc_id":"nl-00125","title":"The Long Bedtime","text":"Author: Delacroix-Bell, Hannah\nPublished: Rookery, 2019\nSubjects: Child rearing; Sleep; Toddlers","tags":["book"],"author":"Delacroix-Bell, Hannah","author_dates":"","year":"2019","publisher":"Rookery","format":"Book","language":"English","fiction":false,"subjects":["Child rearing","Sleep","Toddlers"],"location":"Rowley Green","available":0,"copies":1,"blurb":null,"cover":"#2C5A5A"},"nl-00126":{"doc_id":"nl-00126","title":"Three and Furious","text":"Author: Nkemelu, Chidi\nPublished: Rookery, 2020\nSubjects: Child rearing; Temper tantrums","tags":["large print"],"author":"Nkemelu, Chidi","author_dates":"","year":"2020","publisher":"Rookery","format":"Large print","language":"English","fiction":false,"subjects":["Child rearing","Temper tantrums"],"location":"Fenwick Road","available":1,"copies":1,"blurb":null,"cover":"#7A4A2B"},"nl-00127":{"doc_id":"nl-00127","title":"Murder at Marlowe Hall","text":"Author: Anand, Ravi\nPublished: Pennyfarthing, 2019\nSubjects: Detective and mystery stories; England - Fiction\nSummary: The first Hensleigh mystery. A country house, a missing will, and nothing more graphic than a cold teapot.","tags":["book"],"author":"Anand, Ravi","author_dates":"","year":"2019","publisher":"Pennyfarthing","format":"Book","language":"English","fiction":true,"subjects":["Detective and mystery stories","England - Fiction"],"location":"Northfield Central","available":2,"copies":3,"blurb":"The first Hensleigh mystery. A country house, a missing will, and nothing more graphic than a cold teapot.","cover":"#2C5A5A"},"nl-00128":{"doc_id":"nl-00128","title":"The Knitting Circle Murders","text":"Author: Anand, Ravi\nPublished: Pennyfarthing, 2021\nSubjects: Detective and mystery stories","tags":["book"],"author":"Anand, Ravi","author_dates":"","year":"2021","publisher":"Pennyfarthing","format":"Book","language":"English","fiction":true,"subjects":["Detective and mystery stories"],"location":"Ashcombe Branch","available":1,"copies":1,"blurb":null,"cover":"#2C5A5A"},"nl-00129":{"doc_id":"nl-00129","title":"Death Takes the Bus","text":"Author: Anand, Ravi\nPublished: Pennyfarthing, 2023\nSubjects: Detective and mystery stories","tags":["book"],"author":"Anand, Ravi","author_dates":"","year":"2023","publisher":"Pennyfarthing","format":"Book","language":"English","fiction":true,"subjects":["Detective and mystery stories"],"location":"Ashcombe Branch","available":3,"copies":4,"blurb":null,"cover":"#4A4067"},"nl-00130":{"doc_id":"nl-00130","title":"A Body in the Bandstand","text":"Author: Cholmondeley, Pearl\nPublished: Pennyfarthing, 2020\nSubjects: Detective and mystery stories; Villages - Fiction","tags":["large print"],"author":"Cholmondeley, Pearl","author_dates":"","year":"2020","publisher":"Pennyfarthing","format":"Large print","language":"English","fiction":true,"subjects":["Detective and mystery stories","Villages - Fiction"],"location":"Rowley Green","available":2,"copies":4,"blurb":null,"cover":"#1B4D3E"},"nl-00131":{"doc_id":"nl-00131","title":"The Vicar's Last Sermon","text":"Author: Cholmondeley, Pearl\nPublished: Pennyfarthing, 2022\nSubjects: Detective and mystery stories; Clergy - Fiction","tags":["book"],"author":"Cholmondeley, Pearl","author_dates":"","year":"2022","publisher":"Pennyfarthing","format":"Book","language":"English","fiction":true,"subjects":["Detective and mystery stories","Clergy - Fiction"],"location":"Ashcombe Branch","available":3,"copies":5,"blurb":null,"cover":"#6B3A4B"},"nl-00132":{"doc_id":"nl-00132","title":"Tea, Cake and Arsenic","text":"Author: Cholmondeley, Pearl\nPublished: Pennyfarthing, 2024\nSubjects: Detective and mystery stories","tags":["eaudiobook"],"author":"Cholmondeley, Pearl","author_dates":"","year":"2024","publisher":"Pennyfarthing","format":"eAudiobook","language":"English","fiction":true,"subjects":["Detective and mystery stories"],"location":"Online","available":5,"copies":5,"blurb":null,"cover":"#553F2E"},"nl-00133":{"doc_id":"nl-00133","title":"The Cutting Room","text":"Author: Vasilenko, Irina\nPublished: Blackwater, 2018\nSubjects: Detective and mystery stories; Thrillers","tags":["book"],"author":"Vasilenko, Irina","author_dates":"","year":"2018","publisher":"Blackwater","format":"Book","language":"English","fiction":true,"subjects":["Detective and mystery stories","Thrillers"],"location":"Ashcombe Branch","available":3,"copies":3,"blurb":null,"cover":"#7A4A2B"},"nl-00134":{"doc_id":"nl-00134","title":"Nine Grams","text":"Author: Vasilenko, Irina\nPublished: Blackwater, 2020\nSubjects: Thrillers; Organized crime - Fiction","tags":["book"],"author":"Vasilenko, Irina","author_dates":"","year":"2020","publisher":"Blackwater","format":"Book","language":"English","fiction":true,"subjects":["Thrillers","Organized crime - Fiction"],"location":"Marsden Park","available":1,"copies":3,"blurb":null,"cover":"#4A4067"},"nl-00135":{"doc_id":"nl-00135","title":"Cold Frame","text":"Author: Obuya, Marcus\nPublished: Blackwater, 2022\nSubjects: Detective and mystery stories; Police procedural","tags":["book"],"author":"Obuya, Marcus","author_dates":"","year":"2022","publisher":"Blackwater","format":"Book","language":"English","fiction":true,"subjects":["Detective and mystery stories","Police procedural"],"location":"Northfield Central","available":0,"copies":1,"blurb":null,"cover":"#6B3A4B"},"nl-00136":{"doc_id":"nl-00136","title":"The Salt House","text":"Author: Trevanion, Bryony\nPublished: Aldgate, 2017\nSubjects: Domestic fiction; Wales - Fiction\nSummary: Three sisters return to a house on the estuary to decide what to do with it, and with each other.","tags":["book"],"author":"Trevanion, Bryony","author_dates":"","year":"2017","publisher":"Aldgate","format":"Book","language":"English","fiction":true,"subjects":["Domestic fiction","Wales - Fiction"],"location":"Rowley Green","available":0,"copies":1,"blurb":"Three sisters return to a house on the estuary to decide what to do with it, and with each other.","cover":"#3E4C5E"},"nl-00137":{"doc_id":"nl-00137","title":"A Slight Delay","text":"Author: Trevanion, Bryony\nPublished: Aldgate, 2021\nSubjects: Domestic fiction","tags":["book"],"author":"Trevanion, Bryony","author_dates":"","year":"2021","publisher":"Aldgate","format":"Book","language":"English","fiction":true,"subjects":["Domestic fiction"],"location":"Rowley Green","available":2,"copies":2,"blurb":null,"cover":"#2E4A62"},"nl-00138":{"doc_id":"nl-00138","title":"The Understudy","text":"Author: Ferreira-Lynch, Dom\nPublished: Aldgate, 2019\nSubjects: Theatre - Fiction; Psychological fiction","tags":["book"],"author":"Ferreira-Lynch, Dom","author_dates":"","year":"2019","publisher":"Aldgate","format":"Book","language":"English","fiction":true,"subjects":["Theatre - Fiction","Psychological fiction"],"location":"Northfield Central","available":3,"copies":3,"blurb":null,"cover":"#1B4D3E"},"nl-00139":{"doc_id":"nl-00139","title":"Weather Permitting","text":"Author: Ferreira-Lynch, Dom\nPublished: Aldgate, 2023\nSubjects: Domestic fiction; Humorous fiction","tags":["book"],"author":"Ferreira-Lynch, Dom","author_dates":"","year":"2023","publisher":"Aldgate","format":"Book","language":"English","fiction":true,"subjects":["Domestic fiction","Humorous fiction"],"location":"Northfield Central","available":1,"copies":2,"blurb":null,"cover":"#2C5A5A"},"nl-00140":{"doc_id":"nl-00140","title":"The Loan","text":"Author: Sciacca, Emilia\nPublished: Aldgate, 2016\nSubjects: Domestic fiction; Debt - Fiction","tags":["large print"],"author":"Sciacca, Emilia","author_dates":"","year":"2016","publisher":"Aldgate","format":"Large print","language":"English","fiction":true,"subjects":["Domestic fiction","Debt - Fiction"],"location":"Ashcombe Branch","available":2,"copies":4,"blurb":null,"cover":"#3E4C5E"},"nl-00141":{"doc_id":"nl-00141","title":"Hold the Line","text":"Author: Obuya, Marcus\nPublished: Aldgate, 2024\nSubjects: Domestic fiction; Work - Fiction","tags":["book"],"author":"Obuya, Marcus","author_dates":"","year":"2024","publisher":"Aldgate","format":"Book","language":"English","fiction":true,"subjects":["Domestic fiction","Work - Fiction"],"location":"Ashcombe Branch","available":2,"copies":2,"blurb":null,"cover":"#2C5A5A"},"nl-00142":{"doc_id":"nl-00142","title":"Tuesday Dinners","text":"Author: Rasmussen, Kirsten\nPublished: Copper Pot, 2020\nSubjects: Cooking; Quick and easy cooking\nSummary: Forty meals that assume you got home at half past six and nobody has been to the shops.","tags":["book"],"author":"Rasmussen, Kirsten","author_dates":"","year":"2020","publisher":"Copper Pot","format":"Book","language":"English","fiction":false,"subjects":["Cooking","Quick and easy cooking"],"location":"Fenwick Road","available":0,"copies":1,"blurb":"Forty meals that assume you got home at half past six and nobody has been to the shops.","cover":"#7A4A2B"},"nl-00143":{"doc_id":"nl-00143","title":"One Pan, One Oven","text":"Author: Rasmussen, Kirsten\nPublished: Copper Pot, 2022\nSubjects: Cooking; Quick and easy cooking","tags":["book"],"author":"Rasmussen, Kirsten","author_dates":"","year":"2022","publisher":"Copper Pot","format":"Book","language":"English","fiction":false,"subjects":["Cooking","Quick and easy cooking"],"location":"Marsden Park","available":1,"copies":2,"blurb":null,"cover":"#553F2E"},"nl-00144":{"doc_id":"nl-00144","title":"The Batch Book","text":"Author: Ferreira-Lynch, Dom\nPublished: Copper Pot, 2021\nSubjects: Cooking; Make-ahead cooking","tags":["book"],"author":"Ferreira-Lynch, Dom","author_dates":"","year":"2021","publisher":"Copper Pot","format":"Book","language":"English","fiction":false,"subjects":["Cooking","Make-ahead cooking"],"location":"Rowley Green","available":2,"copies":4,"blurb":null,"cover":"#2E4A62"},"nl-00145":{"doc_id":"nl-00145","title":"Feeding Six for Forty Pounds","text":"Author: Marsh-Ibori, Grace\nPublished: Copper Pot, 2023\nSubjects: Cooking; Low budget cooking; Family","tags":["book"],"author":"Marsh-Ibori, Grace","author_dates":"","year":"2023","publisher":"Copper Pot","format":"Book","language":"English","fiction":false,"subjects":["Cooking","Low budget cooking","Family"],"location":"Ashcombe Branch","available":2,"copies":2,"blurb":null,"cover":"#553F2E"},"nl-00146":{"doc_id":"nl-00146","title":"Bread, Slowly","text":"Author: Rasmussen, Kirsten\nPublished: Copper Pot, 2018\nSubjects: Baking; Bread","tags":["book"],"author":"Rasmussen, Kirsten","author_dates":"","year":"2018","publisher":"Copper Pot","format":"Book","language":"English","fiction":false,"subjects":["Baking","Bread"],"location":"Marsden Park","available":1,"copies":2,"blurb":null,"cover":"#6B3A4B"},"nl-00147":{"doc_id":"nl-00147","title":"The Allotment Kitchen","text":"Author: Whittle, Gordon\nPublished: Copper Pot, 2019\nSubjects: Cooking; Vegetables; Gardening","tags":["large print"],"author":"Whittle, Gordon","author_dates":"","year":"2019","publisher":"Copper Pot","format":"Large print","language":"English","fiction":false,"subjects":["Cooking","Vegetables","Gardening"],"location":"Fenwick Road","available":3,"copies":4,"blurb":null,"cover":"#2C5A5A"},"nl-00148":{"doc_id":"nl-00148","title":"The Year the Fields Changed Hands","text":"Author: Pemberton-Hyde, Alistair\nPublished: Thornbury, 2015\nSubjects: Great Britain - History - Medieval period; Land tenure\nSummary: How a single generation redrew who owned England, told through four manors and their surviving rolls.","tags":["book"],"author":"Pemberton-Hyde, Alistair","author_dates":"","year":"2015","publisher":"Thornbury","format":"Book","language":"English","fiction":false,"subjects":["Great Britain - History - Medieval period","Land tenure"],"location":"Marsden Park","available":1,"copies":3,"blurb":"How a single generation redrew who owned England, told through four manors and their surviving rolls.","cover":"#6B3A4B"},"nl-00149":{"doc_id":"nl-00149","title":"The Survey","text":"Author: Pemberton-Hyde, Alistair\nPublished: Thornbury, 2018\nSubjects: Great Britain - History - Medieval period; Land tenure","tags":["book"],"author":"Pemberton-Hyde, Alistair","author_dates":"","year":"2018","publisher":"Thornbury","format":"Book","language":"English","fiction":false,"subjects":["Great Britain - History - Medieval period","Land tenure"],"location":"Northfield Central","available":0,"copies":2,"blurb":null,"cover":"#553F2E"},"nl-00150":{"doc_id":"nl-00150","title":"Castles of Earth and Timber","text":"Author: Pemberton-Hyde, Alistair\nPublished: Thornbury, 2012\nSubjects: Castles; Military architecture; Great Britain - History","tags":["book"],"author":"Pemberton-Hyde, Alistair","author_dates":"","year":"2012","publisher":"Thornbury","format":"Book","language":"English","fiction":false,"subjects":["Castles","Military architecture","Great Britain - History"],"location":"Northfield Central","available":3,"copies":5,"blurb":null,"cover":"#2E4A62"},"nl-00151":{"doc_id":"nl-00151","title":"The Last Anglo-Saxon Court","text":"Author: Weatherall, Susannah\nPublished: Thornbury, 2020\nSubjects: Great Britain - History; Kings and rulers","tags":["book"],"author":"Weatherall, Susannah","author_dates":"","year":"2020","publisher":"Thornbury","format":"Book","language":"English","fiction":false,"subjects":["Great Britain - History","Kings and rulers"],"location":"Fenwick Road","available":2,"copies":4,"blurb":null,"cover":"#4A4067"},"nl-00152":{"doc_id":"nl-00152","title":"Embroidered Histories","text":"Author: Weatherall, Susannah\nPublished: Thornbury, 2022\nSubjects: Textile fabrics; Great Britain - History; Art and history","tags":["book"],"author":"Weatherall, Susannah","author_dates":"","year":"2022","publisher":"Thornbury","format":"Book","language":"English","fiction":false,"subjects":["Textile fabrics","Great Britain - History","Art and history"],"location":"Northfield Central","available":2,"copies":3,"blurb":null,"cover":"#6B3A4B"},"nl-00153":{"doc_id":"nl-00153","title":"The Crossing","text":"Author: Weatherall, Susannah\nPublished: Thornbury, 2024\nSubjects: Great Britain - History; Naval history","tags":["book"],"author":"Weatherall, Susannah","author_dates":"","year":"2024","publisher":"Thornbury","format":"Book","language":"English","fiction":false,"subjects":["Great Britain - History","Naval history"],"location":"Rowley Green","available":3,"copies":3,"blurb":null,"cover":"#4A4067"},"nl-00154":{"doc_id":"nl-00154","title":"Roads Before Rails","text":"Author: Bramwell, Douglas, 1944-2020\nPublished: Thornbury, 2009\nSubjects: Roads - History; Transport; Great Britain - History","tags":["book"],"author":"Bramwell, Douglas","author_dates":"1944-2020","year":"2009","publisher":"Thornbury","format":"Book","language":"English","fiction":false,"subjects":["Roads - History","Transport","Great Britain - History"],"location":"Marsden Park","available":1,"copies":3,"blurb":null,"cover":"#4A4067"},"nl-00155":{"doc_id":"nl-00155","title":"The Wall and the Frontier","text":"Author: Bramwell, Douglas, 1944-2020\nPublished: Thornbury, 2011\nSubjects: Romans; Great Britain - History; Fortification","tags":["large print"],"author":"Bramwell, Douglas","author_dates":"1944-2020","year":"2011","publisher":"Thornbury","format":"Large print","language":"English","fiction":false,"subjects":["Romans","Great Britain - History","Fortification"],"location":"Marsden Park","available":2,"copies":4,"blurb":null,"cover":"#7A4A2B"},"nl-00156":{"doc_id":"nl-00156","title":"What the Hedgerow Knows","text":"Author: Fairhead, Judith\nPublished: Kestrel & Vane, 2021\nSubjects: Natural history; Hedges; Countryside","tags":["book"],"author":"Fairhead, Judith","author_dates":"","year":"2021","publisher":"Kestrel & Vane","format":"Book","language":"English","fiction":false,"subjects":["Natural history","Hedges","Countryside"],"location":"Ashcombe Branch","available":3,"copies":3,"blurb":null,"cover":"#3E4C5E"},"nl-00157":{"doc_id":"nl-00157","title":"The Quiet Decline","text":"Author: Okonjo, Adaeze\nPublished: Kestrel & Vane, 2023\nSubjects: Insects; Biodiversity; Environmental protection\nSummary: What thirty years of one family's moth-trap records reveal about a landscape emptying out.","tags":["book"],"author":"Okonjo, Adaeze","author_dates":"","year":"2023","publisher":"Kestrel & Vane","format":"Book","language":"English","fiction":false,"subjects":["Insects","Biodiversity","Environmental protection"],"location":"Marsden Park","available":2,"copies":4,"blurb":"What thirty years of one family's moth-trap records reveal about a landscape emptying out.","cover":"#1B4D3E"},"nl-00158":{"doc_id":"nl-00158","title":"Reading the Sky","text":"Author: Corrigan, Estelle\nPublished: Kestrel & Vane, 2017\nSubjects: Meteorology; Weather forecasting","tags":["book"],"author":"Corrigan, Estelle","author_dates":"","year":"2017","publisher":"Kestrel & Vane","format":"Book","language":"English","fiction":false,"subjects":["Meteorology","Weather forecasting"],"location":"Marsden Park","available":3,"copies":5,"blurb":null,"cover":"#7A4A2B"},"nl-00159":{"doc_id":"nl-00159","title":"Deep Water, Slow Time","text":"Author: Vasilenko, Irina\nPublished: Kestrel & Vane, 2022\nSubjects: Oceanography; Climate","tags":["book"],"author":"Vasilenko, Irina","author_dates":"","year":"2022","publisher":"Kestrel & Vane","format":"Book","language":"English","fiction":false,"subjects":["Oceanography","Climate"],"location":"Rowley Green","available":2,"copies":4,"blurb":null,"cover":"#7A4A2B"},"nl-00160":{"doc_id":"nl-00160","title":"The Ice Record","text":"Author: Weatherall, Susannah\nPublished: Kestrel & Vane, 2019\nSubjects: Climatology; Glaciers; Palaeoclimatology","tags":["book"],"author":"Weatherall, Susannah","author_dates":"","year":"2019","publisher":"Kestrel & Vane","format":"Book","language":"English","fiction":false,"subjects":["Climatology","Glaciers","Palaeoclimatology"],"location":"Northfield Central","available":3,"copies":3,"blurb":null,"cover":"#2C5A5A"},"nl-00161":{"doc_id":"nl-00161","title":"The Wednesday Garden","text":"Author: Sciacca, Emilia\nPublished: Rookery, 2018\nSubjects: Children's stories; Gardens - Fiction; Friendship - Fiction\nSummary: A girl inherits a walled garden nobody has opened in forty years. For readers of eight and up.","tags":["book"],"author":"Sciacca, Emilia","author_dates":"","year":"2018","publisher":"Rookery","format":"Book","language":"English","fiction":true,"subjects":["Children's stories","Gardens - Fiction","Friendship - Fiction"],"location":"Fenwick Road","available":1,"copies":2,"blurb":"A girl inherits a walled garden nobody has opened in forty years. For readers of eight and up.","cover":"#4A4067"},"nl-00162":{"doc_id":"nl-00162","title":"The Boy Who Counted Rain","text":"Author: Sciacca, Emilia\nPublished: Rookery, 2021\nSubjects: Children's stories; Family - Fiction","tags":["book"],"author":"Sciacca, Emilia","author_dates":"","year":"2021","publisher":"Rookery","format":"Book","language":"English","fiction":true,"subjects":["Children's stories","Family - Fiction"],"location":"Northfield Central","available":2,"copies":4,"blurb":null,"cover":"#2E4A62"},"nl-00163":{"doc_id":"nl-00163","title":"Marigold and the Long Walk Home","text":"Author: Nkemelu, Chidi\nPublished: Rookery, 2022\nSubjects: Children's stories; Adventure stories","tags":["book"],"author":"Nkemelu, Chidi","author_dates":"","year":"2022","publisher":"Rookery","format":"Book","language":"English","fiction":true,"subjects":["Children's stories","Adventure stories"],"location":"Ashcombe Branch","available":2,"copies":2,"blurb":null,"cover":"#1B4D3E"},"nl-00164":{"doc_id":"nl-00164","title":"The Lighthouse at the End of Term","text":"Author: Trevanion, Bryony\nPublished: Rookery, 2020\nSubjects: Children's stories; Schools - Fiction","tags":["eaudiobook"],"author":"Trevanion, Bryony","author_dates":"","year":"2020","publisher":"Rookery","format":"eAudiobook","language":"English","fiction":true,"subjects":["Children's stories","Schools - Fiction"],"location":"Online","available":1,"copies":1,"blurb":null,"cover":"#553F2E"},"nl-00165":{"doc_id":"nl-00165","title":"Ten Things About Beetles","text":"Author: Fairhead, Judith\nPublished: Rookery, 2023\nSubjects: Children's non-fiction; Insects","tags":["book"],"author":"Fairhead, Judith","author_dates":"","year":"2023","publisher":"Rookery","format":"Book","language":"English","fiction":false,"subjects":["Children's non-fiction","Insects"],"location":"Rowley Green","available":3,"copies":4,"blurb":null,"cover":"#553F2E"},"nl-00166":{"doc_id":"nl-00166","title":"The Salt House [DVD]","text":"Author: Trevanion, Bryony\nPublished: Aldgate Screen, 2022\nSubjects: Feature films; Domestic fiction","tags":["dvd"],"author":"Trevanion, Bryony","author_dates":"","year":"2022","publisher":"Aldgate Screen","format":"DVD","language":"English","fiction":true,"subjects":["Feature films","Domestic fiction"],"location":"Northfield Central","available":3,"copies":4,"blurb":null,"cover":"#3E4C5E"},"nl-00167":{"doc_id":"nl-00167","title":"Marlowe Hall [DVD]","text":"Author: Anand, Ravi\nPublished: Pennyfarthing Screen, 2023\nSubjects: Feature films; Detective and mystery films","tags":["dvd"],"author":"Anand, Ravi","author_dates":"","year":"2023","publisher":"Pennyfarthing Screen","format":"DVD","language":"English","fiction":true,"subjects":["Feature films","Detective and mystery films"],"location":"Rowley Green","available":3,"copies":5,"blurb":null,"cover":"#4A4067"},"nl-00168":{"doc_id":"nl-00168","title":"A Year on the Estuary [DVD]","text":"Author: Fairhead, Judith\nPublished: Kestrel Screen, 2021\nSubjects: Documentary films; Natural history","tags":["dvd"],"author":"Fairhead, Judith","author_dates":"","year":"2021","publisher":"Kestrel Screen","format":"DVD","language":"English","fiction":false,"subjects":["Documentary films","Natural history"],"location":"Fenwick Road","available":3,"copies":5,"blurb":null,"cover":"#7A4A2B"},"nl-00169":{"doc_id":"nl-00169","title":"[Punjabi book]","text":"Author: Anand, Prem, 1931-1990\nPublished: UUUU\nSubjects: Spiritual life","tags":["book"],"author":"Anand, Prem","author_dates":"1931-1990","year":"UUUU","publisher":"","format":"Book","language":"English","fiction":false,"subjects":["Spiritual life"],"location":"Ashcombe Branch","available":2,"copies":3,"blurb":null,"cover":"#3E4C5E"},"nl-00170":{"doc_id":"nl-00170","title":"[Sound recording]","text":"Author: [unknown]\nPublished: UUUU","tags":["eaudiobook"],"author":"","author_dates":"","year":"UUUU","publisher":"","format":"eAudiobook","language":"English","fiction":false,"subjects":[],"location":"Online","available":3,"copies":3,"blurb":null,"cover":"#3E4C5E"},"nl-00171":{"doc_id":"nl-00171","title":"Untitled volume 2","text":"Author: Bramwell, Douglas, 1944-2020\nPublished: Thornbury, 19??\nSubjects: Great Britain - History","tags":["book"],"author":"Bramwell, Douglas","author_dates":"1944-2020","year":"19??","publisher":"Thornbury","format":"Book","language":"English","fiction":false,"subjects":["Great Britain - History"],"location":"Fenwick Road","available":1,"copies":3,"blurb":null,"cover":"#6B3A4B"},"nl-00172":{"doc_id":"nl-00172","title":"[Large print item]","text":"Author: [unknown]\nPublished: 2004\nSubjects: Fiction","tags":["large print"],"author":"","author_dates":"","year":"2004","publisher":"","format":"Large print","language":"English","fiction":true,"subjects":["Fiction"],"location":"Northfield Central","available":1,"copies":1,"blurb":null,"cover":"#7A4A2B"},"nl-00173":{"doc_id":"nl-00173","title":"Selected works","text":"Author: Anand, Prem, 1931-1990\nPublished: Wayfarer Press, 1998\nSubjects: Spiritual life; Collected works","tags":["book"],"author":"Anand, Prem","author_dates":"1931-1990","year":"1998","publisher":"Wayfarer Press","format":"Book","language":"English","fiction":false,"subjects":["Spiritual life","Collected works"],"location":"Northfield Central","available":0,"copies":2,"blurb":null,"cover":"#1B4D3E"}};
+window.__OFFLINE_RANKINGS__ = {"learning to be present|keyword":[],"learning to be present|semantic":[["nl-00106",0.2679],["nl-00100",0.2504],["nl-00107",0.1867],["nl-00117",0.1847],["nl-00105",0.1711],["nl-00108",0.1611],["nl-00101",0.1578],["nl-00169",0.1547]],"gentle crime novels nothing too gory|keyword":[["nl-00134",4.2507],["nl-00103",3.6957],["nl-00127",2.5239]],"gentle crime novels nothing too gory|semantic":[["nl-00128",0.5033],["nl-00134",0.462],["nl-00132",0.4269],["nl-00127",0.4217],["nl-00135",0.4146],["nl-00133",0.3972],["nl-00129",0.3873],["nl-00130",0.386],["nl-00138",0.3684],["nl-00131",0.3588],["nl-00172",0.3571],["nl-00139",0.3478],["nl-00103",0.3463],["nl-00113",0.3395],["nl-00107",0.3365],["nl-00161",0.3334],["nl-00136",0.3307],["nl-00110",0.3237],["nl-00112",0.3207],["nl-00140",0.3199],["nl-00163",0.3182],["nl-00104",0.3157],["nl-00126",0.3139],["nl-00141",0.3109],["nl-00171",0.3095],["nl-00166",0.3089],["nl-00164",0.3026],["nl-00137",0.3025],["nl-00167",0.2983],["nl-00109",0.2785],["nl-00151",0.2761],["nl-00165",0.2704],["nl-00162",0.2693],["nl-00146",0.2603],["nl-00111",0.257],["nl-00142",0.2546],["nl-00125",0.2538],["nl-00100",0.2489],["nl-00153",0.2461],["nl-00156",0.2442],["nl-00143",0.2301],["nl-00155",0.2261],["nl-00152",0.2233],["nl-00150",0.221],["nl-00149",0.2161],["nl-00106",0.2082],["nl-00168",0.2062],["nl-00144",0.2057],["nl-00173",0.2036],["nl-00145",0.2022],["nl-00147",0.1972],["nl-00118",0.1888],["nl-00157",0.1876],["nl-00158",0.1834],["nl-00123",0.1742],["nl-00154",0.1728],["nl-00122",0.1715],["nl-00105",0.1636],["nl-00169",0.1628]],"anand|keyword":[["nl-00169",2.2046],["nl-00103",2.1363],["nl-00128",2.1363],["nl-00129",2.1363],["nl-00101",2.0118],["nl-00167",1.9548],["nl-00173",1.9548],["nl-00102",1.85],["nl-00100",1.459],["nl-00127",1.459]],"anand|semantic":[["nl-00169",0.4233],["nl-00101",0.3564],["nl-00173",0.3541],["nl-00100",0.3465],["nl-00103",0.3211],["nl-00108",0.2792],["nl-00129",0.2785],["nl-00167",0.2731],["nl-00102",0.2416],["nl-00133",0.2342],["nl-00128",0.2236],["nl-00105",0.2185],["nl-00143",0.2053],["nl-00144",0.1929],["nl-00126",0.1913],["nl-00146",0.191],["nl-00104",0.1863],["nl-00117",0.1807],["nl-00116",0.1722],["nl-00134",0.1707],["nl-00142",0.1671],["nl-00172",0.1671],["nl-00170",0.1611],["nl-00127",0.161],["nl-00154",0.1599],["nl-00137",0.1555],["nl-00147",0.1555]],"getting my toddler to eat vegetables|keyword":[["nl-00124",4.2507],["nl-00147",4.2507]],"getting my toddler to eat vegetables|semantic":[["nl-00124",0.585],["nl-00122",0.4331],["nl-00123",0.3232],["nl-00147",0.2855],["nl-00145",0.2462],["nl-00163",0.2241],["nl-00142",0.2161],["nl-00161",0.2076],["nl-00126",0.2064],["nl-00125",0.19],["nl-00165",0.1852]],"books to help me sleep better|keyword":[["nl-00125",3.2301],["nl-00115",3.1359],["nl-00114",2.4282]],"books to help me sleep better|semantic":[["nl-00116",0.6074],["nl-00114",0.5247],["nl-00115",0.5188],["nl-00125",0.5129],["nl-00105",0.3796],["nl-00121",0.3395],["nl-00108",0.339],["nl-00104",0.3099],["nl-00102",0.3039],["nl-00119",0.3034],["nl-00100",0.2745],["nl-00101",0.2605],["nl-00173",0.2578],["nl-00106",0.2548],["nl-00118",0.2482],["nl-00146",0.2412],["nl-00120",0.239],["nl-00113",0.236],["nl-00110",0.2336],["nl-00162",0.2233],["nl-00158",0.2207],["nl-00109",0.2195],["nl-00103",0.2178],["nl-00107",0.2124],["nl-00112",0.2112],["nl-00171",0.206],["nl-00117",0.205],["nl-00169",0.2002],["nl-00111",0.1978],["nl-00126",0.1973],["nl-00136",0.197],["nl-00140",0.1935],["nl-00172",0.1916],["nl-00153",0.1901],["nl-00150",0.1866],["nl-00145",0.1849],["nl-00151",0.182],["nl-00137",0.181],["nl-00163",0.1777],["nl-00142",0.1775],["nl-00164",0.1756],["nl-00139",0.1747],["nl-00165",0.1702],["nl-00161",0.1698],["nl-00152",0.1641],["nl-00143",0.1636],["nl-00141",0.163],["nl-00160",0.1623],["nl-00138",0.1602],["nl-00155",0.1557],["nl-00129",0.1549],["nl-00144",0.1504]]};
+</script>
+<script>
+/* Offline search for the standalone catalogue file.
+ *
+ * NOT loaded by the served page. `scripts/build_standalone.py` inlines this
+ * file, plus a baked data blob, into a copy of catalogue.html so the result
+ * works from file:// with no server.
+ *
+ * Only retrieval needs Python - embedding the query, the vector index, BM25.
+ * That part is precomputed at build time into RANKINGS: for each example query
+ * and mode, the ordered [doc_id, score] list the Searcher returned. Everything
+ * after retrieval is plain data work, so it is ported here from
+ * api/catalogue.py and runs live: facet counts, filtering and pagination all
+ * behave exactly as they do against the real API.
+ *
+ * Keep this in step with api/catalogue.py - _FACET_SPEC, build_facets,
+ * matches_filters and to_card are mirrored below and must agree, or the
+ * standalone file will quietly disagree with the served one.
+ */
+(function () {
+  "use strict";
+
+  const RECORDS = window.__OFFLINE_RECORDS__;
+  const RANKINGS = window.__OFFLINE_RANKINGS__;
+
+  // Match on a loosened form of the query, so the comma in the visible label
+  // "gentle crime novels, nothing too gory" still finds the baked ranking.
+  // The key separator is a plain "|" deliberately: a normalised query is only
+  // [a-z0-9 ], so "|" cannot collide, and unlike an exotic separator it
+  // survives the HTML parser. A NUL here does not - the tokenizer rewrites
+  // U+0000 in script data to U+FFFD, and every lookup then misses silently.
+  const norm = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+
+  // ---- mirrored from api/catalogue.py -------------------------------------
+  function decade(year) {
+    const head = String(year || "").slice(0, 3);
+    if (!head || !/^\d{3}$/.test(head)) return null;
+    return head + "0s";
+  }
+
+  function availability(r) {
+    const tags = [];
+    if ((r.available || 0) > 0) tags.push("Available now");
+    if (r.format === "eAudiobook") tags.push("Available online");
+    return tags;
+  }
+
+  const FACET_SPEC = [
+    ["availability", "Availability", availability],
+    ["format", "Format", (r) => (r.format ? [r.format] : [])],
+    ["fiction", "Fiction / Non-fiction", (r) => [r.fiction ? "Fiction" : "Non-fiction"]],
+    ["decade", "Publication date", (r) => { const d = decade(r.year); return d ? [d] : []; }],
+    ["location", "Location", (r) => (r.location ? [r.location] : [])],
+    ["language", "Language", (r) => (r.language ? [r.language] : [])],
+  ];
+
+  function buildFacets(records) {
+    const facets = [];
+    for (const [key, label, reader] of FACET_SPEC) {
+      const counter = new Map();
+      for (const record of records) {
+        for (const value of reader(record)) {
+          counter.set(value, (counter.get(value) || 0) + 1);
+        }
+      }
+      if (!counter.size) continue;
+      // Python: sorted(counter.items(), key=lambda kv: (-kv[1], kv[0]))
+      const ordered = [...counter.entries()].sort(
+        (a, b) => b[1] - a[1] || a[0].localeCompare(b[0])
+      );
+      facets.push({
+        key,
+        label,
+        values: ordered.map(([value, count]) => ({ value, count })),
+      });
+    }
+    return facets;
+  }
+
+  function matchesFilters(record, filters) {
+    for (const [key, , reader] of FACET_SPEC) {
+      const wanted = filters[key];
+      if (!wanted || !wanted.length) continue;
+      if (!reader(record).some((v) => wanted.includes(v))) return false;
+    }
+    return true;
+  }
+
+  function toCard(record, score, rank) {
+    return {
+      rank,
+      score: Math.round(score * 1e4) / 1e4,
+      doc_id: record.doc_id,
+      title: record.title,
+      author: record.author || "",
+      author_dates: record.author_dates || "",
+      year: record.year || "",
+      publisher: record.publisher || "",
+      format: record.format || "",
+      subjects: record.subjects || [],
+      blurb: record.blurb,
+      location: record.location || "",
+      available: Number(record.available || 0),
+      copies: Number(record.copies || 0),
+      cover: record.cover || "#2E4A62",
+      record_text: record.text || "",
+    };
+  }
+
+  // ---- the same shape /catalogue/search returns ---------------------------
+  function search(query, mode, filters, page, perPage) {
+    const ranking = RANKINGS[norm(query) + "|" + mode];
+    if (!ranking) return null; // not a baked query - caller explains
+
+    const ranked = ranking
+      .map(([docId, score]) => [RECORDS[docId], score])
+      .filter(([record]) => record);
+
+    // Facets are counted before filtering, so the sidebar shows what you could
+    // narrow to rather than only what is already selected.
+    const facets = buildFacets(ranked.map(([record]) => record));
+
+    const kept = ranked.filter(([record]) => matchesFilters(record, filters));
+    const total = kept.length;
+    const start = (page - 1) * perPage;
+    const window_ = kept.slice(start, start + perPage);
+
+    return {
+      query,
+      mode,
+      total,
+      page,
+      per_page: perPage,
+      showing: window_.length ? [start + 1, start + window_.length] : [0, 0],
+      results: window_.map(([record, score], i) => toCard(record, score, start + i + 1)),
+      facets,
+    };
+  }
+
+  function knownQueries() {
+    return [...new Set(Object.keys(RANKINGS).map((k) => k.split("|")[0]))];
+  }
+
+  window.OFFLINE = { search, knownQueries };
+
+  // Say what this copy is, so nobody mistakes an unanswerable query for an
+  // empty catalogue.
+  const footnote = document.querySelector(".footnote");
+  if (footnote) {
+    footnote.innerHTML +=
+      "<br>This is a self-contained offline copy: the searches below are" +
+      " precomputed, so it answers the example queries only. The full version" +
+      " runs every query live against the search service.";
+  }
+})();
+</script>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"']/g, c =>
+  ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+
+let mode = "semantic";
+let page = 1;
+let filters = {};
+let collapsed = {};
+
+function facetHtml(f) {
+  const isOpen = !collapsed[f.key];
+  const rows = f.values.map(v => {
+    const on = (filters[f.key] || []).includes(v.value);
+    return `<li><label>
+      <input type="checkbox" data-facet="${esc(f.key)}" value="${esc(v.value)}" ${on ? "checked" : ""}>
+      <span>${esc(v.value)}</span><span class="n">${v.count}</span>
+    </label></li>`;
+  }).join("");
+  return `<div class="facet">
+    <button type="button" data-toggle="${esc(f.key)}" aria-expanded="${isOpen}">
+      ${esc(f.label)} <span class="chev">${isOpen ? "▾" : "▸"}</span>
+    </button>
+    ${isOpen ? `<ul>${rows}</ul>` : ""}
+  </div>`;
+}
+
+function cardHtml(r) {
+  const placeholder = /^\[.*\]$/.test(r.title) || /^untitled/i.test(r.title);
+  const unknownYear = !r.year || !/^\d{4}$/.test(r.year);
+  const who = r.author
+    ? `${esc(r.author)}${r.author_dates ? ", " + esc(r.author_dates) : ""}`
+    : "Author not recorded";
+  // Only fold the year into the publisher line when it is a real year -
+  // otherwise it prints twice, once here and once as the flagged unknown.
+  const pub = [r.publisher, unknownYear ? null : r.year].filter(Boolean).join(", ");
+  const subs = (r.subjects || []).slice(0, 4)
+    .map(s => `<span>${esc(s)}</span>`).join("");
+  const online = r.format === "eAudiobook";
+  return `<li>
+    <div class="idx">${r.rank}.</div>
+    <div class="cover" style="background:${esc(r.cover)}">
+      ${esc(r.title).slice(0, 44)}
+      <div class="fmt">${esc(r.format)}</div>
+    </div>
+    <div>
+      <p class="title ${placeholder ? "placeholder" : ""}">${esc(r.title)}</p>
+      <p class="byline">${who}</p>
+      <p class="publine">${pub ? esc(pub) : ""}${unknownYear
+        ? `${pub ? ", " : ""}<span class="unknown">${esc(r.year || "no date")}</span>` : ""}</p>
+      ${r.blurb
+        ? `<p class="blurb">${esc(r.blurb)}</p>`
+        : `<p class="norec">No summary in this record.</p>`}
+      <p class="subjects">${subs || "<span>No subject headings</span>"}</p>
+      <div class="actions">
+        <button class="reserve" type="button" ${r.available ? "" : "disabled"}>
+          ${online ? "Borrow" : (r.available ? "Place reservation" : "Join waiting list")}
+        </button>
+        <span class="avail">
+          ${online ? "Available online"
+            : `Available: <b class="${r.available ? "" : "none"}">${r.available}</b> &nbsp; Copies: ${r.copies}`}
+          &nbsp;·&nbsp; ${esc(r.location)}
+        </span>
+      </div>
+    </div>
+  </li>`;
+}
+
+async function run() {
+  const query = $("q").value.trim();
+  if (!query) return;
+  $("status").textContent = "Searching…";
+  // Undefined when served normally. The standalone build defines it, so the
+  // file works from file:// with no search service behind it.
+  if (window.OFFLINE) { runOffline(query); return; }
+  try {
+    const res = await fetch("/catalogue/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query, mode, page, per_page: 10, filters })
+    });
+    const payload = await res.json();
+    if (payload.status !== "success") throw new Error(payload.message || "Search failed");
+    render(payload.data);
+  } catch (err) {
+    $("status").textContent = err.message;
+  }
+}
+
+function render(d) {
+  $("status").textContent = "";
+  $("heading").textContent = `Anywhere: ${d.query}`;
+
+  const m = $("method");
+  m.className = "method" + (d.mode === "semantic" ? " meaning" : "");
+  m.innerHTML = d.mode === "semantic"
+    ? `Matched by <b>meaning</b> — records about this subject, whatever words they use.`
+    : `Matched by <b>keywords</b> — records containing the words you typed.`;
+
+  $("count").textContent = d.total
+    ? `Showing ${d.showing[0]} – ${d.showing[1]} of ${d.total}`
+    : "No results";
+  $("pageno").textContent = d.total ? `Page ${d.page}` : "";
+  $("prev").disabled = d.page <= 1;
+  $("next").disabled = d.page * d.per_page >= d.total;
+
+  $("facets").innerHTML = d.facets.map(facetHtml).join("");
+  $("clearall").hidden = Object.keys(filters).length === 0;
+
+  if (!d.total) {
+    $("results").innerHTML = "";
+    $("status").innerHTML = `<div class="empty">
+      <p class="big">Nothing in the catalogue matched those words.</p>
+      <p>The catalogue holds 74 items. A keyword search can only return a record
+      that literally contains what you typed — if a reader's wording differs from
+      the cataloguer's, the item cannot be found at all.</p>
+      <p>Switch to <strong>Search by meaning</strong> to see what is actually here.</p>
+    </div>`;
+    return;
+  }
+  $("results").innerHTML = d.results.map(cardHtml).join("");
+}
+
+function runOffline(query) {
+  const data = window.OFFLINE.search(query, mode, filters, page, 10);
+  if (data) { render(data); return; }
+  $("count").textContent = "";
+  $("pageno").textContent = "";
+  $("prev").disabled = $("next").disabled = true;
+  $("facets").innerHTML = "";
+  $("results").innerHTML = "";
+  $("clearall").hidden = true;
+  $("status").innerHTML = `<div class="empty">
+    <p class="big">This offline copy cannot answer that one.</p>
+    <p>Searching by meaning has to run the query through the search service,
+    and this is a single file with no service behind it — the example searches
+    were worked out in advance and saved into it. That is a limit of this copy,
+    <strong>not</strong> a statement that the catalogue holds nothing on the
+    subject.</p>
+    <p>Try one of the examples above the results.</p>
+  </div>`;
+}
+
+function setMode(next) {
+  mode = next; page = 1;
+  $("m-keyword").setAttribute("aria-pressed", String(next === "keyword"));
+  $("m-semantic").setAttribute("aria-pressed", String(next === "semantic"));
+  run();
+}
+
+$("form").addEventListener("submit", (e) => { e.preventDefault(); page = 1; run(); });
+$("m-keyword").addEventListener("click", () => setMode("keyword"));
+$("m-semantic").addEventListener("click", () => setMode("semantic"));
+$("prev").addEventListener("click", () => { if (page > 1) { page--; run(); } });
+$("next").addEventListener("click", () => { page++; run(); });
+
+document.querySelectorAll(".presets button").forEach(b =>
+  b.addEventListener("click", () => { $("q").value = b.dataset.q; page = 1; filters = {}; run(); }));
+
+$("facets").addEventListener("click", (e) => {
+  const toggle = e.target.closest("[data-toggle]");
+  if (toggle) { const k = toggle.dataset.toggle; collapsed[k] = !collapsed[k]; run(); }
+});
+$("facets").addEventListener("change", (e) => {
+  const box = e.target.closest("[data-facet]");
+  if (!box) return;
+  const key = box.dataset.facet, val = box.value;
+  const set = new Set(filters[key] || []);
+  box.checked ? set.add(val) : set.delete(val);
+  set.size ? (filters[key] = [...set]) : delete filters[key];
+  page = 1; run();
+});
+$("clearall").addEventListener("click", () => { filters = {}; page = 1; run(); });
+
+run();
+</script>
+</body>
+</html>
