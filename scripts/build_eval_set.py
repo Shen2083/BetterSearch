@@ -83,30 +83,58 @@ def load_queries(path: Path) -> list[dict]:
     return raw["queries"] if isinstance(raw, dict) else raw
 
 
-def build_pools(index_path: str, queries: list[dict], *, per_lane: int) -> dict:
-    """top-K keyword ∪ top-K semantic, per query. Shuffled, source discarded."""
+def build_pools(lanes: list[tuple[str, str, str]], queries: list[dict],
+                *, per_lane: int) -> dict:
+    """top-K from every lane that will later be measured, unioned and shuffled.
+
+    Every arm under measurement must contribute to the pool. Pooling only judges
+    what the pooled lanes retrieve, so if the enriched arm is measured but never
+    pooled, any record it surfaces that the thin lanes missed goes unjudged and
+    scores as irrelevant - penalising enrichment exactly where it works. The
+    number would look defensible and be wrong.
+
+    `lanes` is (label, index_path, mode). The label is used for reporting only;
+    it is discarded before judging so the judge cannot tell lanes apart.
+    """
     from bettersearch.config import load_settings
     from bettersearch.index.numpy_index import NumpyVectorIndex
     from bettersearch.search import Searcher
 
-    searcher = Searcher(index=NumpyVectorIndex(index_path), settings=load_settings())
+    settings = load_settings()
+    searchers = {path: Searcher(index=NumpyVectorIndex(path), settings=settings)
+                 for _, path, _ in lanes}
     rng = random.Random(20260919)
+
     pools: dict[str, list[str]] = {}
-    stats = []
+    contributed: dict[str, int] = {label: 0 for label, _, _ in lanes}
+    unique_to: dict[str, int] = {label: 0 for label, _, _ in lanes}
+    sizes: list[int] = []
+
     for item in queries:
         q = item["query"]
-        ids: list[str] = []
-        per_mode = {}
-        for mode in ("keyword", "semantic"):
-            got = [r.chunk.doc_id for r in searcher.search(q, mode=mode, top_k=per_lane).results]
-            per_mode[mode] = set(got)
-            ids.extend(got)
+        per_lane_ids: dict[str, list[str]] = {}
+        for label, path, mode in lanes:
+            got = [r.chunk.doc_id
+                   for r in searchers[path].search(q, mode=mode, top_k=per_lane).results]
+            per_lane_ids[label] = got
+            contributed[label] += len(got)
+
+        # Records only one lane found - the ones that would be lost if that lane
+        # were left out of the pool.
+        for label in per_lane_ids:
+            others = set().union(*(set(v) for k, v in per_lane_ids.items() if k != label)) \
+                     if len(per_lane_ids) > 1 else set()
+            unique_to[label] += len(set(per_lane_ids[label]) - others)
+
+        ids = [i for label, _, _ in lanes for i in per_lane_ids[label]]
         seen: set[str] = set()
         pool = [i for i in ids if not (i in seen or seen.add(i))]
-        rng.shuffle(pool)  # so pool position cannot encode which lane found it
+        rng.shuffle(pool)  # pool position must not encode which lane found it
         pools[q] = pool
-        stats.append((q, len(pool), len(per_mode["keyword"] & per_mode["semantic"])))
-    return {"pools": pools, "stats": stats}
+        sizes.append(len(pool))
+
+    return {"pools": pools, "sizes": sizes,
+            "contributed": contributed, "unique_to": unique_to}
 
 
 def judge_pairs(pairs: list[tuple[str, str, str]], *, model: str, wait: int = 30) -> dict:
@@ -160,7 +188,16 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--queries", type=Path, default=ROOT / "data/eval_real_queries_draft.json")
     ap.add_argument("--corpus", type=Path, default=ROOT / "data/catalogue_real.json")
-    ap.add_argument("--index", default=".bettersearch/real")
+    ap.add_argument(
+        "--lane", action="append", default=None,
+        help="label=index_path:mode, repeatable. Every arm that will be measured "
+             "must be a lane, or its unique finds go unjudged and score as "
+             "irrelevant. Default: all three.")
+    ap.add_argument("--validate", type=int, default=100,
+                    help="re-judge this many random pairs to measure the judge's "
+                         "self-consistency (0 to skip)")
+    ap.add_argument("--spot-check-out", type=Path,
+                    default=ROOT / "data/eval_real_spotcheck.md")
     ap.add_argument("--out", type=Path, default=ROOT / "data/eval_real.json")
     ap.add_argument("--judgements-out", type=Path, default=ROOT / "data/eval_real_judgements.json")
     ap.add_argument("--per-lane", type=int, default=POOL_PER_LANE)
@@ -172,12 +209,28 @@ def main() -> int:
         args.corpus.read_text(encoding="utf-8"))["documents"]}
     print(f"{len(queries)} queries · {len(corpus)} records · pooling top-{args.per_lane} per lane\n")
 
-    built = build_pools(args.index, queries, per_lane=args.per_lane)
+    if args.lane:
+        lanes = []
+        for spec in args.lane:
+            label, rest = spec.split("=", 1)
+            path, mode = rest.rsplit(":", 1)
+            lanes.append((label, path, mode))
+    else:
+        lanes = [
+            ("keyword", ".bettersearch/real", "keyword"),
+            ("semantic-thin", ".bettersearch/real", "semantic"),
+            ("semantic-enriched", ".bettersearch/real-enriched", "semantic"),
+        ]
+    print("lanes pooled: " + ", ".join(f"{l}({m})" for l, _, m in lanes))
+
+    built = build_pools(lanes, queries, per_lane=args.per_lane)
     pools = built["pools"]
-    sizes = [n for _, n, _ in built["stats"]]
-    overlaps = [o for _, _, o in built["stats"]]
-    print(f"pool size: min {min(sizes)} median {sorted(sizes)[len(sizes)//2]} max {max(sizes)}")
-    print(f"lane overlap (docs found by both): median {sorted(overlaps)[len(overlaps)//2]}")
+    sizes = sorted(built["sizes"])
+    print(f"pool size: min {sizes[0]} median {sizes[len(sizes)//2]} max {sizes[-1]}")
+    print("records only one lane found (these would be lost if it were "
+          "left out of the pool):")
+    for label, n in built["unique_to"].items():
+        print(f"   {label:<20} {n}")
 
     pairs = []
     for qi, item in enumerate(queries):
@@ -197,6 +250,25 @@ def main() -> int:
     usd = ((u["in"] + u["cw"] * 1.25 + u["cr"] * 0.1) / 1e6 * 1.0 + u["out"] / 1e6 * 5.0) * 0.5
     print(f"  judged {len(grades)}  ·  spend ${usd:.2f}  ·  "
           f"cache hit {u['cr']/(u['cr']+u['cw'])*100:.0f}%" if (u["cr"] + u["cw"]) else "")
+
+    # ---- validate the judge before anyone believes it ----------------------
+    consistency = None
+    if args.validate and len(pairs) > args.validate:
+        rng = random.Random(7)
+        sample = rng.sample([p for p in pairs if f"{p[0]}" in grades], args.validate)
+        recheck = judge_pairs([(k + "--recheck", q, r) for k, q, r in sample],
+                              model=args.model)["grades"]
+        agree = exact = 0
+        for key, _, _ in sample:
+            a = grades[key]["grade"]
+            b = recheck.get(key + "--recheck", {}).get("grade")
+            if b is None:
+                continue
+            agree += 1
+            exact += (a == b)
+        consistency = exact / agree if agree else None
+        print(f"\n  judge self-consistency: {exact}/{agree} identical "
+              f"({consistency:.0%})" if consistency is not None else "")
 
     out_queries, dist = [], {0: 0, 1: 0, 2: 0}
     for qi, item in enumerate(queries):
@@ -231,6 +303,8 @@ def main() -> int:
             "drafted by the system's author and edited by the reviewer."
         ),
         "judge_model": args.model,
+        "judge_self_consistency": consistency,
+        "lanes_pooled": [l for l, _, _ in lanes],
         "pool_per_lane": args.per_lane,
         "strict_grade": STRICT_GRADE,
         "queries": out_queries,
@@ -255,7 +329,28 @@ def main() -> int:
         print(f"\n{len(zero)} queries with NO relevant record - drop or rewrite these:")
         for q in zero:
             print(f"   {q!r}")
-    print(f"\nwrote {args.out} and {args.judgements_out}")
+    # ---- 50 pairs for a person to check by eye -----------------------------
+    rng = random.Random(11)
+    by_key = {k: (q, r) for k, q, r in pairs}
+    sample = rng.sample(sorted(grades), min(50, len(grades)))
+    lines = ["# Judge spot check", "",
+             f"50 random judgements from `{args.model}`, for you to sanity-check by eye.",
+             "The question is not whether you agree with every one - it is whether the",
+             "judge is reading **intent** or just matching words. If it is grading a",
+             "thriller as relevant to \"something gentle to read before bed\" because the",
+             "record says \"night\", the eval is not measuring what we think it is.", ""]
+    if consistency is not None:
+        lines += [f"Measured self-consistency on a re-judged sample: **{consistency:.0%}** "
+                  f"identical.", ""]
+    for key in sample:
+        q, record = by_key[key]
+        g = grades[key]
+        lines += [f"**{g['grade']}** — _{q}_",
+                  "```", record.strip()[:260], "```",
+                  f"judge: {g['why']}", ""]
+    args.spot_check_out.write_text("\n".join(lines), encoding="utf-8")
+
+    print(f"\nwrote {args.out}, {args.judgements_out} and {args.spot_check_out}")
     return 0
 
 
