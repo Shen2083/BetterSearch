@@ -241,8 +241,9 @@ Anthropic key; indexing and search do not.
 
 ## What actually breaks at scale
 
-The embedding model is not the bottleneck people expect. Three other things are,
-and each has a specific countermeasure in the code.
+The embedding model is not the bottleneck people expect. Four other things are.
+Three have a specific countermeasure in the code; the fourth was found by
+measuring a real 4,000-record catalogue and is not fixed yet.
 
 ### 1. Changing embedding model invalidates the whole index
 
@@ -276,7 +277,36 @@ managed Postgres instance and fitting comfortably on a small one. Note the
 self-hosted MiniLM default is smaller still — 384 dims at fp16 is 0.72 GB for 1M
 chunks — so staying local sidesteps most of this rather than creating it.
 
-### 4. Scaling while staying self-hosted
+### 4. An absolute relevance threshold does not survive a real corpus
+
+`api/catalogue.py` cuts meaning-based results at a fixed `RELEVANCE_FLOOR = 0.15`,
+tuned by eye on 74 records. Measured against 4,000 real ones with the same 41
+queries, it stops being a threshold at all:
+
+| results returned per query | min | median | p90 | max |
+|---|---|---|---|---|
+| **absolute floor, 0.15** | 116 | **763** | 3,262 | **3,665** |
+| relative: ≥ 0.90 × best | 1 | 4 | 14 | 20 |
+| relative: ≥ 0.85 × best | 2 | 9 | 27 | 41 |
+| largest-gap cut | 1 | 2 | 6 | 24 |
+
+`books like Agatha Christie` returns **3,665 of 4,000 records** above the floor —
+92% of the catalogue, presented to a reader as "3,665 results". The count is
+worse than useless: it is confidently wrong.
+
+The reason is that a fixed cosine threshold admits a roughly constant *fraction*
+of any corpus, not a constant number — 31% of the 74-record catalogue, 19% of
+the 4,000-record one — so the absolute count grows with the collection while the
+threshold looks unchanged. It scales exactly the wrong way, and nothing errors.
+This is the same brittleness that showed up when renaming one author moved a
+headline query from 8 results to 6: a single global constant cannot carry this.
+
+**The fix is a relative cut**, and `≥ 0.85 × best` is the plausible candidate on
+these numbers. It is not yet applied, because which cut is *right* is a question
+about relevance, and that needs the judged eval set rather than a count that
+looks sensible. Sane-looking output is not evidence.
+
+### 5. Scaling while staying self-hosted
 
 Self-hosted embeddings are the default path here: no per-token cost, no vendor
 dependency, and no content leaving your infrastructure — which matters more than
