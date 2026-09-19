@@ -397,6 +397,114 @@ Voyage additionally supports asymmetric encoding (`input_type` of `document` vs
 
 ---
 
+## Measured on 4,000 real catalogue records
+
+Everything above this point was measured on records I wrote. This section is
+measured on **4,000 real bibliographic records** from Open Library, against 41
+queries I drafted and Shen reviewed, with relevance judged by Claude Haiku on a
+pooled candidate set. Build it with `scripts/fetch_openlibrary.py` and
+`scripts/build_eval_set.py`.
+
+### The three modes
+
+| mode | Recall@5 | MRR@10 | nDCG@10 |
+|---|---|---|---|
+| keyword | 0.205 | 0.609 | 0.429 |
+| **semantic** | **0.291** | **0.744** | **0.588** |
+| hybrid | 0.260 | 0.720 | 0.555 |
+
+**Hybrid still loses, and that kills a hypothesis.** The earlier result — hybrid
+below pure semantic — was explained away as an artefact of an eval set weighted
+towards keyword-hostile phrasing, with the prediction that real catalogue
+traffic, full of exact-name lookups, would be where fusion finally earned its
+place. It did not. On real records with five deliberate exact-title and
+exact-author controls, hybrid still sits below semantic. The earlier
+explanation was wrong, or at least incomplete.
+
+**The eval is not saturated.** MRR@10 is 0.744, not the 1.000 that made the
+previous query set useless. There is room to improve and room to regress, which
+is the only condition under which a number means anything.
+
+### Enrichment, tested fairly for the first time
+
+Enrichment on real records, Haiku 4.5, all 4,000:
+
+| arm | Recall@5 | MRR@10 | nDCG@10 |
+|---|---|---|---|
+| thin records | 0.291 | 0.744 | 0.588 |
+| **enriched** | **0.328** | **0.787** | **0.669** |
+
+**+0.081 nDCG, a 14% relative gain**, improving 27 of 41 queries. Far more
+modest than the synthetic corpus suggested, and far more believable. Biggest
+gains are where a title says nothing about content:
+
+| Query | Thin | Enriched |
+|---|---|---|
+| cycling long distances | 0.366 | **0.747** |
+| Joy of Cooking | 0.631 | **1.000** |
+| a novel where the beekeeper is the detective | 0.307 | **0.613** |
+| an uplifting story after a hard year | 0.073 | **0.344** |
+| second world war in the pacific | 0.073 | **0.290** |
+
+**Enrichment is not free, and the failures are systematic.** Five queries got
+worse, and the worst is instructive:
+
+| Query | Thin | Enriched |
+|---|---|---|
+| Sue Monk Kidd | **1.000** | 0.387 |
+| what to do about money worries | 1.000 | 0.695 |
+
+`Sue Monk Kidd` is an exact-author lookup with one matching record. Enrichment
+surrounds that record with topical prose about bees, race and the American
+South, and the author's name stops dominating its vector. **Enrichment helps
+queries about aboutness and hurts queries about identity** — which is an
+argument for routing by query type, not for enriching everything and hoping.
+
+**It also reintroduces a problem the project had written off.** Enrichment
+takes the median record from 21 words to 117, and **79 chunks now exceed
+MiniLM's 256-token cap** where thin records exceeded it zero times. The earlier
+finding that the cap "costs exactly nothing" was true only of thin records. Two
+decisions each measured in isolation interact, and Opus enrichment — 74-word
+synopses against Haiku's 44 — would truncate more.
+
+### Settling the relevance floor
+
+`RELEVANCE_FLOOR = 0.15` was tuned by eye on 74 records. Against real
+judgements:
+
+| strategy | precision | recall | F1 | median results |
+|---|---|---|---|---|
+| **absolute 0.15 (current)** | **0.035** | 0.986 | 0.067 | 763 |
+| relative ≥ 0.90 × best | 0.582 | 0.302 | 0.398 | 4 |
+| relative ≥ 0.85 × best | 0.502 | 0.400 | 0.445 | 9 |
+| largest-gap cut | 0.648 | 0.246 | 0.356 | 2 |
+| **fixed top-20** | 0.398 | 0.667 | **0.498** | 20 |
+
+Precision **0.035**: the floor admits almost everything and calls it a result
+set. But the fix I proposed from result counts alone — a relative cut — is
+**not** the winner. Plain top-k beats every threshold on F1, because thresholds
+buy precision by throwing away recall the pagination would have handled anyway.
+Judging by counts that "look sensible" would have picked the wrong answer; this
+is why the fix waited for the judgements.
+
+### How much to trust this
+
+- **Judge self-consistency 98%** (98 of 100 re-judged pairs identical). A
+  50-pair sample is in `data/eval_real_spotcheck.md` for a human to check.
+- **Pooling bias.** Records no lane retrieved were never judged, so recall is
+  relative to the pool, not absolute. All three measured lanes contributed —
+  309 records came only from the enriched lane, and judging before enriching
+  would have scored every one of them as irrelevant.
+- **Grades are an LLM's**, validated by sampling, not human ground truth.
+- **Queries are author-drafted, reviewer-edited.** Not independently written.
+- **Holdings are invented.** Bibliographic data is real; availability, branch
+  and format are not.
+- **Two queries score 0.000 on both arms** — `learning to grow vegetables in
+  pots` and `the one about a boy wizard at school`. Reported rather than
+  quietly dropped.
+
+---
+
 ## Enrichment for thin catalogue records
 
 The production target is a library catalogue of 100k–1M items holding **thin
