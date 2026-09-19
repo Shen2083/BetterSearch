@@ -45,11 +45,34 @@ class IngestReport:
         }
 
 
-def load_corpus(path: str | Path) -> list[Document]:
-    """Read a corpus JSON file: either a list, or {"documents": [...]}."""
-    raw = json.loads(Path(path).read_text(encoding="utf-8"))
-    records = raw["documents"] if isinstance(raw, dict) else raw
-    return [Document.from_dict(record) for record in records]
+def load_corpus(path: str | Path | Sequence[str | Path]) -> list[Document]:
+    """Read a corpus JSON file: either a list, or {"documents": [...]}.
+
+    Several paths read as one collection. A library's books and its events are
+    maintained separately and searched together, and merging them at load time
+    keeps that a property of the corpus rather than something the index, the
+    searcher or the page has to know about.
+
+    Duplicate doc_ids across files raise rather than silently shadowing: two
+    collections colliding on an id is a corpus error, and the symptom otherwise
+    is a record that cannot be retrieved for reasons nothing reports.
+    """
+    paths = [path] if isinstance(path, (str, Path)) else list(path)
+    documents: list[Document] = []
+    seen: dict[str, Path] = {}
+    for one in paths:
+        raw = json.loads(Path(one).read_text(encoding="utf-8"))
+        records = raw["documents"] if isinstance(raw, dict) else raw
+        for record in records:
+            document = Document.from_dict(record)
+            if (first := seen.get(document.doc_id)) is not None:
+                raise ValueError(
+                    f"duplicate doc_id {document.doc_id!r} in {one} - already "
+                    f"defined in {first}"
+                )
+            seen[document.doc_id] = Path(one)
+            documents.append(document)
+    return documents
 
 
 def ingest_documents(
@@ -105,7 +128,7 @@ def ingest_documents(
 
 
 def ingest_corpus(
-    path: str | Path,
+    path: str | Path | Sequence[str | Path],
     *,
     provider: EmbeddingProvider | None = None,
     index: VectorIndex | None = None,

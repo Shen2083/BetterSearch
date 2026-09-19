@@ -284,3 +284,85 @@ def test_to_card_returns_the_record_not_a_rewrite():
     assert card["record_text"] == "Author: A Writer"
     assert card["score"] == 0.42
     assert card["rank"] == 1
+
+
+# --- events as a second collection ----------------------------------------
+
+
+def event(doc_id: str, title: str, series: str, **extra) -> dict:
+    return {
+        "doc_id": doc_id, "title": title, "series_id": series,
+        "record_type": "event", "format": "Event", "location": "Rowley Green",
+        "available": 6, "copies": 6, "audience": "Adults",
+        "when": "Tuesdays, 2.00pm", "booking": "Just turn up", "cost": "Free",
+        **extra,
+    }
+
+
+@pytest.fixture
+def mixed() -> dict[str, dict]:
+    """Books, plus one weekly session that exists as several dated records."""
+    catalogue = make_catalogue(10)
+    for i in range(4):
+        catalogue[f"ev-knit-{i}"] = event(f"ev-knit-{i}", "Knit and Natter",
+                                          "s-knit")
+    catalogue["ev-repair"] = event("ev-repair", "Repair Cafe", "s-repair")
+    return catalogue
+
+
+def test_repeat_occurrences_of_one_session_collapse_to_one_card(mixed):
+    """Seven copies of a weekly drop-in is not seven results."""
+    searcher = StubSearcher([f"ev-knit-{i}" for i in range(4)] + ["ev-repair"])
+    data = run_search(searcher, mixed, query="knitting", mode="semantic")
+
+    titles = [r["title"] for r in data["results"]]
+    assert titles == ["Knit and Natter", "Repair Cafe"]
+    assert data["total"] == 2
+
+
+def test_a_collapsed_series_says_how_many_dates_it_has(mixed):
+    searcher = StubSearcher([f"ev-knit-{i}" for i in range(4)])
+    data = run_search(searcher, mixed, query="knitting", mode="semantic")
+
+    assert data["results"][0]["repeats"] == 4
+
+
+def test_collapsing_keeps_the_best_ranked_occurrence(mixed):
+    """The one that matched best is the one to show, not whichever came first."""
+    searcher = StubSearcher(["ev-knit-2", "ev-knit-0", "ev-knit-1"])
+    data = run_search(searcher, mixed, query="knitting", mode="semantic")
+
+    assert data["results"][0]["doc_id"] == "ev-knit-2"
+
+
+def test_books_are_never_collapsed(mixed):
+    """Books carry no series_id, so the collapse must not touch them."""
+    searcher = StubSearcher([f"doc-{i:03d}" for i in range(10)])
+    data = run_search(searcher, mixed, query="anything", mode="semantic")
+
+    assert data["total"] == 10
+
+
+def test_records_are_typed_so_a_card_can_say_which_it_is(mixed):
+    searcher = StubSearcher(["ev-repair", "doc-000"])
+    data = run_search(searcher, mixed, query="anything", mode="semantic")
+
+    assert [r["record_type"] for r in data["results"]] == ["event", "book"]
+
+
+def test_the_type_facet_separates_the_two_collections(mixed):
+    searcher = StubSearcher(["ev-repair"] + [f"doc-{i:03d}" for i in range(10)])
+    data = run_search(searcher, mixed, query="anything", mode="semantic")
+
+    facet = next(f for f in data["facets"] if f["key"] == "record_type")
+    counts = {v["value"]: v["count"] for v in facet["values"]}
+    assert counts == {"Books": 10, "Events": 1}
+
+
+def test_filtering_to_events_leaves_only_events(mixed):
+    searcher = StubSearcher(["ev-repair"] + [f"doc-{i:03d}" for i in range(10)])
+    data = run_search(searcher, mixed, query="anything", mode="semantic",
+                      filters={"record_type": ["Events"]})
+
+    assert data["total"] == 1
+    assert data["results"][0]["record_type"] == "event"

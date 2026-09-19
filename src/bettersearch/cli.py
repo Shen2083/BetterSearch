@@ -49,12 +49,13 @@ def _build_searcher() -> Searcher:
 # --------------------------------------------------------------------- ingest
 def cmd_ingest(args: argparse.Namespace) -> int:
     settings = load_settings()
+    corpora = args.corpus or [DEFAULT_CORPUS]
     print(
         f"Provider: {settings.embedding_provider}   "
-        f"Index: {settings.index_backend}   Corpus: {args.corpus}"
+        f"Index: {settings.index_backend}   Corpus: {', '.join(corpora)}"
     )
     report = ingest_corpus(
-        args.corpus, settings=settings, force=args.force, progress=args.progress
+        corpora, settings=settings, force=args.force, progress=args.progress
     )
 
     print(
@@ -197,7 +198,10 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     p_ingest = sub.add_parser("ingest", help="chunk, embed and index a corpus")
-    p_ingest.add_argument("--corpus", default=DEFAULT_CORPUS)
+    # Repeatable: several corpus files read as one collection, which is how a
+    # library's books and its events reach the same index.
+    p_ingest.add_argument("--corpus", action="append", metavar="PATH",
+                          help=f"corpus JSON, repeatable (default: {DEFAULT_CORPUS})")
     p_ingest.add_argument(
         "--force",
         action="store_true",

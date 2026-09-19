@@ -15,13 +15,20 @@ Here is the same idea in a library catalogue. One reader, one phrasing, the same
 
 ![A library catalogue search results page. The query "learning to be present" under the "Catalogue search" tab returns "No results", with the explanation that a keyword search can only return a record that literally contains what you typed](docs/screenshots/catalogue-keyword.png)
 
-**Search by meaning — 6 results.**
+**Search by meaning — 20 results.**
 
-![The same catalogue and the same query under the "Search by meaning" tab, now showing 1-6 of 6 records with working facets for availability, format and location. The first result is "Attention, and Other Small Miracles" by Sanne Verhoeven, whose record contains no summary at all](docs/screenshots/catalogue-meaning.png)
+![The same catalogue and the same query under the "Search by meaning" tab, now showing 1-10 of 20 records with working facets for availability, format and location. The first result is "Attention, and Other Small Miracles" by Sanne Verhoeven, whose record contains no summary at all](docs/screenshots/catalogue-meaning.png)
 
-Not one of those six records contains the word *learning* or the word
-*present*. Four of the six have no summary at all — nothing but a title, an
-author and a subject heading.
+Not one of those twenty records contains the word *learning* or the word
+*present*. Eighteen of the twenty have no summary at all — nothing but a title,
+an author and a subject heading.
+
+Twenty of seventy-four is a lot, and that is the honest state of it: the page
+returns a fixed top 20, a number measured against the 4,000-record corpus
+further down, not against this one. On a shelf this small the last few are
+thin. There is no corpus-independent right answer here — [see below](#settling-the-relevance-floor)
+for what replaced the threshold that used to do this job, and why a number
+that looked sensible was the wrong one.
 
 ---
 
@@ -117,6 +124,63 @@ Point Someone* and *John Dies at the End*, because they contain the words
 in a file anyone can open.
 
 ---
+
+## Searching the events alongside the books
+
+A reader asking what to do about their CV wants Tuesday's job club at least as
+much as a book on interview technique, and a catalogue that only holds books
+cannot tell them. So the events are a second collection in the same index: one
+query reaches both, and they compete for the same result slots.
+
+```bash
+BETTERSEARCH_INDEX_PATH=.bettersearch/real-events \
+    bettersearch ingest --corpus data/catalogue_real.json \
+                        --corpus data/events_northfield.json
+```
+
+`getting my toddler to eat vegetables` now opens with the Toddler Mealtimes
+Workshop, above eighteen books that are also about the right thing.
+
+**The events are invented, so this demonstrates the idea and measures nothing
+about it.** There is no public feed of library events, and writing 114 of them
+reintroduces exactly the flattery that got the 74-record catalogue replaced by
+real Open Library data: the author of the queries also wrote the answers. What
+*is* worth checking is the plumbing, which can fail in two opposite directions —
+4,000 books against 114 events means an event may never surface at all, and the
+worse failure is an event surfacing where nobody wants one.
+
+```bash
+python scripts/check_events.py
+```
+
+| | |
+|---|---|
+| event-shaped queries reaching an event | **11 of 12** |
+| known-item lookups showing an event | **0 of 5** |
+| event results across the 41 book queries | **8 of 820 slots** |
+
+The decision this fed was written down before the script ran: *if events are
+invisible, retrieve the two collections separately and fuse by rank.* They are
+not invisible, so `reciprocal_rank_fusion` stays unused and the single index
+stands. Worth recording that the fallback was specified first — it is much
+easier to decide a fusion layer was necessary after watching it work.
+
+**Two things this turned up.**
+
+The one miss is `learn to knit`, where *Knit and Natter* sits at rank 49 behind
+48 knitting books. That is arguably right — someone asking to learn probably
+wants a book — but the mechanism is not judgement, it is supply. An event only
+wins where the shelves are thin, which is why *Tuesday Club*, *Repair Cafe* and
+*Digital Help Drop-in* come through and knitting does not.
+
+The other was a real defect. A weekly session is several records, one per date,
+so a query matching the session matches all of them: `something short I can
+finish in one sitting` filled its first five slots with five identical copies of
+a chair exercise class, on a cosine score of 0.30. Nothing in any record
+describes how long a book is, so in that vacuum "sitting" matched "sitting down"
+and won. Occurrences of one series now collapse to the best-ranked of them, and
+the card says *and 6 other dates* — which is how a reader thinks about it
+anyway: one thing that happens on Tuesdays, not seven things.
 
 ## The three modes
 
@@ -525,6 +589,16 @@ results rather than 3,665. Reproduce the whole table, both arms and the sweep:
 python scripts/tune_cutoff.py thin=.bettersearch/real \
     enriched=.bettersearch/real-enriched
 ```
+
+**And 20 is not a universal constant.** It is measured for a 4,000-record
+catalogue. On the 74-record demonstration catalogue at the top of this file it
+is more than a quarter of the shelf, and results 11 to 20 for the headline query
+are a Punjabi book with no title and a DVD about a lighthouse — the same error
+as the floor it replaced, a number tuned on one corpus applied to another. The
+difference is that this one is labelled and settable (`BETTERSEARCH_TOP_K`)
+rather than buried, and no second number has been invented for the small
+catalogue: there are no judgements for it, and guessing one is how the first
+version of this went wrong.
 
 One visible consequence: facet counts in the sidebar now describe the 20 results
 returned, where before they described a 763-record set the reader could never

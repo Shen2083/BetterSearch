@@ -19,9 +19,19 @@ _DATA = Path(__file__).resolve().parent.parent / "data"
 #: Which catalogue the page serves. Settable so the 74-record demonstration
 #: catalogue and the 4,000-record real one can both be served without a code
 #: change - they share this schema exactly.
-CATALOGUE_PATH = Path(
-    os.environ.get("BETTERSEARCH_CATALOGUE", _DATA / "catalogue_library.json")
-)
+#:
+#: Comma-separated for several collections at once - books and events, which a
+#: library maintains separately and a reader searches together. Whatever is
+#: listed here has to match what was ingested, or the page will rank records it
+#: cannot then display.
+CATALOGUE_PATHS = [
+    Path(p) for p in
+    os.environ.get("BETTERSEARCH_CATALOGUE", str(_DATA / "catalogue_library.json")).split(",")
+    if p.strip()
+]
+#: Kept for callers that want the primary corpus - notably the standalone build,
+#: which reads its footnote out of the corpus description.
+CATALOGUE_PATH = CATALOGUE_PATHS[0]
 
 #: Meaning-based retrieval always returns its top_k, however weak the match, so
 #: a catalogue has to stop the list somewhere or the result count stops meaning
@@ -37,7 +47,16 @@ CATALOGUE_PATH = Path(
 #:
 #: 20 is where the evidence stops rather than where it peaks: the eval pooled
 #: each lane to depth 20, so nothing deeper is judged. F1 was still rising there.
-SEMANTIC_TOP_K = 20
+#:
+#: Settable, because 20 is measured *for the 4,000-record corpus* and is not a
+#: universal constant. On the 74-record demonstration catalogue it is a quarter
+#: of the shelf, and results 11-20 for the headline query are a Punjabi book
+#: with no title and a DVD about a lighthouse. That is the same error as the
+#: floor it replaced - a number tuned on one corpus applied to another - and the
+#: honest response is to expose it rather than to hard-code a second guess. Any
+#: value set here is eyeballed unless it came out of scripts/tune_cutoff.py
+#: against judgements for the corpus being served.
+SEMANTIC_TOP_K = int(os.environ.get("BETTERSEARCH_TOP_K", "20"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,9 +73,13 @@ class Facet:
 
 
 def load_catalogue() -> dict[str, dict[str, Any]]:
-    raw = json.loads(CATALOGUE_PATH.read_text(encoding="utf-8"))
-    records = raw["documents"] if isinstance(raw, dict) else raw
-    return {r["doc_id"]: r for r in records}
+    catalogue: dict[str, dict[str, Any]] = {}
+    for path in CATALOGUE_PATHS:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        records = raw["documents"] if isinstance(raw, dict) else raw
+        for record in records:
+            catalogue[record["doc_id"]] = record
+    return catalogue
 
 
 def _decade(year: str) -> str | None:
@@ -74,8 +97,20 @@ def _availability(record: dict) -> list[str]:
     return tags
 
 
+def _record_type(record: dict) -> list[str]:
+    """Books unless a record says otherwise.
+
+    Absent on every book record, because the books were catalogued long before
+    there was anything else to tell them apart from. Defaulting here rather than
+    backfilling 4,000 records keeps the two collections independent: adding a
+    third needs a new value, not a migration.
+    """
+    return ["Events" if record.get("record_type") == "event" else "Books"]
+
+
 #: (key, label, how to read the value(s) off a record)
 _FACET_SPEC: list[tuple[str, str, Any]] = [
+    ("record_type", "Books / Events", _record_type),
     ("availability", "Availability", _availability),
     ("format", "Format", lambda r: [r.get("format")] if r.get("format") else []),
     ("fiction", "Fiction / Non-fiction",
@@ -120,6 +155,15 @@ def to_card(record: dict, score: float, rank: int) -> dict[str, Any]:
         "rank": rank,
         "score": round(float(score), 4),
         "doc_id": record["doc_id"],
+        # Books and events are ranked together, so a card has to say which it is
+        # before it says anything else - a result list where a Tuesday drop-in
+        # looks like a book is worse than not returning the drop-in at all.
+        "record_type": record.get("record_type", "book"),
+        "audience": record.get("audience") or "",
+        "when": record.get("when") or "",
+        "booking": record.get("booking") or "",
+        "cost": record.get("cost") or "",
+        "repeats": int(record.get("repeats", 1)),
         "title": record["title"],
         "author": record.get("author") or "",
         "author_dates": record.get("author_dates") or "",
@@ -162,7 +206,16 @@ def run_search(
 
     # Retrieval works on chunks; a catalogue shows records. One chunk per record
     # here, but de-duplicate by doc_id so this stays correct if that changes.
+    #
+    # A weekly event is several records - one per date, each with its own branch
+    # and place count - so a query matching the session matches all of them.
+    # Left alone, "something short I can finish in one sitting" filled its first
+    # five slots with five copies of the same chair exercise class. Occurrences
+    # of one series therefore collapse to the best-ranked one, which is also how
+    # a reader thinks about it: one thing that happens on Tuesdays, not seven
+    # things. `repeats` carries the rest so the card can say so.
     seen: set[str] = set()
+    series_at: dict[str, int] = {}
     ranked: list[tuple[dict, float]] = []
     for hit in hits:
         doc_id = hit.chunk.doc_id
@@ -170,8 +223,16 @@ def run_search(
             continue
         seen.add(doc_id)
         record = catalogue.get(doc_id)
-        if record is not None:
-            ranked.append((record, hit.score))
+        if record is None:
+            continue
+        if (series := record.get("series_id")) is not None:
+            if (position := series_at.get(series)) is not None:
+                first, score = ranked[position]
+                ranked[position] = ({**first,
+                                     "repeats": first.get("repeats", 1) + 1}, score)
+                continue
+            series_at[series] = len(ranked)
+        ranked.append((record, hit.score))
 
     # Facets are counted before filtering, so the sidebar shows what you could
     # narrow to rather than only what is already selected. Under the old floor

@@ -94,7 +94,12 @@ def build_rankings(queries: list[str]) -> tuple[dict, dict]:
                 page=1, per_page=len(catalogue),
             )
             key = f"{normalise(query)}|{mode}"
-            rankings[key] = [[r["doc_id"], r["score"]] for r in data["results"]]
+            # Third element is the occurrence count of a collapsed event
+            # series. It is carried rather than re-derived offline because
+            # run_search has already collapsed the list by this point - the
+            # baked ranking holds one record per series and the count with it.
+            rankings[key] = [[r["doc_id"], r["score"], r.get("repeats", 1)]
+                             for r in data["results"]]
             print(f"  {mode:<9} {query!r} -> {len(rankings[key])} records")
     return catalogue, rankings
 
@@ -108,7 +113,7 @@ def reachable(catalogue: dict, rankings: dict) -> dict:
     safe; it is only unsafe if a ranking references a record that is not here,
     which the caller checks.
     """
-    wanted = {doc_id for ranking in rankings.values() for doc_id, _ in ranking}
+    wanted = {doc_id for ranking in rankings.values() for doc_id, *_ in ranking}
     return {doc_id: catalogue[doc_id] for doc_id in wanted if doc_id in catalogue}
 
 
@@ -146,10 +151,18 @@ def rewrite_footnote(html: str) -> str:
     file meant to be sent to a library is exactly the claim not to get wrong, so
     it is taken from the corpus file rather than written here.
     """
-    from api.catalogue import CATALOGUE_PATH
+    from api.catalogue import CATALOGUE_PATHS
 
-    raw = json.loads(Path(CATALOGUE_PATH).read_text(encoding="utf-8"))
-    description = raw.get("description") if isinstance(raw, dict) else None
+    # Every collection served, not just the first. With books and events the
+    # books file says the bibliographic data is real and the events file says
+    # the whole programme is invented; printing only one of those is precisely
+    # the misstatement this function exists to avoid.
+    parts = []
+    for path in CATALOGUE_PATHS:
+        raw = json.loads(Path(path).read_text(encoding="utf-8"))
+        if isinstance(raw, dict) and raw.get("description"):
+            parts.append(raw["description"].strip())
+    description = " ".join(parts)
     if not description:
         return html
     return re.sub(
@@ -178,7 +191,7 @@ def build(out: Path, queries: list[str] | None = None) -> Path:
 
     full = len(catalogue)
     catalogue = reachable(catalogue, rankings)
-    missing = {doc_id for r in rankings.values() for doc_id, _ in r} - set(catalogue)
+    missing = {doc_id for r in rankings.values() for doc_id, *_ in r} - set(catalogue)
     if missing:
         raise SystemExit(f"{len(missing)} ranked records are not in the "
                          f"catalogue - the index and the corpus disagree")
