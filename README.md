@@ -490,17 +490,25 @@ is why the fix waited for the judgements.
 ### Open: does the top model tier buy better retrieval?
 
 Enrichment above is Haiku 4.5 on all 4,000 records. Opus 5 was run on a
-120-record sample before the comparison was abandoned, and on those same
+289-record sample before the comparison was abandoned, and on those same
 records it is plainly the richer writer:
 
-| on the same 120 records | Haiku 4.5 | Opus 5 |
+| on the same 289 records | Haiku 4.5 | Opus 5 |
 |---|---|---|
-| `recognised: true` | 74% | **93%** |
-| synopsis words | 44 | **74** |
-| topics | 8.5 | **14.3** |
+| `recognised: true` | 52% | **76%** |
+| synopsis words | 39 | **65** |
+| topics | 7.6 | **13.5** |
+
+An earlier version of this table read 74% / 93% off the first 120 records.
+Those 120 are all detective and science fiction — the corpus is stored in the
+order it was fetched, subject by subject — and famous genre novels are the
+easiest thing in a catalogue for a model to recognise. Widening the sample to
+289 drops both models by more than twenty points. The ordering between them
+survives; the absolute rates did not, and a sample drawn from the top of a
+subject-ordered file is not a sample.
 
 **This does not answer whether Opus retrieves better, and it was never going to.**
-A valid Opus arm needs all 4,000 records enriched by Opus: with 300 enriched
+A valid Opus arm needs all 4,000 records enriched by Opus: with 289 enriched
 among 4,000 thin ones, the enriched records gain an advantage purely for being
 enriched. The sample supports a quality comparison, not a retrieval one. Buying
 the real answer costs about £37 of Opus enrichment against £7 for Haiku.
@@ -508,11 +516,11 @@ the real answer costs about £37 of Opus enrichment against £7 for Haiku.
 **The 4k result argues against assuming richer is better.** Enrichment already
 regressed five queries by diluting records — `Sue Monk Kidd` fell 1.000 → 0.387
 because topical prose crowded out an exact-author match. Opus writes 68% more
-synopsis and 68% more topics, so it would dilute harder. Richer could plausibly
+synopsis and 78% more topics, so it would dilute harder. Richer could plausibly
 retrieve *worse*, and the 79 chunks already pushed past MiniLM's 256-token cap
 would become more.
 
-The 120 Opus enrichments are committed at `data/enrichment_real_opus_sample.jsonl`
+The 289 Opus enrichments are committed at `data/enrichment_real_opus_sample.jsonl`
 so the quality figures above can be checked.
 
 ### How much to trust this
