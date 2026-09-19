@@ -60,6 +60,20 @@ hybrid         0.624     0.826     0.741
 Semantic should roughly double keyword on nDCG. Hybrid scoring *below* semantic
 is expected here and is not a bug — see the README on why.
 
+To re-derive where the catalogue page cuts its result list, against the 4,000
+real records and their judgements:
+
+```bash
+python scripts/tune_cutoff.py thin=.bettersearch/real \
+    enriched=.bettersearch/real-enriched
+```
+
+**Expected**: `fixed top-20` is the best measured F1 on both arms, and the script
+says so itself. It also marks the rows it cannot judge — any cut returning more
+than the pool depth of 20 is scored partly against records no judge ever saw, so
+its precision is not comparable. `api/catalogue.py:SEMANTIC_TOP_K` holds the
+number the script picks; if you change one, re-run the other.
+
 ### The tests
 
 ```bash

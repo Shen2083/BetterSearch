@@ -24,10 +24,20 @@ CATALOGUE_PATH = Path(
 )
 
 #: Meaning-based retrieval always returns its top_k, however weak the match, so
-#: a catalogue needs a floor or "3 results" becomes "74 results" and the count
-#: stops meaning anything. Tuned against observed scores: genuinely relevant
-#: records land around 0.3-0.5, unrelated ones near or below 0.1.
-RELEVANCE_FLOOR = 0.15
+#: a catalogue has to stop the list somewhere or the result count stops meaning
+#: anything. This was an absolute cosine floor of 0.15, eyeballed on 74 records.
+#: On 4,000 it fell apart: a fixed threshold admits a roughly constant *fraction*
+#: of a corpus, not a constant number, so `books like Agatha Christie` came back
+#: with 3,665 of 4,000 records above the floor and the page said "3,665 results".
+#:
+#: Plain top-k wins instead - precision 0.398 against the floor's 0.035 on the
+#: judged set. It also beat every threshold variant, including the relative cut
+#: that looked right from result counts alone. Reproduce with
+#: `python scripts/tune_cutoff.py`.
+#:
+#: 20 is where the evidence stops rather than where it peaks: the eval pooled
+#: each lane to depth 20, so nothing deeper is judged. F1 was still rising there.
+SEMANTIC_TOP_K = 20
 
 
 @dataclass(frozen=True, slots=True)
@@ -140,10 +150,15 @@ def run_search(
     depth = len(catalogue)
 
     if mode == "keyword":
+        # Keyword keeps full depth on purpose, which makes the two modes
+        # asymmetric. BM25 has a cut-off built in - a record sharing no term with
+        # the query simply does not match - so its result count is already a
+        # statement about the query. Cosine similarity has no such floor: every
+        # record scores against every query, and something has to impose the end
+        # of the list.
         hits = searcher.keyword(query, top_k=depth)
     else:
-        hits = [h for h in searcher.semantic(query, top_k=depth)
-                if h.score >= RELEVANCE_FLOOR]
+        hits = searcher.semantic(query, top_k=SEMANTIC_TOP_K)
 
     # Retrieval works on chunks; a catalogue shows records. One chunk per record
     # here, but de-duplicate by doc_id so this stays correct if that changes.
@@ -159,7 +174,10 @@ def run_search(
             ranked.append((record, hit.score))
 
     # Facets are counted before filtering, so the sidebar shows what you could
-    # narrow to rather than only what is already selected.
+    # narrow to rather than only what is already selected. Under the old floor
+    # this counted over a 763-record shadow set the reader could never page to;
+    # it now describes the results actually returned, which is what a reader
+    # takes the numbers to mean.
     facets = build_facets([r for r, _ in ranked])
 
     kept = [(r, s) for r, s in ranked if matches_filters(r, filters)]

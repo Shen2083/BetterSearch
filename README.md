@@ -279,9 +279,9 @@ chunks — so staying local sidesteps most of this rather than creating it.
 
 ### 4. An absolute relevance threshold does not survive a real corpus
 
-`api/catalogue.py` cuts meaning-based results at a fixed `RELEVANCE_FLOOR = 0.15`,
+`api/catalogue.py` cut meaning-based results at a fixed `RELEVANCE_FLOOR = 0.15`,
 tuned by eye on 74 records. Measured against 4,000 real ones with the same 41
-queries, it stops being a threshold at all:
+queries, it stopped being a threshold at all:
 
 | results returned per query | min | median | p90 | max |
 |---|---|---|---|---|
@@ -301,10 +301,12 @@ threshold looks unchanged. It scales exactly the wrong way, and nothing errors.
 This is the same brittleness that showed up when renaming one author moved a
 headline query from 8 results to 6: a single global constant cannot carry this.
 
-**The fix is a relative cut**, and `≥ 0.85 × best` is the plausible candidate on
-these numbers. It is not yet applied, because which cut is *right* is a question
-about relevance, and that needs the judged eval set rather than a count that
-looks sensible. Sane-looking output is not evidence.
+**The obvious fix is a relative cut**, and `≥ 0.85 × best` is the plausible
+candidate on these numbers. It was not applied, because which cut is *right* is a
+question about relevance, and that needs the judged eval set rather than a count
+that looks sensible. Sane-looking output is not evidence — and when the
+judgements arrived they picked something else entirely. See *Settling the
+relevance floor* below.
 
 ### 5. Scaling while staying self-hosted
 
@@ -470,14 +472,17 @@ synopses against Haiku's 44 — would truncate more.
 ### Settling the relevance floor
 
 `RELEVANCE_FLOOR = 0.15` was tuned by eye on 74 records. Against real
-judgements:
+judgements, on the thin 4,000-record arm:
 
 | strategy | precision | recall | F1 | median results |
 |---|---|---|---|---|
-| **absolute 0.15 (current)** | **0.035** | 0.986 | 0.067 | 763 |
+| absolute 0.15 (old) | **0.035** | 0.986 | 0.067 | 763 |
 | relative ≥ 0.90 × best | 0.582 | 0.302 | 0.398 | 4 |
 | relative ≥ 0.85 × best | 0.502 | 0.400 | 0.445 | 9 |
 | largest-gap cut | 0.648 | 0.246 | 0.356 | 2 |
+| fixed top-5 | 0.522 | 0.291 | 0.373 | 5 |
+| fixed top-10 | 0.461 | 0.420 | 0.439 | 10 |
+| fixed top-15 | 0.418 | 0.556 | 0.477 | 15 |
 | **fixed top-20** | 0.398 | 0.667 | **0.498** | 20 |
 
 Precision **0.035**: the floor admits almost everything and calls it a result
@@ -486,6 +491,30 @@ set. But the fix I proposed from result counts alone — a relative cut — is
 buy precision by throwing away recall the pagination would have handled anyway.
 Judging by counts that "look sensible" would have picked the wrong answer; this
 is why the fix waited for the judgements.
+
+**Where the evidence stops.** The eval pooled each lane to depth 20, so no record
+below rank 20 has a judgement and every one of them scores as irrelevant. F1 is
+still *rising* at k=20 — 0.373, 0.439, 0.477, 0.498 across the sweep — and the
+fall after it (0.477 at 25, 0.339 at 50) is an artefact of running past the pool,
+not a peak. So the honest claim is narrow: **20 is the deepest cut this eval can
+vouch for, and it beats everything shallower.** Whether 30 would be better is
+unmeasured, and would need a deeper pool to answer.
+
+`api/catalogue.py` now retrieves `SEMANTIC_TOP_K = 20` directly instead of
+retrieving everything and filtering. `books like Agatha Christie` returns 20
+results rather than 3,665. Reproduce the whole table, both arms and the sweep:
+
+```bash
+python scripts/tune_cutoff.py thin=.bettersearch/real \
+    enriched=.bettersearch/real-enriched
+```
+
+One visible consequence: facet counts in the sidebar now describe the 20 results
+returned, where before they described a 763-record set the reader could never
+page to. The keyword lane is untouched and still returns full depth — BM25 stops
+on its own, since a record sharing no term with the query does not match at all,
+while cosine similarity scores every record against every query and needs the
+list ended for it.
 
 ### Open: does the top model tier buy better retrieval?
 
