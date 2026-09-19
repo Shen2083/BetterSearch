@@ -5,17 +5,17 @@ the one part of this I should not be marking myself. Edit freely.
 
 ## What I need from you
 
-1. **Would a real person type this into a library catalogue?** If not, reword or cut it.
-2. **Cut freely.** 30 good queries beat 41 mediocre ones. Nothing is wasted —
-   relevance judgements are generated afterwards, so changing a query here costs nothing.
-3. **Please keep several controls.** They are deliberately keyword-friendly and stop
-   the set flattering semantic search by construction.
-4. **Add your own.** Anything you have heard a real borrower ask.
+1. Would a real person type this into a library catalogue? If not, cut it or rewrite it.
+2. The 'control' queries are deliberately keyword-friendly. They stop the set flattering semantic search by construction - please keep at least a few.
+3. Difficulty should be spread. The previous eval set saturated at MRR 1.000 and became useless; a set where everything is easy tells us nothing.
+4. Delete freely. 30 good queries beat 40 mediocre ones.
+5. Sensitive queries (grief, illness, mental health) are judged on whether a book HELPS with the subject, not whether it FEATURES it. The judge rubric enforces this: fiction using death as a plot device scores 0, not 1.
 
-⚠️ marks a query where I already saw a problem — those are the ones most worth your eye.
+⚠️ = a problem I have already seen.  🔴 = a **sensitive** query, where a wrong
+result harms the reader rather than mildly annoying them.
 
-To edit: `data/eval_real_queries_draft.json`. To see what each one currently
-retrieves from the real catalogue: `docs/query-review.md`.
+To edit: `data/eval_real_queries_draft.json`. What each currently retrieves:
+`docs/query-review.md`.
 
 ---
 
@@ -85,7 +85,7 @@ retrieves from the real catalogue: `docs/query-review.md`.
 > Endurance cycling, phrased plainly.
 
 
-## task  (8)
+## task  (7)
 
 **16. `getting my toddler to eat vegetables`**  
 
@@ -95,31 +95,32 @@ retrieves from the real catalogue: `docs/query-review.md`.
 
 > Spans parenting and sleep.
 
-**18. `coping after someone dies`**  ⚠️
-
-> Bereavement in plain words.
->
-> **Problem seen:** 115 grief-adjacent records exist, but they are Ubik, Mort, Death Note — fiction where death is a theme, not bereavement support.
-
-**19. `preparing for a job interview`**  
+**18. `preparing for a job interview`**  
 
 > Job hunting.
 
-**20. `what to expect when you are pregnant`**  
+**19. `what to expect when you are pregnant`**  
 
 > Near a famous title - tests title bleed.
 
-**21. `getting fit again after illness`**  
+**20. `getting fit again after illness`**  
 
 > Fitness with a qualifier.
 
-**22. `learning to cook on a budget`**  
+**21. `learning to cook on a budget`**  
 
 > Cookery plus constraint.
 
-**23. `dog training for a new puppy`**  
+**22. `dog training for a new puppy`**  
 
 > Should be easy for both lanes.
+
+
+## task (sensitive)  (1)
+
+**23. `coping after someone dies`**  🔴
+
+> Bereavement in plain words. The sharpest query in the set: semantic returns 8/8 grief-support titles, while keyword serves a grieving reader 'John Dies at the End' and 'Five Point Someone' by matching someone/dies/after. Failure here has a human cost, not just a relevance cost.
 
 
 ## mood  (7)
@@ -144,7 +145,7 @@ retrieves from the real catalogue: `docs/query-review.md`.
 
 > Length, which is not in the record at all. May be unanswerable - worth knowing.
 >
-> **Problem seen:** Keyword accidentally WINS (finds short-story collections); semantic returns Woodworking. Length is not in the record at all.
+> **Problem seen:** Keyword accidentally WINS (short-story collections); semantic returns Woodworking. Length is not in the record.
 
 **28. `a book that will make me cry`**  
 
@@ -216,7 +217,7 @@ retrieves from the real catalogue: `docs/query-review.md`.
 
 ---
 
-**41 queries** · 5 flagged · 5 controls
+**41 queries** · 4 flagged · 1 sensitive · 5 controls
 
 Provenance recorded in the README: drafted by the system's author, reviewed and
 edited by Shen. Not claimed as independently written.

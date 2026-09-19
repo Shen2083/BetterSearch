@@ -60,6 +60,15 @@ bed" is asking about tone, so a calm novel or a book of soothing essays scores \
 For a query naming an exact title or author, the named work scores 2; other \
 works by that author score 1; unrelated works score 0.
 
+Some queries carry emotional weight, and getting those wrong harms the reader \
+rather than mildly annoying them. "Coping after someone dies" is asked by \
+someone who has been bereaved. Books that help a person grieve score 2. Fiction \
+in which death is a plot device, a horror premise, or played for comedy scores \
+**0, not 1** - however prominently "Death" sits in its subject headings. \
+Adjacent by keyword is not adjacent by need. Apply the same reasoning to any \
+query about illness, loss, addiction or mental health: a novel that features \
+the subject is not a book that helps with it.
+
 Catalogue records are thin - often just a title, an author and subject \
 headings, with no summary. Judge on what a reader could reasonably infer from \
 that, as they would in a real catalogue. If the record is too sparse to tell, \

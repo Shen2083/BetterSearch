@@ -6,55 +6,215 @@
     "Would a real person type this into a library catalogue? If not, cut it or rewrite it.",
     "The 'control' queries are deliberately keyword-friendly. They stop the set flattering semantic search by construction - please keep at least a few.",
     "Difficulty should be spread. The previous eval set saturated at MRR 1.000 and became useless; a set where everything is easy tells us nothing.",
-    "Delete freely. 30 good queries beat 40 mediocre ones."
+    "Delete freely. 30 good queries beat 40 mediocre ones.",
+    "Sensitive queries (grief, illness, mental health) are judged on whether a book HELPS with the subject, not whether it FEATURES it. The judge rubric enforces this: fiction using death as a plot device scores 0, not 1."
   ],
   "queries": [
-    {"query": "how to keep bees in a small garden", "category": "natural-language subject", "note": "Subject exists in the corpus; wording will not match headings."},
-    {"query": "learning to grow vegetables in pots", "category": "natural-language subject", "note": "Container gardening, phrased as a beginner would."},
-    {"query": "books about the night sky for beginners", "category": "natural-language subject", "note": "Astronomy without using the word."},
-    {"query": "understanding how computers actually work", "category": "natural-language subject", "note": "Vague, non-technical phrasing."},
-    {"query": "starting a business with no money", "category": "natural-language subject", "note": "Small business, framed by constraint."},
-    {"query": "what to do about money worries", "category": "natural-language subject", "note": "Personal finance, emotional framing."},
-    {"query": "identifying garden birds", "category": "natural-language subject", "note": "Should be reachable by both lanes."},
-    {"query": "learning to take better photographs", "category": "natural-language subject", "note": "Photography, skill framing."},
-    {"query": "knitting patterns for beginners", "category": "natural-language subject", "note": "Close to the heading - a keyword lane should do well."},
-    {"query": "woodworking with hand tools", "category": "natural-language subject", "note": "Corpus uses 'woodwork'; tests morphology."},
-
-    {"query": "something gentle to read before bed", "category": "mood", "note": "No subject heading exists for this. Core product claim."},
-    {"query": "a funny book to cheer me up", "category": "mood", "note": "Humour, phrased by effect not genre."},
-    {"query": "gripping but not too violent", "category": "mood", "note": "Two constraints, one negative. Negation is hard for both lanes."},
-    {"query": "something short I can finish in one sitting", "category": "mood", "note": "Length, which is not in the record at all. May be unanswerable - worth knowing."},
-    {"query": "a book that will make me cry", "category": "mood", "note": "Pure affect."},
-    {"query": "cosy mystery, nothing gruesome", "category": "mood", "note": "The gentle-crime case that keyword got backwards on the small corpus."},
-    {"query": "an uplifting story after a hard year", "category": "mood", "note": "Affect plus life context."},
-
-    {"query": "getting my toddler to eat vegetables", "category": "task", "note": "Parenting; no heading will contain this."},
-    {"query": "helping a child who will not sleep", "category": "task", "note": "Spans parenting and sleep."},
-    {"query": "coping after someone dies", "category": "task", "note": "Bereavement in plain words."},
-    {"query": "preparing for a job interview", "category": "task", "note": "Job hunting."},
-    {"query": "what to expect when you are pregnant", "category": "task", "note": "Near a famous title - tests title bleed."},
-    {"query": "getting fit again after illness", "category": "task", "note": "Fitness with a qualifier."},
-    {"query": "learning to cook on a budget", "category": "task", "note": "Cookery plus constraint."},
-    {"query": "dog training for a new puppy", "category": "task", "note": "Should be easy for both lanes."},
-
-    {"query": "books like Agatha Christie", "category": "read-alike", "note": "Read-alike. Keyword will return Christie herself; semantic should find similar authors. The judge decides which is right."},
-    {"query": "if I liked Lord of the Rings what next", "category": "read-alike", "note": "Conversational read-alike."},
-    {"query": "something similar to Sherlock Holmes", "category": "read-alike", "note": "Detective read-alike."},
-
-    {"query": "that book about a woman and bees in South Carolina", "category": "half-remembered", "note": "The Secret Life of Bees. Tests vague known-item."},
-    {"query": "the one about a boy wizard at school", "category": "half-remembered", "note": "May not be in the corpus; a legitimate zero-result case."},
-    {"query": "a novel where the beekeeper is the detective", "category": "half-remembered", "note": "Deliberately specific and possibly unanswerable."},
-
-    {"query": "Joy of Cooking", "category": "control (keyword should win)", "note": "Exact title. If semantic loses here that is expected and fine."},
-    {"query": "Agatha Christie", "category": "control (keyword should win)", "note": "Exact author."},
-    {"query": "The Secret Life of Bees", "category": "control (keyword should win)", "note": "Exact title; pairs with the half-remembered version above."},
-    {"query": "Betty Crocker", "category": "control (keyword should win)", "note": "Exact author, single work."},
-    {"query": "Sue Monk Kidd", "category": "control (keyword should win)", "note": "Exact author."},
-
-    {"query": "second world war in the pacific", "category": "subject, natural phrasing", "note": "Corpus heading is 'World War, 1939-1945'. Classic vocabulary mismatch."},
-    {"query": "history of my local area", "category": "subject, natural phrasing", "note": "Local history; deliberately unanchored to a place."},
-    {"query": "poems about loss", "category": "subject, natural phrasing", "note": "Crosses poetry and bereavement."},
-    {"query": "graphic novels for teenagers", "category": "subject, natural phrasing", "note": "Two facets at once."},
-    {"query": "cycling long distances", "category": "subject, natural phrasing", "note": "Endurance cycling, phrased plainly."}
+    {
+      "query": "how to keep bees in a small garden",
+      "category": "natural-language subject",
+      "note": "Subject exists in the corpus; wording will not match headings."
+    },
+    {
+      "query": "learning to grow vegetables in pots",
+      "category": "natural-language subject",
+      "note": "Container gardening, phrased as a beginner would."
+    },
+    {
+      "query": "books about the night sky for beginners",
+      "category": "natural-language subject",
+      "note": "Astronomy without using the word."
+    },
+    {
+      "query": "understanding how computers actually work",
+      "category": "natural-language subject",
+      "note": "Vague, non-technical phrasing."
+    },
+    {
+      "query": "starting a business with no money",
+      "category": "natural-language subject",
+      "note": "Small business, framed by constraint."
+    },
+    {
+      "query": "what to do about money worries",
+      "category": "natural-language subject",
+      "note": "Personal finance, emotional framing."
+    },
+    {
+      "query": "identifying garden birds",
+      "category": "natural-language subject",
+      "note": "Should be reachable by both lanes."
+    },
+    {
+      "query": "learning to take better photographs",
+      "category": "natural-language subject",
+      "note": "Photography, skill framing."
+    },
+    {
+      "query": "knitting patterns for beginners",
+      "category": "natural-language subject",
+      "note": "Close to the heading - a keyword lane should do well."
+    },
+    {
+      "query": "woodworking with hand tools",
+      "category": "natural-language subject",
+      "note": "Corpus uses 'woodwork'; tests morphology."
+    },
+    {
+      "query": "something gentle to read before bed",
+      "category": "mood",
+      "note": "No subject heading exists for this. Core product claim."
+    },
+    {
+      "query": "a funny book to cheer me up",
+      "category": "mood",
+      "note": "Humour, phrased by effect not genre."
+    },
+    {
+      "query": "gripping but not too violent",
+      "category": "mood",
+      "note": "Two constraints, one negative. Negation is hard for both lanes."
+    },
+    {
+      "query": "something short I can finish in one sitting",
+      "category": "mood",
+      "note": "Length, which is not in the record at all. May be unanswerable - worth knowing."
+    },
+    {
+      "query": "a book that will make me cry",
+      "category": "mood",
+      "note": "Pure affect."
+    },
+    {
+      "query": "cosy mystery, nothing gruesome",
+      "category": "mood",
+      "note": "The gentle-crime case that keyword got backwards on the small corpus."
+    },
+    {
+      "query": "an uplifting story after a hard year",
+      "category": "mood",
+      "note": "Affect plus life context."
+    },
+    {
+      "query": "getting my toddler to eat vegetables",
+      "category": "task",
+      "note": "Parenting; no heading will contain this."
+    },
+    {
+      "query": "helping a child who will not sleep",
+      "category": "task",
+      "note": "Spans parenting and sleep."
+    },
+    {
+      "query": "coping after someone dies",
+      "category": "task (sensitive)",
+      "note": "Bereavement in plain words. The sharpest query in the set: semantic returns 8/8 grief-support titles, while keyword serves a grieving reader 'John Dies at the End' and 'Five Point Someone' by matching someone/dies/after. Failure here has a human cost, not just a relevance cost.",
+      "sensitive": true
+    },
+    {
+      "query": "preparing for a job interview",
+      "category": "task",
+      "note": "Job hunting."
+    },
+    {
+      "query": "what to expect when you are pregnant",
+      "category": "task",
+      "note": "Near a famous title - tests title bleed."
+    },
+    {
+      "query": "getting fit again after illness",
+      "category": "task",
+      "note": "Fitness with a qualifier."
+    },
+    {
+      "query": "learning to cook on a budget",
+      "category": "task",
+      "note": "Cookery plus constraint."
+    },
+    {
+      "query": "dog training for a new puppy",
+      "category": "task",
+      "note": "Should be easy for both lanes."
+    },
+    {
+      "query": "books like Agatha Christie",
+      "category": "read-alike",
+      "note": "Read-alike. Keyword will return Christie herself; semantic should find similar authors. The judge decides which is right."
+    },
+    {
+      "query": "if I liked Lord of the Rings what next",
+      "category": "read-alike",
+      "note": "Conversational read-alike."
+    },
+    {
+      "query": "something similar to Sherlock Holmes",
+      "category": "read-alike",
+      "note": "Detective read-alike."
+    },
+    {
+      "query": "that book about a woman and bees in South Carolina",
+      "category": "half-remembered",
+      "note": "The Secret Life of Bees. Tests vague known-item."
+    },
+    {
+      "query": "the one about a boy wizard at school",
+      "category": "half-remembered",
+      "note": "May not be in the corpus; a legitimate zero-result case."
+    },
+    {
+      "query": "a novel where the beekeeper is the detective",
+      "category": "half-remembered",
+      "note": "Deliberately specific and possibly unanswerable."
+    },
+    {
+      "query": "Joy of Cooking",
+      "category": "control (keyword should win)",
+      "note": "Exact title. If semantic loses here that is expected and fine."
+    },
+    {
+      "query": "Agatha Christie",
+      "category": "control (keyword should win)",
+      "note": "Exact author."
+    },
+    {
+      "query": "The Secret Life of Bees",
+      "category": "control (keyword should win)",
+      "note": "Exact title; pairs with the half-remembered version above."
+    },
+    {
+      "query": "Betty Crocker",
+      "category": "control (keyword should win)",
+      "note": "Exact author, single work."
+    },
+    {
+      "query": "Sue Monk Kidd",
+      "category": "control (keyword should win)",
+      "note": "Exact author."
+    },
+    {
+      "query": "second world war in the pacific",
+      "category": "subject, natural phrasing",
+      "note": "Corpus heading is 'World War, 1939-1945'. Classic vocabulary mismatch."
+    },
+    {
+      "query": "history of my local area",
+      "category": "subject, natural phrasing",
+      "note": "Local history; deliberately unanchored to a place."
+    },
+    {
+      "query": "poems about loss",
+      "category": "subject, natural phrasing",
+      "note": "Crosses poetry and bereavement."
+    },
+    {
+      "query": "graphic novels for teenagers",
+      "category": "subject, natural phrasing",
+      "note": "Two facets at once."
+    },
+    {
+      "query": "cycling long distances",
+      "category": "subject, natural phrasing",
+      "note": "Endurance cycling, phrased plainly."
+    }
   ]
 }
