@@ -28,6 +28,11 @@ class EnrichmentStore:
         self._entries: dict[tuple[str, str, str, str], Enrichment] = {}
         self._load()
 
+    @property
+    def path(self) -> Path:
+        """Where this store lives. Callers need it to place sidecar files."""
+        return self._path
+
     @staticmethod
     def _key(e: Enrichment) -> tuple[str, str, str, str]:
         return (e.item_id, e.prompt_version, e.enrichment_model, e.source_hash)

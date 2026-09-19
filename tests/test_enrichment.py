@@ -266,3 +266,48 @@ def test_effort_is_omitted_for_models_that_reject_it():
     # The schema must survive either way - that is what makes the output parse.
     for model in ("claude-opus-5", "claude-haiku-4-5"):
         assert _request_params(item, model)["output_config"]["format"]["type"] == "json_schema"
+
+
+def test_a_dead_poller_does_not_lose_a_paid_batch(store, records, tmp_path):
+    """A poller that dies between submitting and collecting must not cost the
+    run twice. The batch id is recorded beside the store at submit time, so the
+    next run reattaches to the batch already paid for instead of billing the
+    whole corpus again."""
+    from bettersearch.enrichment.pipeline import _read_inflight, _write_inflight
+
+    class DyingClient(FakeClient):
+        def collect_batch(self, batch_id, items):
+            raise RuntimeError("poller died before collecting")
+
+    dying = DyingClient()
+    try:
+        enrich(records, store=store, client=dying, use_batch=True)
+    except RuntimeError:
+        pass
+
+    # The id survives the crash, scoped to the model that produced it.
+    assert _read_inflight(store, model=dying.model) == dying.submit_batch([]), (
+        "the submitted batch id must be recorded beside the store"
+    )
+    assert _read_inflight(store, model="a-different-model") is None, (
+        "a batch must never be reused for a model that did not produce it"
+    )
+
+    # A second run reattaches rather than submitting again.
+    recovering = FakeClient()
+    recovering.submitted = 0
+    original = FakeClient.submit_batch
+
+    def counting(self, items):
+        self.submitted += 1
+        return original(self, items)
+
+    FakeClient.submit_batch = counting
+    try:
+        enrich(records, store=store, client=recovering, use_batch=True)
+    finally:
+        FakeClient.submit_batch = original
+    assert recovering.submitted == 0, "must reattach, not resubmit and pay twice"
+    assert _read_inflight(store, model=recovering.model) is None, (
+        "the sidecar must be cleared once results are collected"
+    )

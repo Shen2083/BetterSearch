@@ -8,8 +8,10 @@ costs only the work that is genuinely outstanding.
 
 from __future__ import annotations
 
+import json
 import time
 from collections.abc import Sequence
+from pathlib import Path
 from dataclasses import dataclass
 
 from ..types import Document
@@ -71,6 +73,42 @@ def pending(
     ]
 
 
+def _inflight_path(store: EnrichmentStore) -> Path:
+    return Path(str(store.path) + ".inflight.json")
+
+
+def _write_inflight(store: EnrichmentStore, batch_id: str, *, model: str) -> None:
+    """Record the batch id beside the store the moment it is submitted.
+
+    Until the results are collected, this file is the only thing that connects
+    money already spent to the store it belongs in.
+    """
+    _inflight_path(store).write_text(
+        json.dumps({"batch_id": batch_id, "model": model,
+                    "prompt_version": PROMPT_VERSION,
+                    "submitted_at": time.time()}),
+        encoding="utf-8",
+    )
+
+
+def _read_inflight(store: EnrichmentStore, *, model: str) -> str | None:
+    path = _inflight_path(store)
+    if not path.is_file():
+        return None
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
+    # A batch is only reusable for the model and prompt that produced it.
+    if raw.get("model") != model or raw.get("prompt_version") != PROMPT_VERSION:
+        return None
+    return raw.get("batch_id")
+
+
+def _clear_inflight(store: EnrichmentStore) -> None:
+    _inflight_path(store).unlink(missing_ok=True)
+
+
 def enrich(
     documents: Sequence[Document],
     *,
@@ -95,15 +133,27 @@ def enrich(
 
     if outstanding:
         if use_batch:
-            # One real request first: a bad request shape fails every item in
-            # the batch, and the API only says so after the whole thing has been
-            # submitted and processed.
-            if progress:
-                print("preflight: validating the request shape on one item")
-            client.preflight(outstanding[0])
-            batch_id = client.submit_batch(outstanding)
-            if progress:
-                print(f"batch {batch_id} submitted; polling every {poll_seconds}s")
+            # Reattach to a batch this store already paid for, rather than
+            # submitting a second one. A poller that dies between submission and
+            # collection otherwise strands the results: they sit completed on the
+            # server, their id exists only in a log file, and the next run
+            # cheerfully bills the whole corpus again.
+            batch_id = _read_inflight(store, model=client.model)
+            if batch_id:
+                if progress:
+                    print(f"reattaching to in-flight batch {batch_id} "
+                          f"(already submitted and paid for)")
+            else:
+                # One real request first: a bad request shape fails every item in
+                # the batch, and the API only says so after the whole thing has
+                # been submitted and processed.
+                if progress:
+                    print("preflight: validating the request shape on one item")
+                client.preflight(outstanding[0])
+                batch_id = client.submit_batch(outstanding)
+                _write_inflight(store, batch_id, model=client.model)
+                if progress:
+                    print(f"batch {batch_id} submitted; polling every {poll_seconds}s")
             waited = 0
             while client.batch_status(batch_id) not in _TERMINAL:
                 if waited >= max_wait_seconds:
@@ -114,6 +164,7 @@ def enrich(
                 time.sleep(poll_seconds)
                 waited += poll_seconds
             produced, failed = client.collect_batch(batch_id, outstanding)
+            _clear_inflight(store)
         else:
             for item in outstanding:
                 try:
