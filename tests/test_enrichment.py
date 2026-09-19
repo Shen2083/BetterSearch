@@ -48,6 +48,10 @@ class FakeClient:
             source_hash=source_hash(item.record),
         )
 
+    def preflight(self, item: CatalogueItem) -> None:
+        """Real clients send one live request here to validate the shape."""
+        self.preflighted = True
+
     def enrich_one(self, item: CatalogueItem) -> Enrichment:
         return self._make(item)
 
@@ -235,3 +239,30 @@ def test_enrichment_is_added_alongside_the_record_not_instead_of_it(store, recor
 def test_unenriched_documents_pass_through_unchanged(store, records):
     rebuilt = enriched_documents(records, store=store, model="fake-model")
     assert rebuilt[0].text == records[0].text
+
+
+def test_batch_runs_preflight_before_submitting(store, records):
+    """One bad request shape fails every item in a batch, and the API only says
+    so after the whole batch has been processed. A 4,000-item run came back 100%
+    errored on a parameter the model did not accept; one request would have
+    caught it."""
+    client = FakeClient()
+    enrich(records, store=store, client=client, use_batch=True)
+    assert getattr(client, "preflighted", False), (
+        "batch submission must validate the request shape on one item first"
+    )
+
+
+def test_effort_is_omitted_for_models_that_reject_it():
+    """Haiku 4.5 rejects output_config.effort outright, failing the request
+    before inference. Effort is an optimisation, never a requirement."""
+    from bettersearch.enrichment.client import _request_params, supports_effort
+
+    item = CatalogueItem("x", "Title", "Author: A")
+    assert supports_effort("claude-opus-5")
+    assert not supports_effort("claude-haiku-4-5")
+    assert "effort" in _request_params(item, "claude-opus-5")["output_config"]
+    assert "effort" not in _request_params(item, "claude-haiku-4-5")["output_config"]
+    # The schema must survive either way - that is what makes the output parse.
+    for model in ("claude-opus-5", "claude-haiku-4-5"):
+        assert _request_params(item, model)["output_config"]["format"]["type"] == "json_schema"

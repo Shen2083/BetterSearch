@@ -42,7 +42,28 @@ class CatalogueItem:
     record: str
 
 
+#: Models that reject `output_config.effort` outright:
+#:     "This model does not support the effort parameter."
+#: Sending it anyway fails the whole request before inference, so a 4,000-item
+#: batch comes back 100% errored. Effort is an optimisation, never a
+#: requirement, so it is simply omitted where unsupported.
+_NO_EFFORT_SUPPORT = ("claude-haiku-4-5", "claude-sonnet-4-5", "claude-3")
+
+
+def supports_effort(model: str) -> bool:
+    return not model.startswith(_NO_EFFORT_SUPPORT)
+
+
 def _request_params(item: CatalogueItem, model: str) -> dict:
+    # Descriptive metadata writing does not need deep reasoning, and thinking
+    # tokens bill as output - which is the whole cost here. Where the model
+    # cannot take the hint, the request still has to be valid.
+    output_config: dict = {
+        "format": {"type": "json_schema", "schema": ENRICHMENT_JSON_SCHEMA}
+    }
+    if supports_effort(model):
+        output_config["effort"] = "low"
+
     return {
         "model": model,
         "max_tokens": MAX_TOKENS,
@@ -62,15 +83,7 @@ def _request_params(item: CatalogueItem, model: str) -> dict:
                 "content": build_user_message(title=item.title, record=item.record),
             }
         ],
-        # Descriptive metadata writing does not need deep reasoning, and
-        # thinking tokens bill as output - which is the whole cost here.
-        "output_config": {
-            "effort": "low",
-            "format": {
-                "type": "json_schema",
-                "schema": ENRICHMENT_JSON_SCHEMA,
-            },
-        },
+        "output_config": output_config,
     }
 
 
@@ -126,6 +139,21 @@ class EnrichmentClient:
             yield self.enrich_one(item)
 
     # ------------------------------------------------------------------ batch
+    def preflight(self, item: CatalogueItem) -> None:
+        """Send one real request to prove the request shape is valid.
+
+        A malformed request fails every item in a batch identically, and the
+        Batch API reports that as 4,000 individual errors long after submission
+        rather than as one rejection at submit time. A 4,000-item Haiku run came
+        back 100% errored on "This model does not support the effort parameter",
+        which one request would have caught in seconds.
+
+        Costs a single item. Raises whatever the API raises.
+        """
+        self._guard(
+            lambda: self._client.messages.create(**_request_params(item, self.model))
+        )
+
     def submit_batch(self, items: Sequence[CatalogueItem]) -> str:
         """Submit a batch and return its id. Does not wait."""
         requests = [

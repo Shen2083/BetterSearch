@@ -95,6 +95,12 @@ def enrich(
 
     if outstanding:
         if use_batch:
+            # One real request first: a bad request shape fails every item in
+            # the batch, and the API only says so after the whole thing has been
+            # submitted and processed.
+            if progress:
+                print("preflight: validating the request shape on one item")
+            client.preflight(outstanding[0])
             batch_id = client.submit_batch(outstanding)
             if progress:
                 print(f"batch {batch_id} submitted; polling every {poll_seconds}s")
