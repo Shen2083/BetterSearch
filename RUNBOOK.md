@@ -125,15 +125,44 @@ paging still run live in the browser. It therefore answers **the example queries
 only** — anything else says so plainly rather than showing an empty result set,
 which would wrongly read as "the catalogue holds nothing on that".
 
+The committed copy is built against the **real 4,000-record catalogue**, not the
+invented demonstration one the served page uses by default — it is the corpus
+every measurement in the README refers to, so it is the one worth sending. Its
+example queries come from the reviewed eval set for the same reason.
+
 ```bash
-export BETTERSEARCH_INDEX_PATH=.bettersearch/catalogue
-bettersearch ingest --corpus data/catalogue_library.json   # if not already built
-python scripts/build_standalone.py
+BETTERSEARCH_INDEX_PATH=.bettersearch/real \
+    bettersearch ingest --corpus data/catalogue_real.json   # if not already built
+
+python scripts/build_standalone.py \
+    --catalogue data/catalogue_real.json --index .bettersearch/real \
+    --query "something gentle to read before bed" \
+    --query "coping after someone dies" \
+    --query "cosy mystery, nothing gruesome" \
+    --query "getting my toddler to eat vegetables" \
+    --query "how to keep bees in a small garden" \
+    --query "Agatha Christie"
 ```
 
-Rebuild it after changing `web/catalogue.html`, the catalogue data, or the
-example queries. The build reads the queries out of the page's own preset
-buttons, so those two cannot drift apart.
+**Expected**: `446 of 4000 records reachable from these queries`, and a file
+around 318 KB. Only the records some baked ranking can reach are shipped —
+carrying all 4,000 would add 3.2 MB nobody can navigate to. That is only
+affordable because the meaning lane stops at `SEMANTIC_TOP_K`; under the old
+relevance floor one query reached 3,665 records by itself.
+
+Two things the build does so the file cannot lie about itself. It rewrites the
+preset buttons and the search box to the queries actually baked, so no button is
+dead. And it replaces the page footnote with the corpus's own `description`
+field — the served page says the records are invented, which is true of the
+demonstration catalogue and false of this one, where the bibliographic data is
+real Open Library material and only the holdings are made up.
+
+Omit `--query` and `--catalogue` to build the demonstration-catalogue version
+instead; the queries are then read out of the page's own preset buttons, so
+those two cannot drift apart.
+
+Rebuild after changing `web/catalogue.html`, `web/offline-search.js`, the
+catalogue data, or `SEMANTIC_TOP_K`.
 
 ---
 

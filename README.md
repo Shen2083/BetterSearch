@@ -99,6 +99,23 @@ around without passing as a real library. Rebuild it with
 `python scripts/build_catalogue.py`, and regenerate these screenshots with
 `python scripts/capture_screenshots.py` against a running server.
 
+**To send the page to someone**, `docs/catalogue-standalone.html` opens on a
+double-click with no server and no Python: the example searches are run through
+the real `Searcher` at build time and baked in, while facets, filtering and
+paging still run live in the browser. That copy is built against the **real
+4,000-record catalogue** rather than the invented one, so the file shows the
+corpus every measurement below refers to. It answers its six example queries and
+says so plainly for anything else, rather than returning nothing and letting that
+read as "the catalogue holds nothing on that". `RUNBOOK.md` has the build
+command.
+
+Worth opening it on `coping after someone dies` and switching modes. Meaning-based
+search returns *How to go on living when someone you love dies* and
+*Understanding dying, death, and bereavement*; catalogue search returns *Five
+Point Someone* and *John Dies at the End*, because they contain the words
+"someone" and "dies". That is the difference the rest of this document measures,
+in a file anyone can open.
+
 ---
 
 ## The three modes

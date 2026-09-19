@@ -15,9 +15,18 @@ resulting rankings are baked into a copy of the page. Facets, filtering and
 pagination still run live in the browser, ported in web/offline-search.js.
 
 The example queries are read out of catalogue.html's own preset buttons rather
-than listed here, so the two cannot drift apart.
+than listed here, so the two cannot drift apart. Passing --query overrides them,
+for building against a corpus the page's own presets were not written for; the
+preset row and the default search box in the output are rewritten to match, so
+every button in the built file is one the file can actually answer.
 
-Needs an index built for the catalogue corpus:
+Only the records those rankings reach are shipped. Against the real 4,000-record
+catalogue six example queries reach 446 records, so the file stays around 300 KB
+rather than carrying 3.2 MB of catalogue nobody can navigate to. That only works
+because the meaning lane now stops at SEMANTIC_TOP_K - under the old relevance
+floor a single query reached 3,665 records on its own.
+
+Needs an index built for the corpus being baked:
 
     export BETTERSEARCH_INDEX_PATH=.bettersearch/catalogue
     bettersearch ingest --corpus data/catalogue_library.json
@@ -27,6 +36,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -74,7 +84,11 @@ def build_rankings(queries: list[str]) -> tuple[dict, dict]:
     rankings: dict[str, list] = {}
     for query in queries:
         for mode in MODES:
-            # per_page = whole catalogue: we want the full ranking, not a page.
+            # per_page = whole catalogue so the page is not what truncates this.
+            # The ranking still ends where run_search ends it - top-k for the
+            # meaning lane, full BM25 depth for keyword - which is the point:
+            # the offline copy inherits the served page's cut rather than
+            # choosing its own, so the two cannot disagree about a result count.
             data = run_search(
                 searcher, catalogue, query=query, mode=mode,
                 page=1, per_page=len(catalogue),
@@ -85,11 +99,91 @@ def build_rankings(queries: list[str]) -> tuple[dict, dict]:
     return catalogue, rankings
 
 
-def build(out: Path) -> Path:
+def reachable(catalogue: dict, rankings: dict) -> dict:
+    """Only the records some baked ranking can reach.
+
+    Shipping the whole catalogue would put every record a query never returns
+    into the file - on the real corpus that is 3.2 MB of dead weight. The
+    offline engine looks records up by doc_id and drops misses, so a subset is
+    safe; it is only unsafe if a ranking references a record that is not here,
+    which the caller checks.
+    """
+    wanted = {doc_id for ranking in rankings.values() for doc_id, _ in ranking}
+    return {doc_id: catalogue[doc_id] for doc_id in wanted if doc_id in catalogue}
+
+
+def rewrite_presets(html: str, queries: list[str]) -> str:
+    """Point the page's preset buttons and search box at the baked queries.
+
+    Without this a build against a different corpus ships buttons the file
+    cannot answer: the page's own presets name a surname collision and a title
+    that exist only in the demonstration catalogue. A dead preset button reads
+    as a broken page, which is worse than no button.
+    """
+    buttons = "\n      ".join(
+        f'<button type="button" data-q="{html_escape(q)}">{html_escape(q)}</button>'
+        for q in queries
+    )
+    html = re.sub(
+        r'(<p class="presets">\s*\n\s*Try:\n)(.*?)(\n\s*</p>)',
+        lambda m: m.group(1) + "      " + buttons + m.group(3),
+        html, count=1, flags=re.DOTALL,
+    )
+    return re.sub(
+        r'(<input id="q"[^>]*value=")[^"]*(")',
+        lambda m: m.group(1) + html_escape(queries[0]) + m.group(2),
+        html, count=1,
+    )
+
+
+def rewrite_footnote(html: str) -> str:
+    """Replace the page footnote with the corpus's own description of itself.
+
+    The served page describes a catalogue of invented records. That is a false
+    statement about the real corpus, where the bibliographic data is genuine
+    Open Library material and only the holdings - availability, copies, branch,
+    format, cover colour - are invented. Getting that the wrong way round in a
+    file meant to be sent to a library is exactly the claim not to get wrong, so
+    it is taken from the corpus file rather than written here.
+    """
+    from api.catalogue import CATALOGUE_PATH
+
+    raw = json.loads(Path(CATALOGUE_PATH).read_text(encoding="utf-8"))
+    description = raw.get("description") if isinstance(raw, dict) else None
+    if not description:
+        return html
+    return re.sub(
+        r'(<p class="footnote">\s*\n)(.*?)(\n</p>)',
+        lambda m: m.group(1) + "  " + html_escape(description) + m.group(3),
+        html, count=1, flags=re.DOTALL,
+    )
+
+
+def html_escape(text: str) -> str:
+    return (text.replace("&", "&amp;").replace("<", "&lt;")
+                .replace(">", "&gt;").replace('"', "&quot;"))
+
+
+def build(out: Path, queries: list[str] | None = None) -> Path:
     html = SOURCE.read_text(encoding="utf-8")
-    queries = preset_queries(html)
+    if queries:
+        html = rewrite_presets(html, queries)
+        if set(preset_queries(html)) != set(queries):
+            raise SystemExit("preset rewrite did not take - the page markup "
+                             "has moved; fix rewrite_presets before shipping")
+    else:
+        queries = preset_queries(html)
     print(f"{len(queries)} example queries x {len(MODES)} modes:")
     catalogue, rankings = build_rankings(queries)
+
+    full = len(catalogue)
+    catalogue = reachable(catalogue, rankings)
+    missing = {doc_id for r in rankings.values() for doc_id, _ in r} - set(catalogue)
+    if missing:
+        raise SystemExit(f"{len(missing)} ranked records are not in the "
+                         f"catalogue - the index and the corpus disagree")
+    print(f"\n  {len(catalogue)} of {full} records reachable from these queries")
+    html = rewrite_footnote(html)
 
     if "window.OFFLINE" not in html:
         raise SystemExit(
@@ -130,8 +224,22 @@ def build(out: Path) -> Path:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
+    parser.add_argument("--query", action="append", metavar="TEXT",
+                        help="example query to bake, repeatable; overrides the "
+                             "page's own preset buttons")
+    parser.add_argument("--catalogue", type=Path,
+                        help="corpus to serve (default: whatever "
+                             "BETTERSEARCH_CATALOGUE or api/catalogue.py picks)")
+    parser.add_argument("--index", type=Path,
+                        help="index to search (default: BETTERSEARCH_INDEX_PATH)")
     args = parser.parse_args()
-    out = build(args.out)
+
+    # Set before build() imports api.catalogue, which reads the env at import.
+    if args.catalogue:
+        os.environ["BETTERSEARCH_CATALOGUE"] = str(args.catalogue)
+    if args.index:
+        os.environ["BETTERSEARCH_INDEX_PATH"] = str(args.index)
+    out = build(args.out, args.query or None)
     print(f"\n{SOURCE.relative_to(ROOT)} -> {out} ({out.stat().st_size // 1024} KB)")
     return 0
 
