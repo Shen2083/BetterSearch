@@ -9,12 +9,19 @@ nothing in ``src/bettersearch`` knows this file exists.
 from __future__ import annotations
 
 import json
+import os
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-CATALOGUE_PATH = Path(__file__).resolve().parent.parent / "data" / "catalogue_library.json"
+_DATA = Path(__file__).resolve().parent.parent / "data"
+#: Which catalogue the page serves. Settable so the 74-record demonstration
+#: catalogue and the 4,000-record real one can both be served without a code
+#: change - they share this schema exactly.
+CATALOGUE_PATH = Path(
+    os.environ.get("BETTERSEARCH_CATALOGUE", _DATA / "catalogue_library.json")
+)
 
 #: Meaning-based retrieval always returns its top_k, however weak the match, so
 #: a catalogue needs a floor or "3 results" becomes "74 results" and the count
