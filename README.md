@@ -487,6 +487,34 @@ buy precision by throwing away recall the pagination would have handled anyway.
 Judging by counts that "look sensible" would have picked the wrong answer; this
 is why the fix waited for the judgements.
 
+### Open: does the top model tier buy better retrieval?
+
+Enrichment above is Haiku 4.5 on all 4,000 records. Opus 5 was run on a
+120-record sample before the comparison was abandoned, and on those same
+records it is plainly the richer writer:
+
+| on the same 120 records | Haiku 4.5 | Opus 5 |
+|---|---|---|
+| `recognised: true` | 74% | **93%** |
+| synopsis words | 44 | **74** |
+| topics | 8.5 | **14.3** |
+
+**This does not answer whether Opus retrieves better, and it was never going to.**
+A valid Opus arm needs all 4,000 records enriched by Opus: with 300 enriched
+among 4,000 thin ones, the enriched records gain an advantage purely for being
+enriched. The sample supports a quality comparison, not a retrieval one. Buying
+the real answer costs about £37 of Opus enrichment against £7 for Haiku.
+
+**The 4k result argues against assuming richer is better.** Enrichment already
+regressed five queries by diluting records — `Sue Monk Kidd` fell 1.000 → 0.387
+because topical prose crowded out an exact-author match. Opus writes 68% more
+synopsis and 68% more topics, so it would dilute harder. Richer could plausibly
+retrieve *worse*, and the 79 chunks already pushed past MiniLM's 256-token cap
+would become more.
+
+The 120 Opus enrichments are committed at `data/enrichment_real_opus_sample.jsonl`
+so the quality figures above can be checked.
+
 ### How much to trust this
 
 - **Judge self-consistency 98%** (98 of 100 re-judged pairs identical). A
