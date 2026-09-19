@@ -215,10 +215,15 @@ prototype** above.
 
 ## 6. What is not verified
 
-Three areas have never run against their real dependencies, so treat them as
+Two areas have never run against their real dependencies, so treat them as
 untested rather than working:
 
-- **Enrichment against the live API** — tested only with a fake client.
 - **The pgvector backend** — never connected to a real Postgres.
 - **The OpenAI and Voyage embedding backends** — construct and validate
   correctly, but have never made an API call.
+
+**Enrichment is now verified against the live API.** A full 112-record run went
+through the Batch API on Claude Opus 5: 112 submitted, 112 succeeded, 0 errored,
+0 failed, results matched back by `custom_id`. Structured output parsed cleanly
+on every record, and the resumability check held — a second `bettersearch enrich`
+reports every item skipped. The measured numbers are in the README.

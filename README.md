@@ -384,31 +384,57 @@ survey. It builds the vocabulary bridge deliberately instead of hoping for it.
 `scripts/synthesise_catalogue.py` strips the seed corpus down to thin records —
 title, synthetic author, LCSH-style subject headings, **no body text at all** —
 so the same 32 labelled queries can be re-run against a realistically
-impoverished corpus. The full-text score is the ceiling.
+impoverished corpus, then enriched and re-run a third time.
 
-| Arm | Corpus | Recall@5 | nDCG@10 |
+| Arm | Corpus | Recall@5 | MRR@10 | nDCG@10 |
+|---|---|---|---|---|
+| Full text | full article text | 0.841 | 0.984 | 0.890 |
+| **Baseline** | thin records only | 0.718 | 0.917 | **0.789** |
+| **Treatment** | enriched records | 0.836 | **1.000** | **0.894** |
+
+Enrichment recovers **104% of the gap** between thin records and full text, and
+improves 24 of the 32 queries. The per-query view is where the case is actually
+made — run `python scripts/compare_arms.py ceiling=… thin=… enriched=…`:
+
+| Query | Full text | Thin | Enriched |
 |---|---|---|---|
-| **Ceiling** | full article text | 0.841 | **0.890** |
-| **Baseline** | thin records only | 0.718 | **0.789** |
-| Treatment | enriched records | — | *needs an API key* |
+| planning a landing on a defended coast | 0.871 | 0.296 | **0.626** |
+| 1066 | 0.876 | 0.369 | **0.706** |
+| how electricity gets from a power station… | 1.000 | 0.581 | **0.884** |
+| how plants make food from sunlight | 0.761 | 0.503 | **0.956** |
+| drugs that stop working | 0.920 | 0.693 | **1.000** |
 
-The aggregate drop is modest because these titles are unusually descriptive
-("The Battle of Hastings" gives the game away). The per-query view is where the
-real damage shows — run `python scripts/compare_arms.py ceiling=… thin=…`:
+**Queries collapse when the relevant documents' titles do not name the
+concept**, and that is exactly what enrichment repairs. `1066` falls by more
+than half on thin records because *The Domesday Book*, *The Bayeux Tapestry*,
+*Stamford Bridge* and *Harold Godwinson* never contain the string — enrichment
+puts it there, and the query recovers to 0.706.
 
-| Query | Ceiling | Thin | Drop |
-|---|---|---|---|
-| planning a landing on a defended coast | 0.871 | 0.296 | **−0.575** |
-| 1066 | 0.876 | 0.369 | **−0.507** |
-| how electricity gets from a power station… | 1.000 | 0.581 | −0.419 |
-| evolution by natural selection | 0.911 | 0.637 | −0.274 |
-| Norman conquest | 0.980 | 0.709 | −0.271 |
+#### Four things that keep this honest
 
-The pattern is consistent and it is exactly the enrichment case: **queries
-collapse when the relevant documents' titles do not name the concept.** `1066`
-falls by more than half because *The Domesday Book*, *The Bayeux Tapestry*,
-*Stamford Bridge* and *Harold Godwinson* never contain the string. A synopsis
-would put it there.
+**"Full text" is not a ceiling, and enrichment passes it.** 0.894 against 0.890,
+beating it on 17 of 32 queries. That is not a paradox: an article was written to
+be read, while enrichment is generated to be *retrieved* — the `questions` field
+puts "What happened at the Battle of Hastings?" into the embedded text, and
+query-to-question is a closer shape match than query-to-document. The row is
+relabelled from "Ceiling" accordingly.
+
+**MRR@10 hit 1.000 — the eval set is saturated.** A relevant record now ranks
+first for all 32 queries, so this query set can no longer distinguish further
+improvement. Any next experiment needs harder queries or a larger corpus; do not
+read 1.000 as headroom.
+
+**Enrichment made 5 of 32 queries worse**, and it is not free. `machine that
+broke German codes in the war` fell 0.832 → 0.613: adding topical prose can
+dilute a record that already matched well. The aggregate hides this — check the
+per-query table before assuming enrichment is a pure win.
+
+**Every record came back `recognised: false` (0 of 112).** The authors are
+invented, so the model correctly declined to claim knowledge of the specific
+works and used grounded expansion throughout — subject headings turned into
+prose, nothing fabricated. So these numbers measure the **conservative mode
+only**. The knowledge-synopsis path is still unmeasured, and on a real catalogue
+of real books it would carry a meaningful share of the corpus.
 
 ### Design
 
@@ -454,6 +480,20 @@ python scripts/synthesise_catalogue.py          # or bring your own catalogue
 bettersearch enrich --corpus data/catalogue_thin.json --index
 ```
 
+**Reproducing the table above needs no API key.** The 112 enrichments from that
+run are committed at `data/enrichment_seed.jsonl` — copy them into the store and
+every number is re-derivable offline:
+
+```bash
+mkdir -p .bettersearch && cp data/enrichment_seed.jsonl .bettersearch/enrichment.jsonl
+BETTERSEARCH_INDEX_PATH=.bettersearch/arm-ceiling  bettersearch ingest --corpus data/corpus_seed.json
+BETTERSEARCH_INDEX_PATH=.bettersearch/arm-thin     bettersearch ingest --corpus data/catalogue_thin.json
+BETTERSEARCH_INDEX_PATH=.bettersearch/arm-enriched bettersearch enrich \
+    --corpus data/catalogue_thin.json --index      # store is warm: no API calls
+python scripts/compare_arms.py ceiling=.bettersearch/arm-ceiling \
+    thin=.bettersearch/arm-thin enriched=.bettersearch/arm-enriched
+```
+
 Uses the Batch API by default (half price, results keyed by `custom_id` since
 they arrive in arbitrary order). Resumable: everything already stored for this
 prompt/model/source is skipped, so a crash costs only the in-flight batch.
@@ -461,9 +501,28 @@ prompt/model/source is skipped, so a crash costs only the in-flight batch.
 
 ### Cost
 
-Thin records invert the usual shape — input is ~100 tokens against a cached
-system prompt, output is ~300 tokens — so **output length dominates the bill**.
-Synopsis length is the primary lever, not model tier.
+Thin records invert the usual shape — the record itself is ~26 tokens against a
+cached system prompt, and output is the bulk — so **synopsis length is the
+primary lever, not model tier**.
+
+Measured on the 112-record run above (Opus 5, Batch API):
+
+```
+uncached input   6,353      cache writes 84,392     cache reads 38,360
+output          29,353      mean 262 tokens/record
+total spend      $0.66      cache hit rate 31%
+```
+
+**The 31% cache hit rate is the finding worth carrying forward.** A batch
+submits every request at once, so they race on the system-prompt cache and most
+*write* it rather than read it. That pushed input to 44% of the bill — not the
+rounding error "output dominates" implies. At catalogue scale a sustained run
+keeps the prefix warm and the ratio improves, but this is exactly the silent
+cost leak `client.py` warns about, so check `cache_read_input_tokens` on any
+real run before trusting a projection.
+
+Projections below assume caching works properly; at the 31% hit rate measured
+here the Opus figure is nearer $5,900 than $4,000.
 
 | Model | 1M items (batched) | 100k items |
 |---|---|---|
