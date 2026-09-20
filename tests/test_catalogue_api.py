@@ -366,3 +366,73 @@ def test_filtering_to_events_leaves_only_events(mixed):
 
     assert data["total"] == 1
     assert data["results"][0]["record_type"] == "event"
+
+
+# --- the page describes the corpus it is actually serving ------------------
+
+
+def test_meta_comes_from_the_corpus_not_the_page(tmp_path, monkeypatch):
+    """The bug this prevents: serving real records under "records are invented",
+    with a button for a surname collision that only exists in another corpus."""
+    import json
+
+    import api.catalogue as mod
+
+    books = tmp_path / "books.json"
+    books.write_text(json.dumps({
+        "description": "Records are real.", "presets": ["coping after someone dies"],
+        "documents": [],
+    }), encoding="utf-8")
+    monkeypatch.setattr(mod, "CATALOGUE_PATHS", [books])
+
+    meta = mod.load_meta()
+    assert meta["presets"] == ["coping after someone dies"]
+    assert meta["description"] == "Records are real."
+
+
+def test_several_collections_each_contribute_presets_and_caveats(tmp_path, monkeypatch):
+    import json
+
+    import api.catalogue as mod
+
+    books = tmp_path / "books.json"
+    books.write_text(json.dumps({
+        "description": "Records are real.", "presets": ["Agatha Christie"],
+        "documents": [],
+    }), encoding="utf-8")
+    events = tmp_path / "events.json"
+    events.write_text(json.dumps({
+        "description": "Events are invented.", "presets": ["what's on for toddlers"],
+        "documents": [],
+    }), encoding="utf-8")
+    monkeypatch.setattr(mod, "CATALOGUE_PATHS", [books, events])
+
+    meta = mod.load_meta()
+    assert meta["presets"] == ["Agatha Christie", "what's on for toddlers"]
+    assert meta["description"] == "Records are real. Events are invented."
+
+
+def test_a_corpus_without_presets_yields_none_rather_than_borrowing(tmp_path, monkeypatch):
+    """No presets is an honest empty row; someone else's presets are a lie."""
+    import json
+
+    import api.catalogue as mod
+
+    bare = tmp_path / "bare.json"
+    bare.write_text(json.dumps({"documents": []}), encoding="utf-8")
+    monkeypatch.setattr(mod, "CATALOGUE_PATHS", [bare])
+
+    assert mod.load_meta() == {"presets": [], "description": ""}
+
+
+def test_every_shipped_corpus_declares_its_own_presets():
+    """A corpus with no presets renders a page with nothing to press."""
+    import json
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parent.parent
+    for name in ("catalogue_library.json", "catalogue_real.json",
+                 "events_northfield.json"):
+        raw = json.loads((root / "data" / name).read_text(encoding="utf-8"))
+        assert raw.get("presets"), f"{name} declares no example queries"
+        assert raw.get("description"), f"{name} does not describe itself"

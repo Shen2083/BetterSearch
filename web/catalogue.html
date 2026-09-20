@@ -200,7 +200,9 @@
   <div class="searchbar-inner">
     <form id="form" role="search">
       <label class="visually-hidden" for="q" style="position:absolute;left:-9999px">Search the catalogue</label>
-      <input id="q" name="q" type="search" value="learning to be present" autocomplete="off" spellcheck="false" />
+      <!-- No default here: the opening query is the corpus's first example, so it
+           is always one this catalogue can answer. -->
+      <input id="q" name="q" type="search" value="" autocomplete="off" spellcheck="false" />
       <select id="scope" aria-label="Search scope">
         <option>Full catalogue</option>
         <option>Books only</option>
@@ -214,14 +216,10 @@
       <button type="button" id="m-semantic" aria-pressed="true">Search by meaning</button>
     </div>
 
-    <p class="presets">
-      Try:
-      <button type="button" data-q="learning to be present">learning to be present</button>
-      <button type="button" data-q="gentle crime novels nothing too gory">gentle crime novels, nothing too gory</button>
-      <button type="button" data-q="grewal">grewal</button>
-      <button type="button" data-q="getting my toddler to eat vegetables">getting my toddler to eat vegetables</button>
-      <button type="button" data-q="books to help me sleep better">books to help me sleep better</button>
-    </p>
+    <!-- Filled from the corpus being served - see /catalogue/meta. Hard-coded
+         examples here would follow the page onto a catalogue that cannot
+         answer them. -->
+    <p class="presets" id="presets"></p>
   </div>
 </div>
 
@@ -252,10 +250,9 @@
   </main>
 </div>
 
-<p class="footnote">
-  Demonstration catalogue for a fictional library service. Records, availability
-  figures and borrower details are invented.
-</p>
+<!-- Also from the corpus: which parts of it are real is a property of the
+     data, not of this page. -->
+<p class="footnote" id="footnote"></p>
 
 <script>
 const $ = (id) => document.getElementById(id);
@@ -448,8 +445,31 @@ $("m-semantic").addEventListener("click", () => setMode("semantic"));
 $("prev").addEventListener("click", () => { if (page > 1) { page--; run(); } });
 $("next").addEventListener("click", () => { page++; run(); });
 
-document.querySelectorAll(".presets button").forEach(b =>
-  b.addEventListener("click", () => { $("q").value = b.dataset.q; page = 1; filters = {}; run(); }));
+// Presets are delegated rather than bound per button, because the buttons do
+// not exist until the corpus metadata arrives.
+$("presets").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-q]");
+  if (!b) return;
+  $("q").value = b.dataset.q; page = 1; filters = {}; run();
+});
+
+async function loadMeta() {
+  // window.OFFLINE is defined only in the standalone build, which bakes the
+  // same metadata in rather than reaching a service that is not there.
+  const meta = window.OFFLINE
+    ? window.OFFLINE.meta()
+    : await fetch("/catalogue/meta").then(r => r.json()).then(d => d.data);
+
+  if (meta.presets && meta.presets.length) {
+    $("presets").innerHTML = "Try: " + meta.presets
+      .map(q => `<button type="button" data-q="${esc(q)}">${esc(q)}</button>`)
+      .join("\n");
+    // The box starts on the first example, so the page opens on something it
+    // can answer whichever catalogue is loaded.
+    if (!$("q").value.trim()) $("q").value = meta.presets[0];
+  }
+  if (meta.description) $("footnote").textContent = meta.description;
+}
 
 $("facets").addEventListener("click", (e) => {
   const toggle = e.target.closest("[data-toggle]");
@@ -466,7 +486,11 @@ $("facets").addEventListener("change", (e) => {
 });
 $("clearall").addEventListener("click", () => { filters = {}; page = 1; run(); });
 
-run();
+// Metadata first: it decides the opening query, so searching before it lands
+// would run the wrong one and then visibly replace it.
+loadMeta().then(run).catch((err) => {
+  $("status").textContent = "Could not load the catalogue description: " + err;
+});
 </script>
 </body>
 </html>

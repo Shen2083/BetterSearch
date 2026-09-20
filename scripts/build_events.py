@@ -333,6 +333,9 @@ def main() -> int:
     args.out.parent.mkdir(exist_ok=True)
     args.out.write_text(json.dumps({
         "name": "northfield-events",
+        # Contributed to the page's example queries alongside the books', so
+        # serving both collections offers a query for each.
+        "presets": ["somewhere to go on a Tuesday afternoon"],
         "description": (
             "Events at a fictional library service. Every session, date, branch "
             "and place count here is invented - there is no public feed of "

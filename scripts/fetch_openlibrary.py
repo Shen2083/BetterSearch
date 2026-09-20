@@ -124,6 +124,15 @@ _JUNK_SUBJECT = re.compile(
 )
 MAX_SUBJECTS = 8
 
+#: Example queries offered by the page when this corpus is served.
+PRESETS = [
+    "coping after someone dies",
+    "something gentle to read before bed",
+    "how to keep bees in a small garden",
+    "books about the night sky for beginners",
+    "Agatha Christie",
+]
+
 
 def clean_subjects(raw: list[str]) -> list[str]:
     """Drop export artefacts, keep real headings including inconsistent ones."""
@@ -288,6 +297,10 @@ def build(target: int, out: Path) -> dict:
     out.parent.mkdir(exist_ok=True)
     out.write_text(json.dumps({
         "name": "northfield-libraries-real",
+        # The page reads its example queries from here rather than carrying its
+        # own, so a corpus can never be served with another corpus's buttons.
+        # These are drawn from the reviewed eval set, so each one is judged.
+        "presets": PRESETS,
         "description": (
             "Bibliographic records are real, from Open Library (openlibrary.org, "
             "public domain). Availability, copies, branch, format and cover "

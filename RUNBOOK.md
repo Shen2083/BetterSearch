@@ -179,31 +179,23 @@ BETTERSEARCH_INDEX_PATH=.bettersearch/real-events \
 
 python scripts/build_standalone.py \
     --catalogue "data/catalogue_real.json,data/events_northfield.json" \
-    --index .bettersearch/real-events \
-    --query "something gentle to read before bed" \
-    --query "coping after someone dies" \
-    --query "getting my toddler to eat vegetables" \
-    --query "somewhere to go on a Tuesday afternoon" \
-    --query "how to keep bees in a small garden" \
-    --query "Agatha Christie"
+    --index .bettersearch/real-events
 ```
 
-**Expected**: `351 of 4114 records reachable from these queries`, and a file
-around 262 KB. Only the records some baked ranking can reach are shipped —
+**Expected**: `977 of 4114 records reachable from these queries`, and a file
+around 683 KB. The example queries are no longer listed here — they come from
+the corpus files, the same place the served page gets them, so the offline copy
+cannot offer a button the served page does not. `--query` still overrides them. Only the records some baked ranking can reach are shipped —
 carrying all 4,000 would add 3.2 MB nobody can navigate to. That is only
 affordable because the meaning lane stops at `SEMANTIC_TOP_K`; under the old
 relevance floor one query reached 3,665 records by itself.
 
-Two things the build does so the file cannot lie about itself. It rewrites the
-preset buttons and the search box to the queries actually baked, so no button is
-dead. And it replaces the page footnote with the corpus's own `description`
-field — the served page says the records are invented, which is true of the
-demonstration catalogue and false of this one, where the bibliographic data is
-real Open Library material and only the holdings are made up.
+The example queries and the footnote are baked in from the corpus and rendered
+by the same code the served page uses, so the file cannot offer a dead button or
+describe a different catalogue. This used to be two regex rewrites of the HTML;
+it is now just data.
 
-Omit `--query` and `--catalogue` to build the demonstration-catalogue version
-instead; the queries are then read out of the page's own preset buttons, so
-those two cannot drift apart.
+Omit `--catalogue` to build the demonstration-catalogue version instead.
 
 Rebuild after changing `web/catalogue.html`, `web/offline-search.js`, the
 catalogue data, or `SEMANTIC_TOP_K`.

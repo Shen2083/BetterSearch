@@ -2,6 +2,13 @@
   "name": "northfield-libraries-real",
   "description": "Bibliographic records are real, from Open Library (openlibrary.org, public domain). Availability, copies, branch, format and cover colour are invented - Open Library holds no holdings data - and must not be quoted as real.",
   "source": "https://openlibrary.org/developers/api",
+  "presets": [
+    "coping after someone dies",
+    "something gentle to read before bed",
+    "how to keep bees in a small garden",
+    "books about the night sky for beginners",
+    "Agatha Christie"
+  ],
   "documents": [
     {
       "doc_id": "ol-OL15844725W",

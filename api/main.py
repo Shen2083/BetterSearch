@@ -22,7 +22,7 @@ from bettersearch import Searcher, load_settings
 from bettersearch.search import MODES
 from bettersearch.types import EmptyIndexError, ModelMismatchError
 
-from .catalogue import load_catalogue, run_search
+from .catalogue import load_catalogue, load_meta, run_search
 
 WEB_DIR = Path(__file__).resolve().parent.parent / "web"
 
@@ -122,6 +122,16 @@ def catalogue_search(request: CatalogueRequest) -> JSONResponse:
             per_page=request.per_page,
         )
     )
+
+
+@app.get("/catalogue/meta")
+def catalogue_meta() -> JSONResponse:
+    """The example queries and the caveat, from the corpus being served.
+
+    The page renders both from here rather than carrying its own copy, so it
+    cannot offer examples that belong to a different catalogue.
+    """
+    return _ok(load_meta())
 
 
 @app.get("/catalogue")

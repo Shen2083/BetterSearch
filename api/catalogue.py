@@ -72,6 +72,34 @@ class Facet:
     values: list[FacetValue]
 
 
+def load_meta() -> dict[str, Any]:
+    """What the page needs to describe the corpus it is actually serving.
+
+    The example queries and the footnote used to be written into
+    web/catalogue.html. That silently tied the page to one corpus: serving the
+    real 4,000 Open Library records still offered a button for `grewal`, a
+    surname collision that only exists in the invented catalogue and returns
+    nothing, under a footnote stating the records were invented - which is true
+    of the demonstration catalogue and false of real bibliographic data.
+
+    Both now come from the corpus file, so a corpus cannot be served with
+    another corpus's examples or another corpus's caveat. Several collections
+    contribute in order: books bring their queries, events bring theirs.
+    """
+    presets: list[str] = []
+    described: list[str] = []
+    for path in CATALOGUE_PATHS:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(raw, dict):
+            continue
+        for query in raw.get("presets", []):
+            if query not in presets:
+                presets.append(query)
+        if description := (raw.get("description") or "").strip():
+            described.append(description)
+    return {"presets": presets, "description": " ".join(described)}
+
+
 def load_catalogue() -> dict[str, dict[str, Any]]:
     catalogue: dict[str, dict[str, Any]] = {}
     for path in CATALOGUE_PATHS:

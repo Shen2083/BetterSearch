@@ -157,15 +157,28 @@
     return [...new Set(Object.keys(RANKINGS).map((k) => k.split("|")[0]))];
   }
 
-  window.OFFLINE = { search, knownQueries };
+  // The corpus metadata the served page fetches from /catalogue/meta. Baked in
+  // here because there is no service behind this file.
+  function meta() {
+    return window.__OFFLINE_META__ || { presets: [], description: "" };
+  }
+
+  window.OFFLINE = { search, knownQueries, meta };
 
   // Say what this copy is, so nobody mistakes an unanswerable query for an
-  // empty catalogue.
+  // empty catalogue. The page fills .footnote from the corpus description
+  // after this script runs, so wait for it rather than appending to an empty
+  // paragraph that is about to be overwritten.
+  const NOTE =
+    "This is a self-contained offline copy: the searches below are" +
+    " precomputed, so it answers the example queries only. The full version" +
+    " runs every query live against the search service.";
   const footnote = document.querySelector(".footnote");
   if (footnote) {
-    footnote.innerHTML +=
-      "<br>This is a self-contained offline copy: the searches below are" +
-      " precomputed, so it answers the example queries only. The full version" +
-      " runs every query live against the search service.";
+    new MutationObserver((_, observer) => {
+      if (footnote.textContent.includes(NOTE)) return;
+      footnote.innerHTML += "<br>" + NOTE;
+      observer.disconnect();
+    }).observe(footnote, { childList: true, characterData: true, subtree: true });
   }
 })();

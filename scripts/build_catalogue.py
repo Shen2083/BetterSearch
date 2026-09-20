@@ -282,6 +282,16 @@ def build():
             "Demonstration catalogue for a fictional library service. Records are "
             "invented; availability figures are illustrative."
         ),
+        # The page reads its example queries from here rather than carrying its
+        # own. These three are the demonstration: a query no keyword search can
+        # answer, one it answers backwards, and a surname collision.
+        "presets": [
+            "learning to be present",
+            "gentle crime novels nothing too gory",
+            "grewal",
+            "getting my toddler to eat vegetables",
+            "books to help me sleep better",
+        ],
         "documents": records,
     }, indent=2, ensure_ascii=False), encoding="utf-8")
 

@@ -1,6 +1,13 @@
 {
   "name": "northfield-libraries",
   "description": "Demonstration catalogue for a fictional library service. Records are invented; availability figures are illustrative.",
+  "presets": [
+    "learning to be present",
+    "gentle crime novels nothing too gory",
+    "grewal",
+    "getting my toddler to eat vegetables",
+    "books to help me sleep better"
+  ],
   "documents": [
     {
       "doc_id": "nl-00100",

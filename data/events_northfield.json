@@ -1,6 +1,9 @@
 {
   "name": "northfield-events",
   "description": "Events at a fictional library service. Every session, date, branch and place count here is invented - there is no public feed of library events - so this collection demonstrates searching books and events together and measures nothing about how well it works.",
+  "presets": [
+    "somewhere to go on a Tuesday afternoon"
+  ],
   "documents": [
     {
       "doc_id": "ev-b7a47bf384",

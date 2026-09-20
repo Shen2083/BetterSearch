@@ -14,11 +14,9 @@ build time, through the *real* Searcher and the *real* run_search, and the
 resulting rankings are baked into a copy of the page. Facets, filtering and
 pagination still run live in the browser, ported in web/offline-search.js.
 
-The example queries are read out of catalogue.html's own preset buttons rather
-than listed here, so the two cannot drift apart. Passing --query overrides them,
-for building against a corpus the page's own presets were not written for; the
-preset row and the default search box in the output are rewritten to match, so
-every button in the built file is one the file can actually answer.
+The example queries come from the corpus file, the same place the served page
+gets them from, so the built file cannot offer a button it has no ranking for.
+--query overrides them when you want to bake a different set.
 
 Only the records those rankings reach are shipped. Against the real 4,000-record
 catalogue six example queries reach 446 records, so the file stays around 300 KB
@@ -59,18 +57,6 @@ _NON_ALNUM = re.compile(r"[^a-z0-9]+")
 
 def normalise(query: str) -> str:
     return _NON_ALNUM.sub(" ", query.lower()).strip()
-
-
-def preset_queries(html: str) -> list[str]:
-    """The example queries, taken from the page's own preset buttons."""
-    queries = re.findall(r'<button type="button" data-q="([^"]+)"', html)
-    if not queries:
-        raise SystemExit("no data-q preset buttons found in catalogue.html")
-    # The default query in the search box must work too, or the file opens broken.
-    if match := re.search(r'<input id="q"[^>]*value="([^"]*)"', html):
-        if (default := match.group(1).strip()) and default not in queries:
-            queries.insert(0, default)
-    return queries
 
 
 def build_rankings(queries: list[str]) -> tuple[dict, dict]:
@@ -117,75 +103,23 @@ def reachable(catalogue: dict, rankings: dict) -> dict:
     return {doc_id: catalogue[doc_id] for doc_id in wanted if doc_id in catalogue}
 
 
-def rewrite_presets(html: str, queries: list[str]) -> str:
-    """Point the page's preset buttons and search box at the baked queries.
-
-    Without this a build against a different corpus ships buttons the file
-    cannot answer: the page's own presets name a surname collision and a title
-    that exist only in the demonstration catalogue. A dead preset button reads
-    as a broken page, which is worse than no button.
-    """
-    buttons = "\n      ".join(
-        f'<button type="button" data-q="{html_escape(q)}">{html_escape(q)}</button>'
-        for q in queries
-    )
-    html = re.sub(
-        r'(<p class="presets">\s*\n\s*Try:\n)(.*?)(\n\s*</p>)',
-        lambda m: m.group(1) + "      " + buttons + m.group(3),
-        html, count=1, flags=re.DOTALL,
-    )
-    return re.sub(
-        r'(<input id="q"[^>]*value=")[^"]*(")',
-        lambda m: m.group(1) + html_escape(queries[0]) + m.group(2),
-        html, count=1,
-    )
-
-
-def rewrite_footnote(html: str) -> str:
-    """Replace the page footnote with the corpus's own description of itself.
-
-    The served page describes a catalogue of invented records. That is a false
-    statement about the real corpus, where the bibliographic data is genuine
-    Open Library material and only the holdings - availability, copies, branch,
-    format, cover colour - are invented. Getting that the wrong way round in a
-    file meant to be sent to a library is exactly the claim not to get wrong, so
-    it is taken from the corpus file rather than written here.
-    """
-    from api.catalogue import CATALOGUE_PATHS
-
-    # Every collection served, not just the first. With books and events the
-    # books file says the bibliographic data is real and the events file says
-    # the whole programme is invented; printing only one of those is precisely
-    # the misstatement this function exists to avoid.
-    parts = []
-    for path in CATALOGUE_PATHS:
-        raw = json.loads(Path(path).read_text(encoding="utf-8"))
-        if isinstance(raw, dict) and raw.get("description"):
-            parts.append(raw["description"].strip())
-    description = " ".join(parts)
-    if not description:
-        return html
-    return re.sub(
-        r'(<p class="footnote">\s*\n)(.*?)(\n</p>)',
-        lambda m: m.group(1) + "  " + html_escape(description) + m.group(3),
-        html, count=1, flags=re.DOTALL,
-    )
-
-
-def html_escape(text: str) -> str:
-    return (text.replace("&", "&amp;").replace("<", "&lt;")
-                .replace(">", "&gt;").replace('"', "&quot;"))
-
-
 def build(out: Path, queries: list[str] | None = None) -> Path:
+    from api.catalogue import load_meta
+
     html = SOURCE.read_text(encoding="utf-8")
+    meta = load_meta()
+    # The page renders its buttons and its footnote from this, exactly as the
+    # served page does from /catalogue/meta - so the offline copy cannot end up
+    # offering a query it has no ranking for, or describing a different corpus.
     if queries:
-        html = rewrite_presets(html, queries)
-        if set(preset_queries(html)) != set(queries):
-            raise SystemExit("preset rewrite did not take - the page markup "
-                             "has moved; fix rewrite_presets before shipping")
+        meta["presets"] = queries
     else:
-        queries = preset_queries(html)
+        queries = meta["presets"]
+    if not queries:
+        raise SystemExit(
+            "the corpus declares no presets and none were given with --query; "
+            "the built file would open with no examples to press"
+        )
     print(f"{len(queries)} example queries x {len(MODES)} modes:")
     catalogue, rankings = build_rankings(queries)
 
@@ -196,7 +130,6 @@ def build(out: Path, queries: list[str] | None = None) -> Path:
         raise SystemExit(f"{len(missing)} ranked records are not in the "
                          f"catalogue - the index and the corpus disagree")
     print(f"\n  {len(catalogue)} of {full} records reachable from these queries")
-    html = rewrite_footnote(html)
 
     if "window.OFFLINE" not in html:
         raise SystemExit(
@@ -206,6 +139,9 @@ def build(out: Path, queries: list[str] | None = None) -> Path:
 
     blob = (
         "<script>\n"
+        "window.__OFFLINE_META__ = "
+        + json.dumps(meta, ensure_ascii=False)
+        + ";\n"
         "window.__OFFLINE_RECORDS__ = "
         + json.dumps(catalogue, ensure_ascii=False, separators=(",", ":"))
         + ";\n"
