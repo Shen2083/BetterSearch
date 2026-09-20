@@ -488,13 +488,20 @@ queries I drafted and Shen reviewed, with relevance judged by Claude Haiku on a
 pooled candidate set. Build it with `scripts/fetch_openlibrary.py` and
 `scripts/build_eval_set.py`.
 
+The pool is the top 20 from each of four lanes — BM25, MiniLM over thin
+records, MiniLM over enriched records, and bge-base over thin records — unioned,
+shuffled and judged blind: 1,979 judgements over 41 queries. Four lanes rather
+than three because an arm that is measured but not pooled is penalised for
+everything it finds that the pooled lanes missed; see *Comparing embedding
+models* below, where that mistake reversed a conclusion.
+
 ### The three modes
 
 | mode | Recall@5 | MRR@10 | nDCG@10 |
 |---|---|---|---|
-| keyword | 0.205 | 0.609 | 0.429 |
-| **semantic** | **0.291** | **0.744** | **0.588** |
-| hybrid | 0.260 | 0.720 | 0.555 |
+| keyword | 0.196 | 0.633 | 0.443 |
+| **semantic** | **0.264** | **0.725** | **0.579** |
+| hybrid | 0.228 | 0.710 | 0.549 |
 
 **Hybrid still loses, and that kills a hypothesis.** The earlier result — hybrid
 below pure semantic — was explained away as an artefact of an eval set weighted
@@ -504,7 +511,7 @@ place. It did not. On real records with five deliberate exact-title and
 exact-author controls, hybrid still sits below semantic. The earlier
 explanation was wrong, or at least incomplete.
 
-**The eval is not saturated.** MRR@10 is 0.744, not the 1.000 that made the
+**The eval is not saturated.** MRR@10 is 0.725, not the 1.000 that made the
 previous query set useless. There is room to improve and room to regress, which
 is the only condition under which a number means anything.
 
@@ -514,10 +521,10 @@ Enrichment on real records, Haiku 4.5, all 4,000:
 
 | arm | Recall@5 | MRR@10 | nDCG@10 |
 |---|---|---|---|
-| thin records | 0.291 | 0.744 | 0.588 |
-| **enriched** | **0.328** | **0.787** | **0.669** |
+| thin records | 0.264 | 0.725 | 0.579 |
+| **enriched** | **0.307** | **0.793** | **0.671** |
 
-**+0.081 nDCG, a 14% relative gain**, improving 27 of 41 queries. Far more
+**+0.092 nDCG, a 16% relative gain**, improving 26 of 41 queries. Far more
 modest than the synthetic corpus suggested, and far more believable. Biggest
 gains are where a title says nothing about content:
 
@@ -557,14 +564,14 @@ judgements, on the thin 4,000-record arm:
 
 | strategy | precision | recall | F1 | median results |
 |---|---|---|---|---|
-| absolute 0.15 (old) | **0.035** | 0.986 | 0.067 | 763 |
-| relative ≥ 0.90 × best | 0.582 | 0.302 | 0.398 | 4 |
-| relative ≥ 0.85 × best | 0.502 | 0.400 | 0.445 | 9 |
-| largest-gap cut | 0.648 | 0.246 | 0.356 | 2 |
-| fixed top-5 | 0.522 | 0.291 | 0.373 | 5 |
-| fixed top-10 | 0.461 | 0.420 | 0.439 | 10 |
-| fixed top-15 | 0.418 | 0.556 | 0.477 | 15 |
-| **fixed top-20** | 0.398 | 0.667 | **0.498** | 20 |
+| absolute 0.15 (old) | **0.039** | 0.985 | 0.074 | 763 |
+| relative ≥ 0.90 × best | 0.585 | 0.282 | 0.380 | 4 |
+| relative ≥ 0.85 × best | 0.515 | 0.372 | 0.432 | 9 |
+| largest-gap cut | 0.653 | 0.229 | 0.340 | 2 |
+| fixed top-5 | 0.527 | 0.264 | 0.352 | 5 |
+| fixed top-10 | 0.459 | 0.381 | 0.416 | 10 |
+| fixed top-15 | 0.416 | 0.506 | 0.457 | 15 |
+| **fixed top-20** | 0.396 | 0.603 | **0.478** | 20 |
 
 Precision **0.035**: the floor admits almost everything and calls it a result
 set. But the fix I proposed from result counts alone — a relative cut — is
@@ -575,8 +582,8 @@ is why the fix waited for the judgements.
 
 **Where the evidence stops.** The eval pooled each lane to depth 20, so no record
 below rank 20 has a judgement and every one of them scores as irrelevant. F1 is
-still *rising* at k=20 — 0.373, 0.439, 0.477, 0.498 across the sweep — and the
-fall after it (0.477 at 25, 0.339 at 50) is an artefact of running past the pool,
+still *rising* at k=20 — 0.352, 0.416, 0.457, 0.478 across the sweep — and the
+fall after it (0.468 at 25, 0.359 at 50) is an artefact of running past the pool,
 not a peak. So the honest claim is narrow: **20 is the deepest cut this eval can
 vouch for, and it beats everything shallower.** Whether 30 would be better is
 unmeasured, and would need a deeper pool to answer.
@@ -606,6 +613,66 @@ page to. The keyword lane is untouched and still returns full depth — BM25 sto
 on its own, since a record sharing no term with the query does not match at all,
 while cosine similarity scores every record against every query and needs the
 list ended for it.
+
+### Comparing embedding models
+
+`all-MiniLM-L6-v2` is 384 dimensions and reads 256 tokens. Swapping it is a
+config change — `BETTERSEARCH_LOCAL_MODEL` — so the obvious question is whether
+the retrieval ceiling is the encoder or the records. Against `bge-base-en-v1.5`
+(768 dimensions, 512 tokens, still self-hosted, still no API key):
+
+| | thin records | enriched records |
+|---|---|---|
+| MiniLM (384d) | 0.579 | 0.671 |
+| **bge-base (768d)** | **0.658** | **0.743** |
+
+*nDCG@10 on the four-lane pool.*
+
+**They stack, and almost additively.** Enrichment is worth +0.092 over the
+baseline, the encoder +0.079, and both together +0.164 against the 0.171 you
+would get if they never overlapped. Best arm improves 29 of 41 queries and
+regresses 3.
+
+The practical reading: **a bigger encoder buys most of what LLM enrichment buys,
+for free.** bge on thin records (0.658) nearly matches MiniLM on enriched
+records (0.671) — no API calls, no per-record cost, no vendor. Enrichment is
+still worth its £7 on top, but it is the second thing to try, not the first.
+The 512-token window also removes the truncation the 256-token cap was causing:
+0 truncated chunks against 79.
+
+What it costs: vectors are twice the size, so the storage arithmetic above
+doubles, and embedding is **6× slower on CPU** — 400 records in 10.0s against
+MiniLM's 1.6s. That is an ingest cost, paid once per record, not a query cost.
+
+**I nearly got this exactly backwards.** The first comparison said bge was
+*worse* — 0.578 against 0.588 — and I was ready to report that the records were
+the ceiling. Two things were wrong with it.
+
+The first was a red herring: bge wants a query instruction prefix for retrieval
+and our provider adds none. Adding it changed nothing (0.572).
+
+The second was the real fault. `data/eval_real.json` was pooled from three lanes,
+all MiniLM or BM25. **Judging only what the pooled lanes retrieve means any
+record a new system finds that they missed is unjudged, and unjudged counts as
+irrelevant.** Measured: 100% of MiniLM's top 10 had been seen by the judge
+against **71%** of bge's. Re-pooling with bge as a fourth lane added 312 records
+no other lane had ever surfaced, and moved bge by **+0.080** — the entire
+difference between "slightly worse" and "close to enrichment".
+
+This is the same failure the enrichment arm was protected from by pooling all
+three lanes, arriving in a new costume. The fix is in the tooling: a lane and an
+arm can each name their own encoder, and `scripts/compare_arms.py` says in its
+docstring that an unpooled arm cannot be compared.
+
+The combined arm is itself only 90% judged, so 0.743 is if anything an
+undercount — the bias runs against the conclusion, which is why it stands
+without a fifth re-pool.
+
+One honest wrinkle: on `learning to be present`, the query that prompted all
+this, plain bge is the best arm. It returns *Be Here Now* at rank 1 where MiniLM
+returned *Introduction to Algorithms*; adding enrichment pushes it to rank 4.
+Enrichment wins on average and dilutes some queries, exactly as `Sue Monk Kidd`
+showed earlier.
 
 ### Open: does the top model tier buy better retrieval?
 
@@ -638,14 +705,15 @@ regressed five queries by diluting records — `Sue Monk Kidd` fell 1.000 → 0.
 because topical prose crowded out an exact-author match. Opus writes 68% more
 synopsis and 78% more topics, so it would dilute harder. Richer could plausibly
 retrieve *worse*, and the 79 chunks already pushed past MiniLM's 256-token cap
-would become more.
+would become more — though on bge's 512-token window that particular objection
+disappears, since the enriched records truncate to 0 chunks there.
 
 The 289 Opus enrichments are committed at `data/enrichment_real_opus_sample.jsonl`
 so the quality figures above can be checked.
 
 ### How much to trust this
 
-- **Judge self-consistency 98%** (98 of 100 re-judged pairs identical). A
+- **Judge self-consistency 94%** (94 of 100 re-judged pairs identical). A
   50-pair sample is in `data/eval_real_spotcheck.md` for a human to check.
 - **Pooling bias.** Records no lane retrieved were never judged, so recall is
   relative to the pool, not absolute. All three measured lanes contributed —

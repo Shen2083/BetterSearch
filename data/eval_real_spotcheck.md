@@ -6,295 +6,52 @@ judge is reading **intent** or just matching words. If it is grading a
 thriller as relevant to "something gentle to read before bed" because the
 record says "night", the eval is not measuring what we think it is.
 
-Measured self-consistency on a re-judged sample: **98%** identical.
+Measured self-consistency on a re-judged sample: **94%** identical.
 
-**0** — _the one about a boy wizard at school_
+**1** — _books like Agatha Christie_
 ```
-The Thing About December
-Author: Donal Ryan
-Published: Transworld Publishers Limited, 2013
-Subjects: Fathers and sons; Fiction; Bereavement; Land tenure; Fiction, general
+The Secret Bedroom
+Author: Robert Lawrence Stine
+Published: Gareth Stevens Pub, 1991
+Subjects: Fiction; Horror tales; Revenge; Horror; collectionID:FearStreet; Children's fiction; Mystery and detective stories; Horror stories
 ```
-judge: Contemporary Irish fiction about bereavement and land tenure, not fantasy or wizards.
-
-**0** — _The Secret Life of Bees_
-```
-How to Keep Bees
-Author: Miller, Arthur C. inspector of apiaries.
-Published: CreateSpace Independent Publishing, 2014
-Subjects: Beekeeping
-```
-judge: Practical beekeeping manual, not the Sue Monk Kidd novel requested.
-
-**2** — _knitting patterns for beginners_
-```
-Winter essential knits
-Author: Quail Studio
-Published: Quail Publishing, 2015
-Subjects: Knitting; Patterns; Knitting, patterns
-```
-judge: Knitting patterns book directly matches beginner-focused query intent.
-
-**0** — _the one about a boy wizard at school_
-```
-The Wonderful Story of Henry Sugar and Six More
-Author: Roald Dahl
-Published: Alfred A. Knopf, 1977
-Subjects: Juvenile books; Teenage fiction; Children's stories, English; Short stories; JUVENILE FICTION / Short Stories; JUVENILE FICTION / Fantasy & Magic; JUV
-```
-judge: Short story collection, not novel about boy wizard at school.
-
-**2** — _the one about a boy wizard at school_
-```
-Carry On
-Author: Rainbow Rowell
-Published: Macmillan, 2015
-Subjects: gay; fantasy; magical schools; Young adult fiction, fantasy, contemporary; Young adult fiction, romance, paranormal; Magic; JUVENILE FICTION / Love & Romance; JUVENILE FICTION / Fantasy & Mag
-```
-judge: Boy wizard at magical school - this directly matches the query intent.
-
-**1** — _a novel where the beekeeper is the detective_
-```
-The keeper of the bees
-Author: Gene Stratton-Porter
-Published: Indiana UP, 1925
-Subjects: Fiction; Bee culture; Beekeepers; Fiction, general; Indiana, fiction
-```
-judge: Features a beekeeper protagonist, but not a detective novel.
-
-**0** — _Sue Monk Kidd_
-```
-Tree of Birds
-Author: Susan Meddaugh
-Published: Tandem Library, 1988
-Subjects: Juvenile fiction; Fiction; Migration; Birds; School stories; Humorous stories; Schools; Humorous fiction
-```
-judge: Wrong author. Sue Monk Kidd writes adult fiction, not juvenile books.
-
-**2** — _an uplifting story after a hard year_
-```
-Option B
-Author: Sheryl Sandberg
-Published: Knopf, 2017
-Subjects: Relationships; Parenting; Grief; Resilience (Personality trait); Loss (Psychology); Bereavement; Family; BIOGRAPHY & AUTOBIOGRAPHY
-```
-judge: Resilience and bereavement recovery directly address uplifting after hardship.
-
-**0** — _an uplifting story after a hard year_
-```
-The Lonely Voice
-Author: Frank O'Connor
-Published: Melville House Pub., 1963
-Subjects: Short story; Short stories - literary criticism
-```
-judge: Literary criticism of short stories, not an uplifting narrative to read.
-
-**0** — _woodworking with hand tools_
-```
-Wood machining processes
-Author: Koch, Peter
-Published: Ronald Press Co., 1964
-Subjects: Woodwork; Woodworking machinery
-```
-judge: Reader wants hand tools; record focuses on machinery processes.
-
-**0** — _a novel where the beekeeper is the detective_
-```
-Fables & Reflections
-Author: Neil Gaiman
-Published: Vertigo, 1993
-Subjects: Literature; Comics & graphic novels, general; Fantasy; Graphic novel; Mythology; Fairy tales; Fables; Dreams
-```
-judge: Fables collection, not a novel with beekeeper detective plot.
-
-**2** — _understanding how computers actually work_
-```
-Code
-Author: Charles Petzold
-Published: Microsoft Press, 1999
-Subjects: Computer programming; Coding theory; Datenverarbeitung; Computers; Hardware; Coderingstheorie; Programmatuurtechniek; Einfu hrung
-```
-judge: Petzold's Code explains computer fundamentals from circuits to programming.
-
-**1** — _history of my local area_
-```
-Writing local history
-Author: David Dymond
-Published: Bedford Square Press / NCVO, 1981
-Subjects: Local History
-```
-judge: Guide to researching local history, not history of a specific area.
-
-**1** — _second world war in the pacific_
-```
-World War II
-Author: Grolier Educational
-Published: Gill & MacMillan, 2006
-Subjects: World War, 1939-1945; Encyclopedias; World War (1939-1945) fast (OCoLC)fst01180924
-```
-judge: General WWII coverage, but likely lacks Pacific theatre depth.
-
-**2** — _knitting patterns for beginners_
-```
-Vogue Knitting
-Author: Trisha Malcolm
-Published: Sixth&Spring Books, 1999
-Subjects: Patterns; Knitting; Knitting, patterns
-```
-judge: Directly addresses beginner knitting patterns with authority.
-
-**1** — _an uplifting story after a hard year_
-```
-Chicken Soup for the Grieving Soul
-Author: Jack Canfield
-Published: HCI, 2003
-Subjects: Self-Improvement; Bereavement; Nonfiction
-```
-judge: Uplifting stories present, but focused on grief rather than general renewal.
-
-**0** — _gripping but not too violent_
-```
-Love your life not theirs
-Author: Rachel Cruze
-Published: Dreamscape Media, 2016
-Subjects: Money; Personal Finance; Finance, personal
-```
-judge: Personal finance book, not fiction. Tone/violence level irrelevant.
-
-**0** — _the one about a boy wizard at school_
-```
-Coach Hyatt is a riot!
-Author: Dan Gutman
-Published: HarperTrophy, 2008
-Subjects: Fiction; Humorous stories; Football in fiction; Schools; Football; Coaches (Athletics); Schools in fiction; Juvenile Fiction
-```
-judge: Sports comedy about a football coach, not wizard school fiction.
-
-**2** — _preparing for a job interview_
-```
-Job hunting for dummies
-Author: Max Messmer
-Published: Dialektika, 1995
-Subjects: Miniature books; Job hunting; Specimens; Employment interviewing; Career changes
-```
-judge: Directly addresses job hunting and employment interviewing. Practical guide for job seekers.
-
-**0** — _a book that will make me cry_
-```
-The Meltdown
-Author: Jeff Kinney
-Published: Baumhaus Verlag GmbH, 2007
-Subjects: Humorous stories; Families; Winter; Diaries; JUVENILE FICTION / Humorous Stories; Juvenile fiction; Snow; Fiction
-```
-judge: Humorous juvenile fiction designed to make readers laugh, not cry.
-
-**1** — _gripping but not too violent_
-```
-Calamity
-Author: Brandon Sanderson
-Published: Delacorte Press, 2016
-Subjects: Science fiction; Guerrilla warfare; Juvenile fiction; Supervillains; JUVENILE FICTION / Boys & Men; Fiction; Children's fiction; Adventure and adventurers, fiction
-```
-judge: Science fiction adventure with action, but guerrilla warfare suggests violence level unclear.
-
-**2** — _Agatha Christie_
-```
-The Pale Horse
-Author: Agatha Christie
-Published: Collins, 1952
-Subjects: English Detective and mystery stories; Fiction; Mystery; Detective and mystery stories; English Novelists; Large type books; English literature; Fiction, crime
-```
-judge: Work by Agatha Christie, exactly what reader requested.
-
-**2** — _woodworking with hand tools_
-```
-Traditional woodworking handtools
-Author: Graham Blackburn
-Published: Gramercy Books, 1998
-Subjects: Woodworking tools; Handbooks, manuals; Woodwork; Tools; Travail du bois; Guides, manuels; Outillage
-```
-judge: Directly matches query: traditional woodworking with hand tools, practical handbook.
-
-**2** — _starting a business with no money_
-```
-Starting a Business All-In-One for Dummies
-Author: Consumer Dummies
-Published: Wiley & Sons, Incorporated, John, 2015
-Subjects: New business enterprises; Business planning; Small business, planning
-```
-judge: Directly addresses business startup basics. Practical guide for new entrepreneurs.
-
-**1** — _poems about loss_
-```
-Poems
-Author: Matthew Arnold
-Published: The Macmillan Company, 1853
-Subjects: Philosophy; Education; Poetry (poetic works by one author); English poetry; Modern Poetry; Arnold, matthew, 1822-1888; Literature, history and criticism; Poetry
-```
-judge: General poetry collection; loss not confirmed in sparse record metadata.
-
-**2** — _something gentle to read before bed_
-```
-Sleep like a tiger
-Author: Mary Logue
-Published: HMH Books for Young Readers, 2012
-Subjects: Animals; Fiction; Sleep; Bedtime; Sleep behavior; Sleep behavior in animals; Juvenile fiction; Picture books for children
-```
-judge: Gentle bedtime picture book about sleep. Exactly what they're seeking.
-
-**0** — _Sue Monk Kidd_
-```
-"Surely You're Joking, Mr. Feynman"
-Author: Richard Phillips Feynman
-Published: W. W. Norton/Commonwealth Publishing, 1984
-Subjects: Anecdotes; Anecdotes, facetiae, satire; Art; Biography; Humor; Music; Physicists; Professors
-```
-judge: Different author entirely. No connection to Sue Monk Kidd's works.
-
-**0** — _if I liked Lord of the Rings what next_
-```
-The millionaire next door
-Author: Thomas J. Stanley
-Published: MJF Books, 1996
-Subjects: Rich people; Millionaires; Richesse; Millionnaires; Saving and investment; Riches; Personal Banking; Economics
-```
-judge: Non-fiction finance book, unrelated to fantasy adventure fiction.
-
-**0** — _the one about a boy wizard at school_
-```
-The Test
-Author: Peggy Kern
-Published: Scholastic Paperbacks, 2011
-Subjects: Juvenile fiction; High school students; Teenage pregnancy; Fiction; Children's fiction; Pregnancy, fiction; Schools, fiction
-```
-judge: School setting present, but no wizard or magical elements. Different topic entirely.
-
-**0** — _poems about loss_
-```
-Turn Up the Heat
-Author: Philip L. Goglia
-Published: Plume, 2002
-Subjects: Nutrition; Physical fitness; Weight loss
-```
-judge: Book about weight loss and nutrition, not emotional loss or grief poetry.
+judge: Mystery element present, but horror focus differs from Christie's detective style.
 
 **2** — _what to do about money worries_
 ```
-Thou Shall Prosper
-Author: Rabbi Daniel Lapin
-Published: Wiley & Sons, Incorporated, John, 2002
-Subjects: Wealth; Judaism; Personal Finance; Money; Finance, personal; Money, religious aspects
+Focus on personal finance
+Author: Jack R. Kapoor
+Published: McGraw-Hill/Irwin, 2013
+Subjects: Personal Finance; Investments
 ```
-judge: Personal finance book directly addressing money concerns and wealth-building.
+judge: Directly addresses personal finance and money management concerns.
 
-**1** — _history of my local area_
+**0** — _the one about a boy wizard at school_
 ```
-Index to American Genealogies: And to Genealogical Material Contained in All Works Such as Town ..
-Author: Daniel Steele Durrie
-Published: J. Munsell's sons, 1900
-Subjects: Bibliography; Local History; Genealogy
+The Great Automatic Grammatizator
+Author: Roald Dahl
+Published: Tandem Library, 1982
+Subjects: Teen & Young Adult Fiction; Teen & Young Adult Mystery & Suspense; Juvenile audience; Fiction; Juvenile Fiction; Young Adult Fiction; Wit and humor; Short stories
 ```
-judge: Genealogy index related to local history, but primarily a reference tool rather than history narrative.
+judge: Roald Dahl story collection, not about a boy wizard at school.
+
+**1** — _cycling long distances_
+```
+A Walk in the Woods
+Author: Bill Bryson
+Published: Goldmann, 1997
+Subjects: Description and travel; Natural history; Travel; Journeys; Hiking; Nonfiction; Natural history, united states; Appalachian trail
+```
+judge: Long-distance travel/journey narrative, but hiking not cycling.
+
+**0** — _learning to take better photographs_
+```
+Woodworking
+Author: Nancy MacDonald
+Published: CENGAGE Delmar Learning, 2008
+Subjects: Carpentry; Woodwork
+```
+judge: Woodworking book has no connection to photography instruction.
 
 **2** — _poems about loss_
 ```
@@ -303,157 +60,400 @@ Author: Edgar Allan Poe
 Published: Alfred A. Knopf, 1995
 Subjects: American fantasy poetry; Poetry (poetic works by one author); Laments; Narrative poetry; Poetry; Grief; American poetry; American Children's poetry
 ```
-judge: Collection explicitly includes grief and laments; Poe renowned for elegiac poetry.
+judge: Poe collection with grief and laments as subjects directly matches loss poetry query.
 
-**0** — _a book that will make me cry_
+**2** — _books like Agatha Christie_
 ```
-Getting Through the Night
-Author: Eugenia Price
-Published: (Ulverscroft) [distributor], 1982
-Subjects: Grief; Consolation; Christianity; Religious aspects of Bereavement; Religious aspects of Grief; Bereavement; Large type books
+The Secret of Chimneys
+Author: Agatha Christie
+Published: Wydawnictwo Hachette, 1925
+Subjects: Fiction; Mystery; Superintendent Battle (Fictitious character); English Detective and mystery stories; Murder; Investigation; Conspiracies; Manors
 ```
-judge: Self-help for grief, not emotional fiction to move reader to tears.
+judge: Exact author match. Classic mystery novel by Agatha Christie herself.
 
-**2** — _history of my local area_
+**2** — _dog training for a new puppy_
 ```
-Unraveling the past
-Author: Maria Luisa T. Camagay
-Published: Vibal Group, Inc., 2018
-Subjects: Study and teaching; Sources; Local History; Education
+The Dog's Mind
+Author: Bruce Fogle
+Published: Pelham Books/Stephen Greene Press, 1990
+Subjects: Dogs; Behavior; Psychology; Training; Dogs, psychology
 ```
-judge: Local history book directly matches reader's query intent.
+judge: Covers dog behavior, psychology and training - directly addresses puppy training needs.
 
-**2** — _how to keep bees in a small garden_
+**2** — _something similar to Sherlock Holmes_
 ```
-How to Keep Bees
-Author: Miller, Arthur C. inspector of apiaries.
-Published: CreateSpace Independent Publishing, 2014
-Subjects: Beekeeping
+Death in the Clouds
+Author: Agatha Christie
+Published: Ren min wen xue, 1935
+Subjects: Detective and mystery stories; Fiction; Hercule Poirot (Fictitious character); Private investigators; Murder; English Detective and mystery stories; Mystery; Murder in ficti
 ```
-judge: Directly addresses beekeeping fundamentals; matches query intent perfectly.
+judge: Classic detective mystery by renowned author similar to Holmes stories.
+
+**1** — _cycling long distances_
+```
+Three Men on the Bummel
+Author: Jerome Klapka Jérôme
+Published: Sutton Publishing Ltd, 1900
+Subjects: Cycling; Humor; British; Fiction
+```
+judge: Fiction about cycling, but comedic travel narrative, not instructional guide.
+
+**1** — _understanding how computers actually work_
+```
+Advances in Computers, Volume 49 (Advances in Computers)
+Author: Marvin V. Zelkowitz
+Published: Elsevier Science & Technology, 1995
+Subjects: Computers, periodicals; Electronic data processing; Informatique; Computers; Ordinateurs; Machine Theory; Reference; G
+```
+judge: Technical coverage of computers, but academic volume may not suit beginner understanding.
+
+**2** — _a book that will make me cry_
+```
+Déjalos ir con amor
+Author: Nancy O'Connor
+Published: Trillas, 1990
+Subjects: Bereavement; Psychological aspects; Grief
+```
+judge: Book about grief and bereavement directly addresses emotional need to process loss.
+
+**1** — _a book that will make me cry_
+```
+Destroy Me
+Author: Tahereh Mafi
+Published: Farshore, 2012
+Subjects: Dystopian; science fiction; young adult; romance; dystopian romance; science fiction romance; forbidden love; power dynamics
+```
+judge: Emotionally intense dystopian romance, may move reader but not guaranteed tearful.
+
+**2** — _graphic novels for teenagers_
+```
+Jujutsu Kaisen, Vol. 7
+Author: Gege Akutami
+Published: Viz Media, 2020
+Subjects: Comics & graphic novels, manga, horror; Comics & graphic novels, manga, media tie-in; Comics & graphic novels, manga, fantasy
+```
+judge: Manga graphic novel, appropriate for teenage audience, horror and fantasy genres.
+
+**0** — _something similar to Sherlock Holmes_
+```
+Home woodworking
+Author: F. E. Sherlock
+Published: Newnes Technical, 1982
+Subjects: Amateurs' manuals; Woodwork; Woodworking; Woodwork - General; Crafts / Hobbies
+```
+judge: Woodworking manual, not detective fiction. Author surname coincidence.
+
+**0** — _if I liked Lord of the Rings what next_
+```
+One of us is next
+Author: Karen M. McManus
+Published: Alfaguara Infantil, 2020
+Subjects: Young adult fiction, mysteries & detective stories; Young adult fiction, school & education, general; Young adult fiction, thrillers & suspense; Young adult fiction, socia
+```
+judge: Contemporary YA mystery thriller; completely unrelated to epic fantasy.
 
 **1** — _Joy of Cooking_
 ```
-The compleat I hate to cook book
-Author: Peg Bracken
-Published: Bantam Books, 1986
-Subjects: Cookery; International Cookery; Cooking
+Guide to good food
+Author: Velda L. Largen
+Published: Goodheart-Wilcox Co., 1979
+Subjects: Food; Nutrition; International Cookery; Cookery, International; General; Education / Teaching; Education; EDU
 ```
-judge: Cooking book but humorous approach, not the classic Joy of Cooking
+judge: Similar cookbook but not the exact famous title reader sought.
 
-**0** — _a funny book to cheer me up_
+**0** — _a novel where the beekeeper is the detective_
 ```
-The pin-up
-Author: Mark Gabor
-Published: Bell, 1972
-Subjects: Glamour photography; Graphic arts; Photography of women; Photography, history
+Hector Finds a Fortune (Ready-for-Chapters)
+Author: Elizabeth Shreeve
+Published: Fitzgerald Books, 2004
+Subjects: Uncles; Insects; Juvenile fiction; Fiction; Friendship; Travel; Beekeepers; Beekeeping
 ```
-judge: Photography history book, not humorous fiction or entertainment.
+judge: Juvenile adventure featuring beekeeping, not detective mystery novel.
 
-**1** — _something gentle to read before bed_
+**0** — _graphic novels for teenagers_
 ```
-Chicken Little (Read-Aloud Storybook)
-Author: RH Disney
-Published: RH/Disney, 2005
-Subjects: Children: Kindergarten; Children: Grades 1-2; Juvenile fiction
+A New Beginning
+Author: John Flanagan
+Published: Puffin Books, 2013
+Subjects: JUVENILE FICTION; Action & Adventure; Apprentices; Fantasy fiction; Fiction; Fantasy; JUVENILE FICTION / Action & Adventure / General; JUVENILE FICTION / Fantasy & Magic
 ```
-judge: Read-aloud storybook, but Chicken Little's panic plot may not be soothing.
+judge: Text novel, not graphic novel. Wrong format entirely.
 
-**1** — _learning to grow vegetables in pots_
+**0** — _a book that will make me cry_
 ```
-Square Foot Gardening
-Author: Mel Bartholomew
-Published: Rodale Books, 1981
-Subjects: Square foot gardening; Vegetable gardening; Gardening
+Boys don't cry
+Author: Malorie Blackman
+Published: Random House Children's Books, 2010
+Subjects: Teenage fathers; Fiction; Single parents
 ```
-judge: Vegetable gardening book, but focuses on square foot method, not container/pot growing.
+judge: Emotional manipulation title, but YA fiction about fatherhood unlikely to meet emotional need.
 
-**2** — _an uplifting story after a hard year_
+**2** — _a funny book to cheer me up_
 ```
-the sun and her flowers
-Author: Rupi Kaur
-Published: Kenwann, 2017
-Subjects: Self-actualization (Psychology); Poetry; American poetry; New York Times bestseller; New York Times reviewed; Poetry (poetic works by one author); American poetry -- 21st century; Sel
+No Brainer
+Author: Jeff Kinney
+Published: Bound to Stay Bound Books, 2023
+Subjects: Children's fiction; Enjoying; funny; Silly; Juvenile fiction
 ```
-judge: Poetry collection about self-actualization and personal growth. Uplifting tone matches intent.
+judge: Funny children's book by popular humorous author, explicitly marked silly.
+
+**0** — _dog training for a new puppy_
+```
+Anatomy of the dog
+Author: Malcolm E. Miller
+Published: W.B. Saunders, 1964
+Subjects: Anatomy; Dogs; Veterinary anatomy; Dogs, anatomy; Chiens; Anatomie; Dogs, pictorial works; Anatomy & histology
+```
+judge: Book covers anatomy, not puppy training or behavior.
 
 **2** — _helping a child who will not sleep_
 ```
-Gentle Sleep Book
-Author: Sarah Ockwell-Smith
-Published: Little, Brown Book Group Limited, 2015
-Subjects: Infants; Preschool children; Toddlers; Children, sleep; Pediatrics; Sleep; Care
+Sleep Is for Everyone
+Author: Paul Showers
+Published: HarperCollins, 1974
+Subjects: Sleep; Sleep, juvenile literature; Juvenile literature; Sleep -- Juvenile literature.; Children's fiction; Sleep, fiction
 ```
-judge: Directly addresses children's sleep issues with parenting guidance approach.
+judge: Children's book about sleep, directly addresses the reader's need.
 
-**2** — _second world war in the pacific_
+**2** — _something short I can finish in one sitting_
 ```
-Unbroken
-Author: Laura Hillenbrand
-Published: April Yaynclk, 2010
-Subjects: New York Times bestseller; Prisoners of war; Campaigns; American Aerial operations; World War, 1939-1945; Long-distance runners; United States; Biography
+I Really Like Slop!
+Author: Mo Willems
+Published: Babaryba, 2015
+Subjects: Pigs; Swine; Elephants; Juvenile fiction; Friendship; Food habits; Fiction; New York Times bestseller
 ```
-judge: Detailed WWII Pacific prisoner-of-war biography with aerial campaigns and combat.
+judge: Short children's book easily readable in one sitting.
 
-**1** — _learning to grow vegetables in pots_
+**1** — _a funny book to cheer me up_
 ```
-Question box
-Author: United States. Department of Agriculture. Radio Service
-Published: United States Department of, 1941
-Subjects: Vegetables; Nutrition; Berries; Gardening; Victory gardens
+Science of Happiness
+Author: Stefan Klein
+Published: Hachette Books, 2009
+Subjects: Popular science; Psychology; Happiness; Pleasure; Smiling
 ```
-judge: Gardening and vegetables present, but unclear if specifically about container/pot gardening.
-
-**2** — _knitting patterns for beginners_
-```
-Knitting Now
-Author: Gabi Tubbs
-Published: Scribner, 1985
-Subjects: Patterns; Knitting; Knitting, patterns
-```
-judge: Directly matches query for knitting patterns. Appears to be instructional resource.
+judge: About happiness but likely serious science, not humorous entertainment.
 
 **0** — _the one about a boy wizard at school_
 ```
-Magical child
-Author: Joseph Chilton Pearce
-Published: Bantam Books, 1977
-Subjects: Child psychology; Child rearing; Psychologie; Enfants
+The Last Straw
+Author: Jeff Kinney
+Published: Baumhaus Verlag GmbH, 2008
+Subjects: Diaries; Middle schools; Juvenile fiction; Family life; Fiction; Schools; Families; Parent-Child Relations
 ```
-judge: Non-fiction psychology text, not fiction about wizard boy at school.
+judge: School setting but no wizard or fantasy elements; wrong series entirely.
 
-**0** — _getting fit again after illness_
+**1** — _graphic novels for teenagers_
 ```
-Women & madness
-Author: Phyllis Chesler
-Published: PALGRAVE MACMILLAN, 1972
-Subjects: Women; Sex role; Psychology; Mental health; Social aspects; Mental illness; Sociological aspects; Health and hygiene
+Watchmen
+Author: Alan Moore
+Published: Panini Verlags GmbH, 1986
+Subjects: Watchmen (Comic strip); Graphic novels; Comic books, strips; New York Times bestseller; Comics & graphic novels, science fiction; Superheroes; Crimes against; Comics & graphic novels, s
 ```
-judge: Mental illness text, not fitness/recovery guidance after illness.
+judge: Graphic novel, but adult-oriented dark content unsuitable for most teenagers.
 
-**0** — _that book about a woman and bees in South Carolina_
+**2** — _identifying garden birds_
 ```
-The splendour of South Indian music
-Author: P. T. Chelladurai
-Published: Vaigarai Publishers, 1991
-Subjects: Carnatic music; History and criticism; Music; Ragas
+Bird (Eyewitness Guide)
+Author: David Burnie
+Published: Distributed by Random House, 1988
+Subjects: Nature; Nonfiction; Aves; Juvenile literature; Birds; Literatura juvenil; Uccelli; Libri per ragazzi
 ```
-judge: About South Indian music history, not South Carolina or bees.
+judge: Comprehensive bird identification guide, appropriate scope and format.
 
 **0** — _Sue Monk Kidd_
 ```
-Humble Pi
-Author: Matt Parker
-Published: Mundi, 2019
-Subjects: Mathematics; Mathematics, popular works; Mathematics, miscellanea; Humor, general
+The Hostile Hospital
+Author: Lemony Snicket
+Published: HarperCollins Publishers New Zealand, 2001
+Subjects: Juvenile fiction; Orphans; Medical fiction; Brothers and sisters; Children's fiction; Orphans, fiction; Brothers and sisters, fiction; Humorous stories
 ```
-judge: Reader asked for Sue Monk Kidd; this is a math humor book by different author.
+judge: Reader wants Sue Monk Kidd; this is Lemony Snicket, different author entirely.
+
+**0** — _Joy of Cooking_
+```
+A new system of domestic cookery
+Author: Maria Eliza Ketelby Rundell
+Published: Robert M'Dermut, 1800
+Subjects: American Cookery; Cookery; English Cookery; Cooking; American Cooking; English Cooking
+```
+judge: Different cookbook from different author and era. Not Joy of Cooking.
+
+**1** — _learning to grow vegetables in pots_
+```
+Growing vegetables west of the Cascades
+Author: Steve Solomon
+Published: Sasquatch Books, 1989
+Subjects: Vegetable gardening; Organic gardening; Gardening; Nonfiction
+```
+judge: Vegetable gardening guide, but focused on regional growing, not container gardening.
+
+**0** — _a novel where the beekeeper is the detective_
+```
+Learning about bees from Mr. Krebs
+Author: Alice K. Flanagan
+Published: Children's Press, 1999
+Subjects: Juvenile literature; Bee culture; Beekeepers; Honeybee; Occupations; Bees
+```
+judge: Nonfiction about beekeeping, not a detective novel.
+
+**0** — _getting fit again after illness_
+```
+Getting a job you love during a tough economy
+Author: Guy, Bill the jobs guy
+Published: GlobaLeadershiPublishing, 2014
+Subjects: Job hunting
+```
+judge: Job hunting guide, unrelated to fitness or health recovery.
+
+**1** — _woodworking with hand tools_
+```
+Woodworking technology
+Author: James J. Hammond
+Published: Taplinger Pub Co, 1961
+Subjects: Woodwork; Woodwork (Manual training); Textbooks
+```
+judge: Woodworking topic but unclear if hand tools focus or general technology.
+
+**2** — _books like Agatha Christie_
+```
+Masterpieces of mystery and suspense
+Author: Martin H. Greenberg
+Published: Doubleday Book & Music Clubs, Inc., 1988
+Subjects: American Detective and mystery stories; English Detective and mystery stories; Detective and mystery stories; Literature, collections
+```
+judge: Anthology of detective and mystery stories, exactly Christie's genre and style.
+
+**0** — _The Secret Life of Bees_
+```
+Osobnosti apidológie
+Author: Jozef Čižmárik
+Published: Alexandra, 2003
+Subjects: Biography; Beekeepers
+```
+judge: Book about beekeepers' biographies, not the novel 'The Secret Life of Bees'.
+
+**1** — _history of my local area_
+```
+Index to American Genealogies: And to Genealogical Material Contained in All Works Such as Town ..
+Author: Daniel Steele Durrie
+Published: J. Munsell's sons, 1900
+Subjects: Bibliography; Local History; Genealogy
+```
+judge: Genealogy resource with local history focus, but specialized index rather than narrative history.
+
+**1** — _Joy of Cooking_
+```
+Frugal housewife
+Author: Lydia Maria Child
+Published: T. Tegg and Son, 1829
+Subjects: Home economics; Cookery; American Cookery; Handbooks, manuals; Low budget cookery; American Cooking; Cooking; Low budget cooking
+```
+judge: Historic cookbook on budget cooking, not the Joy of Cooking specifically.
+
+**0** — _The Secret Life of Bees_
+```
+Practical queen rearing
+Author: Frank Chapman Pellett
+Published: American Bee Journal
+Subjects: Bee-keeping
+```
+judge: Non-fiction beekeeping manual, not the novel reader seeks.
+
+**0** — _something short I can finish in one sitting_
+```
+Woodworking
+Author: Moran, Bob
+Published: Reader's Digest, 1996
+Subjects: Woodwork; Woodworking tools; Technique
+```
+judge: Instructional woodworking book, not leisure reading for quick completion
+
+**1** — _Joy of Cooking_
+```
+Theory & practice of good cooking
+Author: James Beard
+Published: Penguin, 1977
+Subjects: Cooking; Cookery
+```
+judge: Classic cooking guide by renowned chef, but different book than Joy of Cooking
+
+**0** — _how to keep bees in a small garden_
+```
+Small business management
+Author: Justin G. Longenecker
+Published: Cengage South-Western, 2000
+Subjects: Management; Small business; Small business, management
+```
+judge: About small business management, not beekeeping or gardening.
+
+**2** — _starting a business with no money_
+```
+Entrepreneurial finance
+Author: Philip J. Adelman
+Published: Prentice Hall, 1997
+Subjects: Finance; Small business; Budgeting & financial management; Small businesses & self-employed; Small Business Finance; Business & Economics; Small Business/Entrepreneurshi
+```
+judge: Directly addresses entrepreneurial finance and small business startup needs.
+
+**0** — _that book about a woman and bees in South Carolina_
+```
+Die Imker
+Author: Roth, Gerhard
+Published: S. Fischer, 2022
+Subjects: Beekeepers; Fiction
+```
+judge: German book about beekeepers, not South Carolina woman and bees story.
+
+**0** — _something gentle to read before bed_
+```
+Music notation
+Author: Gardner Read
+Published: Taplinger Pub. Co., 1964
+Subjects: Musical notation; Musique; Notation
+```
+judge: Technical manual about music notation, not a gentle bedtime read.
+
+**2** — _something gentle to read before bed_
+```
+A Gentle Reminder
+Author: Bianca Sparacino
+Published: Thought catalog, 2020
+Subjects: Self-help; personal development; self-love; self-care; mindfulness; motivation; inspiration; personal growth
+```
+judge: Gentle self-help with mindfulness and self-care subjects perfectly suits bedtime reading.
+
+**0** — _learning to grow vegetables in pots_
+```
+The Marijuana Growing Bible
+Author: Marijuana
+Published: Marijuana Cannabis Association, 2021
+Subjects: Gardening
+```
+judge: Growing marijuana illegally/inappropriately, not vegetable gardening instruction.
+
+**0** — _a book that will make me cry_
+```
+The Berenstain Bears Hug and Make Up (Berenstain Bears)
+Author: Mike Berenstain
+Published: HarperFestival, 2006
+Subjects: Children: Kindergarten; Bears, fiction; Family life, fiction; Children's fiction; Automobile travel, fiction
+```
+judge: Children's picture book unlikely to evoke emotional crying in adult reader.
+
+**2** — _what to do about money worries_
+```
+Creating money
+Author: Sanaya Roman
+Published: H J Kramer Inc., published in a joint, 1988
+Subjects: Channeling (Spiritualism); Money; Success; Mind, body, spirit: disciplines & techniques; Personal Finance; Personal Guidance; Self-Help; New Age / Body, Mind &
+```
+judge: Self-help book directly addressing money concerns and personal finance guidance.
 
 **1** — _an uplifting story after a hard year_
 ```
-You Can Heal Your Life
-Author: Louise Hay
-Published: Hay House Publishing, 2008
-Subjects: Self-actualization (psychology); Mind and body; Self-care, health
+A beekeeper's year
+Author: Janet Luke
+Published: 2017
+Subjects: Bee culture; Beekeepers
 ```
-judge: Self-help wellness book, not narrative fiction. Adjacent to emotional uplift intent.
+judge: Gentle nature topic, but unclear if narrative is uplifting or primarily instructional.
