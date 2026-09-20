@@ -5,9 +5,10 @@ Any sentence-transformers model works here; set ``BETTERSEARCH_LOCAL_MODEL``.
 Dimensions and the input limit are read from the loaded model rather than
 hardcoded, so swapping to a larger encoder needs no code change.
 
-**The input limit is architectural, not a throughput limit.** all-MiniLM-L6-v2
-accepts 256 tokens because its positional embeddings stop there. More CPU or a
-bigger GPU makes it faster, never able to read more.
+**The input limit is architectural, not a throughput limit.** bge-base accepts
+512 tokens, all-MiniLM-L6-v2 only 256, because their positional embeddings stop
+there. More CPU or a bigger GPU makes it faster, never able to read more - which
+is why enriched records truncated 79 chunks under MiniLM and none under bge.
 
 Whether that cap costs anything depends entirely on the content, so measure
 rather than assume. The chunker targets 450 tokens, but a chunk only gets near
@@ -26,7 +27,7 @@ import numpy as np
 
 from .base import l2_normalize
 
-DEFAULT_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+DEFAULT_MODEL = "BAAI/bge-base-en-v1.5"
 
 #: Fallback only, for the rare model that does not report its own limit.
 FALLBACK_MAX_INPUT_TOKENS = 512

@@ -82,14 +82,21 @@ which is the whole reason the previous eyeballed number had to be replaced.
 
 #### Comparing embedding models
 
-The encoder is a config change, not a code change, so a larger model is a
-second index and a second lane:
+The default encoder is `bge-base-en-v1.5` (768 dims, 512 tokens). It replaced
+`all-MiniLM-L6-v2` on the numbers below. The encoder is a config change, not a
+code change, so trying another is a second index and a second lane:
 
 ```bash
-BETTERSEARCH_LOCAL_MODEL=BAAI/bge-base-en-v1.5 \
-BETTERSEARCH_INDEX_PATH=.bettersearch/real-bge \
+BETTERSEARCH_LOCAL_MODEL=sentence-transformers/all-MiniLM-L6-v2 \
+BETTERSEARCH_INDEX_PATH=.bettersearch/real-minilm \
     bettersearch ingest --corpus data/catalogue_real.json
 ```
+
+**Changing the model invalidates every existing index.** The index records the
+model it was built with and refuses a write from a different one — `--force`
+does not override it, because a silent mismatch would write vectors from the
+wrong model into a live index. Delete the `.json` and `.npz` for that index
+path and re-ingest.
 
 **An arm that was not in the pool cannot be compared.** `data/eval_real.json`
 was pooled from three MiniLM and BM25 lanes; scoring a bge index against it
@@ -216,8 +223,8 @@ python scripts/build_standalone.py \
     --index .bettersearch/real-events
 ```
 
-**Expected**: `977 of 4114 records reachable from these queries`, and a file
-around 683 KB. The example queries are no longer listed here — they come from
+**Expected**: `978 of 4114 records reachable from these queries`, and a file
+around 682 KB. The example queries are no longer listed here — they come from
 the corpus files, the same place the served page gets them, so the offline copy
 cannot offer a button the served page does not. `--query` still overrides them. Only the records some baked ranking can reach are shipped —
 carrying all 4,000 would add 3.2 MB nobody can navigate to. That is only

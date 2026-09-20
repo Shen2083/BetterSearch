@@ -25,7 +25,12 @@ class Settings:
     # Matryoshka output width for providers that support truncation. Smaller
     # vectors mean a proportionally smaller index; see README on storage cost.
     embedding_dimensions: int = 512
-    local_model_name: str = "sentence-transformers/all-MiniLM-L6-v2"
+    # bge-base over all-MiniLM-L6-v2 because it is measurably better on the
+    # judged set - nDCG@10 0.658 against 0.579 on thin records, 0.743 against
+    # 0.671 on enriched ones - and still self-hosted with no API key. It costs
+    # twice the storage and about 6x the embedding time, both paid at ingest.
+    # BETTERSEARCH_LOCAL_MODEL swaps back to MiniLM where that matters more.
+    local_model_name: str = "BAAI/bge-base-en-v1.5"
     # Some long-context encoders (nomic-embed, gte-*-v1.5) ship custom modelling
     # code that transformers will only execute with this opted into explicitly.
     # Off by default: it runs arbitrary code from the model repo.
@@ -53,7 +58,7 @@ def load_settings() -> Settings:
         chunk_overlap_tokens=_int_env("BETTERSEARCH_CHUNK_OVERLAP", 60),
         embedding_dimensions=_int_env("BETTERSEARCH_EMBEDDING_DIMENSIONS", 512),
         local_model_name=os.environ.get(
-            "BETTERSEARCH_LOCAL_MODEL", "sentence-transformers/all-MiniLM-L6-v2"
+            "BETTERSEARCH_LOCAL_MODEL", "BAAI/bge-base-en-v1.5"
         ),
         local_trust_remote_code=os.environ.get(
             "BETTERSEARCH_LOCAL_TRUST_REMOTE_CODE", ""

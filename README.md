@@ -81,15 +81,22 @@ uvicorn api.main:app --reload      # http://127.0.0.1:8000/catalogue
 Three queries are worth trying, in this order:
 
 1. **`learning to be present`** — the pair above. Catalogue search cannot return
-   a record that does not contain the words; meaning-based search returns six.
+   a record that does not contain the words; meaning-based search returns 20,
+   led by *Attention, and Other Small Miracles*.
 2. **`gentle crime novels, nothing too gory`** — a request phrased the way a
    reader actually asks. Keyword search finds three records and gets the point
    exactly backwards: it leads with *Nine Grams*, an organised-crime thriller,
    and picks up a book on spiritual life called *Nothing to Do* because the
    record contains the word "nothing". Meaning-based search opens with *The
-   Knitting Circle Murders* and has *Tea, Cake and Arsenic* third — but *Nine
-   Grams* still lands second, because "crime novels" is a far stronger signal
-   than "nothing too gory". Better here, not magic.
+   Knitting Circle Murders* and has *Tea, Cake and Arsenic* sixth, with *Nine
+   Grams* pushed down to fifteenth.
+
+   This one is worth reading twice, because it used to say something weaker.
+   Under the old MiniLM encoder *Nine Grams* still landed **second** — "crime
+   novels" outweighed "nothing too gory" — and the honest conclusion was
+   "better here, not magic". Swapping the encoder for `bge-base-en-v1.5` moved
+   it to fifteenth. The negation is now being read. Nothing about the records
+   or the query changed.
 3. **`grewal`** — the failure that is easiest to miss, because it looks like it
    worked:
 
@@ -138,8 +145,10 @@ BETTERSEARCH_INDEX_PATH=.bettersearch/real-events \
                         --corpus data/events_northfield.json
 ```
 
-`getting my toddler to eat vegetables` now opens with the Toddler Mealtimes
-Workshop, above eighteen books that are also about the right thing.
+`how to keep bees in a small garden` returns *Beekeeping for Beginners* third,
+among the books; `what to expect when you are pregnant` puts the Bump and
+Beyond drop-in third; `dog training for a new puppy` has the Dog Training Talk
+fourth.
 
 **The events are invented, so this demonstrates the idea and measures nothing
 about it.** There is no public feed of library events, and writing 114 of them
@@ -155,9 +164,9 @@ python scripts/check_events.py
 
 | | |
 |---|---|
-| event-shaped queries reaching an event | **11 of 12** |
+| event-shaped queries reaching an event | **12 of 12** |
 | known-item lookups showing an event | **0 of 5** |
-| event results across the 41 book queries | **8 of 820 slots** |
+| event results across the 41 book queries | **9 of 820 slots** |
 
 The decision this fed was written down before the script ran: *if events are
 invisible, retrieve the two collections separately and fuse by rank.* They are
@@ -167,11 +176,11 @@ easier to decide a fusion layer was necessary after watching it work.
 
 **Two things this turned up.**
 
-The one miss is `learn to knit`, where *Knit and Natter* sits at rank 49 behind
-48 knitting books. That is arguably right — someone asking to learn probably
-wants a book — but the mechanism is not judgement, it is supply. An event only
-wins where the shelves are thin, which is why *Tuesday Club*, *Repair Cafe* and
-*Digital Help Drop-in* come through and knitting does not.
+There was one miss under the old encoder: `learn to knit` put *Knit and Natter*
+at rank 49, behind 48 knitting books. An event only wins where the shelves are
+thin, and knitting is not thin. Swapping to bge-base fixed that one too — all
+twelve now reach an event — which is a second reminder that "the corpus cannot
+answer this" and "this encoder cannot find it" look identical from outside.
 
 The other was a real defect. A weekly session is several records, one per date,
 so a query matching the session matches all of them: `something short I can
@@ -202,7 +211,10 @@ the corpus or model changes. Ranks are comparable by construction.
 ## Measured results
 
 Run `bettersearch evaluate` to reproduce. 112 documents, 32 hand-labelled
-queries, `all-MiniLM-L6-v2` embeddings, numpy index.
+queries, numpy index. These were measured with `all-MiniLM-L6-v2`, the encoder
+that was the default at the time; the default is now `bge-base-en-v1.5`, so
+re-running will not reproduce them exactly. The 4,000-record section below is
+the current measurement.
 
 | mode | Recall@5 | MRR@10 | nDCG@10 |
 |---|---|---|---|
@@ -311,7 +323,7 @@ to switch provider or storage.
 | `BETTERSEARCH_EMBEDDING_DIMENSIONS` | `512` | Matryoshka width for API providers |
 | `BETTERSEARCH_CHUNK_TOKENS` | `450` | target chunk size |
 | `BETTERSEARCH_CHUNK_OVERLAP` | `60` | overlap between chunks |
-| `BETTERSEARCH_LOCAL_MODEL` | `sentence-transformers/all-MiniLM-L6-v2` | any sentence-transformers model |
+| `BETTERSEARCH_LOCAL_MODEL` | `BAAI/bge-base-en-v1.5` | any sentence-transformers model |
 | `BETTERSEARCH_LOCAL_TRUST_REMOTE_CODE` | `0` | required by some long-context encoders; runs code from the model repo |
 
 API keys are read from `OPENAI_API_KEY` / `VOYAGE_API_KEY` / `ANTHROPIC_API_KEY`
@@ -354,9 +366,14 @@ before index overhead. Three multiplicative fixes, all implemented:
 | HNSW rather than flat scan | sub-linear query time |
 
 Together that is 6x: **5.72 GB → 0.95 GB**, the difference between needing a large
-managed Postgres instance and fitting comfortably on a small one. Note the
-self-hosted MiniLM default is smaller still — 384 dims at fp16 is 0.72 GB for 1M
-chunks — so staying local sidesteps most of this rather than creating it.
+managed Postgres instance and fitting comfortably on a small one.
+
+Self-hosting changes the arithmetic again, in both directions. The default
+encoder here is `bge-base-en-v1.5` at 768 dimensions: 1.43 GB for 1M chunks at
+fp16, comfortably under the managed-service figure and with no per-token cost.
+Dropping to `all-MiniLM-L6-v2` at 384 dims halves that again to 0.72 GB — at a
+measured cost of 0.079 nDCG, which is the trade to make deliberately rather
+than by default. `BETTERSEARCH_LOCAL_MODEL` is the whole switch.
 
 ### 4. An absolute relevance threshold does not survive a real corpus
 
@@ -396,7 +413,8 @@ dependency, and no content leaving your infrastructure — which matters more th
 the money if the corpus is ever commercially or personally sensitive.
 
 **Measure before you optimise.** On this content the much-discussed 256-token
-cap costs exactly nothing:
+cap of the older MiniLM default cost exactly nothing — the current default
+reads 512, so the headroom is larger still:
 
 ```
 $ # chunk length as all-MiniLM-L6-v2 itself tokenises it

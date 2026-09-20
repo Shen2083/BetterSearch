@@ -10,10 +10,13 @@
 #    filesystem is ephemeral and .bettersearch/ is gitignored, so an index built
 #    at runtime would vanish. Built here, it is baked into the deployed image.
 #
-# 3. plan: standard is deliberate. The local MiniLM model needs ~844MB resident;
-#    free and starter are 512MB and will OOM. If that cost is unwelcome, switch
-#    to an API embedding provider instead (see the alternative service below) -
-#    that runs in ~32MB because only the query is embedded at request time.
+# 3. plan: standard is deliberate. The default local encoder, bge-base-en-v1.5,
+#    needs ~1.13GB resident (measured, peak RSS after a warm query); free and
+#    starter are 512MB and will OOM. all-MiniLM-L6-v2 needs ~847MB - still too
+#    big for starter, so it saves nothing here, and it costs 0.079 nDCG. If the
+#    standard plan is unwelcome, switch to an API embedding provider instead
+#    (see the alternative service below) - that runs in ~32MB because only the
+#    query is embedded at request time.
 services:
   - type: web
     name: bettersearch
@@ -43,8 +46,10 @@ services:
 # Alternative: API embeddings. ~32MB resident, fits the free tier, costs pennies
 # per ingest. Requires OPENAI_API_KEY set in the Render dashboard (never here).
 #
-# The index MUST be rebuilt with the same provider - a numpy index built by
-# MiniLM will refuse an OpenAI-embedded query with ModelMismatchError, by design.
+# The index MUST be rebuilt with the same provider - a numpy index built by the
+# local encoder will refuse an OpenAI-embedded query with ModelMismatchError, by
+# design. The same guard catches a change of local model, and --force does not
+# override it.
 #
 #  - type: web
 #    name: bettersearch-api-embeddings
