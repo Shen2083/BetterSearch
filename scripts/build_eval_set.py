@@ -102,29 +102,40 @@ def build_pools(lanes: list[tuple[str, str, str]], queries: list[dict],
     scores as irrelevant - penalising enrichment exactly where it works. The
     number would look defensible and be wrong.
 
-    `lanes` is (label, index_path, mode). The label is used for reporting only;
-    it is discarded before judging so the judge cannot tell lanes apart.
+    `lanes` is (label, index_path, mode, model). The label is used for reporting
+    only; it is discarded before judging so the judge cannot tell lanes apart.
+    `model` may be None to use the configured default - it exists because an
+    index built with a different encoder has to be queried with that same
+    encoder, and a lane using a larger model is exactly the case this pool has
+    to cover.
     """
+    from dataclasses import replace
+
     from bettersearch.config import load_settings
     from bettersearch.index.numpy_index import NumpyVectorIndex
     from bettersearch.search import Searcher
 
-    settings = load_settings()
-    searchers = {path: Searcher(index=NumpyVectorIndex(path), settings=settings)
-                 for _, path, _ in lanes}
+    base = load_settings()
+    searchers = {}
+    for _, path, _, model in lanes:
+        key = (path, model)
+        if key not in searchers:
+            settings = replace(base, local_model_name=model) if model else base
+            searchers[key] = Searcher(index=NumpyVectorIndex(path), settings=settings)
     rng = random.Random(20260919)
 
     pools: dict[str, list[str]] = {}
-    contributed: dict[str, int] = {label: 0 for label, _, _ in lanes}
-    unique_to: dict[str, int] = {label: 0 for label, _, _ in lanes}
+    contributed: dict[str, int] = {label: 0 for label, *_ in lanes}
+    unique_to: dict[str, int] = {label: 0 for label, *_ in lanes}
     sizes: list[int] = []
 
     for item in queries:
         q = item["query"]
         per_lane_ids: dict[str, list[str]] = {}
-        for label, path, mode in lanes:
+        for label, path, mode, model in lanes:
             got = [r.chunk.doc_id
-                   for r in searchers[path].search(q, mode=mode, top_k=per_lane).results]
+                   for r in searchers[(path, model)].search(
+                       q, mode=mode, top_k=per_lane).results]
             per_lane_ids[label] = got
             contributed[label] += len(got)
 
@@ -135,7 +146,7 @@ def build_pools(lanes: list[tuple[str, str, str]], queries: list[dict],
                      if len(per_lane_ids) > 1 else set()
             unique_to[label] += len(set(per_lane_ids[label]) - others)
 
-        ids = [i for label, _, _ in lanes for i in per_lane_ids[label]]
+        ids = [i for label, *_ in lanes for i in per_lane_ids[label]]
         seen: set[str] = set()
         pool = [i for i in ids if not (i in seen or seen.add(i))]
         rng.shuffle(pool)  # pool position must not encode which lane found it
@@ -199,9 +210,10 @@ def main() -> int:
     ap.add_argument("--corpus", type=Path, default=ROOT / "data/catalogue_real.json")
     ap.add_argument(
         "--lane", action="append", default=None,
-        help="label=index_path:mode, repeatable. Every arm that will be measured "
-             "must be a lane, or its unique finds go unjudged and score as "
-             "irrelevant. Default: all three.")
+        help="label=index_path:mode[@model], repeatable. Every arm that will be "
+             "measured must be a lane, or its unique finds go unjudged and "
+             "score as irrelevant. Append @model when the index was built with "
+             "an encoder other than the configured default.")
     ap.add_argument("--validate", type=int, default=100,
                     help="re-judge this many random pairs to measure the judge's "
                          "self-consistency (0 to skip)")
@@ -222,15 +234,18 @@ def main() -> int:
         lanes = []
         for spec in args.lane:
             label, rest = spec.split("=", 1)
+            rest, model = rest.rsplit("@", 1) if "@" in rest else (rest, None)
             path, mode = rest.rsplit(":", 1)
-            lanes.append((label, path, mode))
+            lanes.append((label, path, mode, model))
     else:
         lanes = [
-            ("keyword", ".bettersearch/real", "keyword"),
-            ("semantic-thin", ".bettersearch/real", "semantic"),
-            ("semantic-enriched", ".bettersearch/real-enriched", "semantic"),
+            ("keyword", ".bettersearch/real", "keyword", None),
+            ("semantic-thin", ".bettersearch/real", "semantic", None),
+            ("semantic-enriched", ".bettersearch/real-enriched", "semantic", None),
         ]
-    print("lanes pooled: " + ", ".join(f"{l}({m})" for l, _, m in lanes))
+    print("lanes pooled: " + ", ".join(
+        f"{l}({m}{'' if not mdl else ', ' + mdl.rsplit('/', 1)[-1]})"
+        for l, _, m, mdl in lanes))
 
     built = build_pools(lanes, queries, per_lane=args.per_lane)
     pools = built["pools"]
@@ -313,7 +328,7 @@ def main() -> int:
         ),
         "judge_model": args.model,
         "judge_self_consistency": consistency,
-        "lanes_pooled": [l for l, _, _ in lanes],
+        "lanes_pooled": [l for l, *_ in lanes],
         "pool_per_lane": args.per_lane,
         "strict_grade": STRICT_GRADE,
         "queries": out_queries,

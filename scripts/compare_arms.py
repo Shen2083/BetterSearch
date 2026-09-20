@@ -11,12 +11,24 @@ aggregate number.
         ceiling=.bettersearch/index \
         thin=.bettersearch/catalogue-thin \
         enriched=.bettersearch/catalogue-enriched
+
+An arm may name the encoder its index was built with, for comparing models:
+
+    python scripts/compare_arms.py --queries data/eval_real.json \
+        minilm=.bettersearch/real \
+        bge=.bettersearch/real-bge@BAAI/bge-base-en-v1.5
+
+A comparison is only honest if every arm was in the pool the judgements came
+from. Scoring an arm that was not pooled penalises it for everything it finds
+that the pooled lanes missed - measured at 29% of one unpooled arm's top 10,
+all of it counted irrelevant by default. See scripts/build_eval_set.py.
 """
 
 from __future__ import annotations
 
 import argparse
 import sys
+from dataclasses import replace
 
 from bettersearch.config import load_settings
 from bettersearch.evaluate import evaluate_mode, load_eval_queries, ndcg_at_k
@@ -25,14 +37,26 @@ from bettersearch.index.numpy_index import NumpyVectorIndex
 from bettersearch.search import Searcher
 
 
-def build(path: str) -> Searcher:
+def build(path: str, model: str | None = None) -> Searcher:
+    """One arm's searcher.
+
+    An index built with a different encoder has to be queried with that same
+    encoder, so an arm may name its own. Without this the settings' single
+    model is used for every arm, and comparing a larger encoder either raises
+    a model mismatch or - worse, if the dimensions happen to agree - quietly
+    scores one arm's index with another arm's vectors.
+    """
     settings = load_settings()
+    if model:
+        settings = replace(settings, local_model_name=model)
     return Searcher(index=NumpyVectorIndex(path), settings=settings)
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("arms", nargs="+", help="name=index_path")
+    parser.add_argument("arms", nargs="+",
+                        help="name=index_path[@model]; append @model when the "
+                             "index was built with a different encoder")
     parser.add_argument("--queries", default="data/eval_queries.json")
     parser.add_argument("--mode", default="semantic")
     parser.add_argument("--top-k", type=int, default=10)
@@ -45,7 +69,8 @@ def main() -> int:
             print(f"Expected name=path, got {spec!r}", file=sys.stderr)
             return 2
         name, path = spec.split("=", 1)
-        arms.append((name, build(path)))
+        path, model = path.rsplit("@", 1) if "@" in path else (path, None)
+        arms.append((name, build(path, model)))
 
     queries = load_eval_queries(args.queries)
 
