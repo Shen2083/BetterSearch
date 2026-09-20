@@ -80,6 +80,40 @@ catalogue it returns a sizeable fraction of the shelf. Anything you set there is
 a guess unless `tune_cutoff.py` produced it from judgements for **that** corpus,
 which is the whole reason the previous eyeballed number had to be replaced.
 
+#### Comparing embedding models
+
+The encoder is a config change, not a code change, so a larger model is a
+second index and a second lane:
+
+```bash
+BETTERSEARCH_LOCAL_MODEL=BAAI/bge-base-en-v1.5 \
+BETTERSEARCH_INDEX_PATH=.bettersearch/real-bge \
+    bettersearch ingest --corpus data/catalogue_real.json
+```
+
+**An arm that was not in the pool cannot be compared.** `data/eval_real.json`
+was pooled from three MiniLM and BM25 lanes; scoring a bge index against it
+looked fair and was not, because 29% of what bge returned had never been shown
+to a judge and unjudged counts as irrelevant. It cost bge 0.080 nDCG — enough
+to invert the conclusion. Re-pool before comparing:
+
+```bash
+python scripts/build_eval_set.py \
+    --lane "keyword=.bettersearch/real:keyword" \
+    --lane "semantic-thin=.bettersearch/real:semantic" \
+    --lane "semantic-enriched=.bettersearch/real-enriched:semantic" \
+    --lane "semantic-bge=.bettersearch/real-bge:semantic@BAAI/bge-base-en-v1.5"
+```
+
+`@model` tells a lane which encoder its index was built with; without it every
+lane shares the configured default and the mismatch either raises or, if the
+dimensions happen to agree, silently scores one index with another's vectors.
+`scripts/compare_arms.py` takes the same suffix.
+
+**Expected**: roughly 1,979 judgements, each lane contributing records no other
+lane found — if a new lane contributes none, it is not adding information and
+the pool did not need it.
+
 ### The tests
 
 ```bash
