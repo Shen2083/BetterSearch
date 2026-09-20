@@ -60,6 +60,26 @@ hybrid         0.624     0.826     0.741
 Semantic should roughly double keyword on nDCG. Hybrid scoring *below* semantic
 is expected here and is not a bug — see the README on why.
 
+To re-derive where the catalogue page cuts its result list, against the 4,000
+real records and their judgements:
+
+```bash
+python scripts/tune_cutoff.py thin=.bettersearch/real \
+    enriched=.bettersearch/real-enriched
+```
+
+**Expected**: `fixed top-20` is the best measured F1 on both arms, and the script
+says so itself. It also marks the rows it cannot judge — any cut returning more
+than the pool depth of 20 is scored partly against records no judge ever saw, so
+its precision is not comparable. `api/catalogue.py:SEMANTIC_TOP_K` holds the
+number the script picks; if you change one, re-run the other.
+
+`BETTERSEARCH_TOP_K` overrides it per deployment. 20 is measured for the
+4,000-record corpus and is not a universal constant — on a much smaller
+catalogue it returns a sizeable fraction of the shelf. Anything you set there is
+a guess unless `tune_cutoff.py` produced it from judgements for **that** corpus,
+which is the whole reason the previous eyeballed number had to be replaced.
+
 ### The tests
 
 ```bash
@@ -98,6 +118,42 @@ The catalogue is a fictional service with invented records, so it can be shown
 around without passing as a real library. Rebuild it with
 `python scripts/build_catalogue.py`.
 
+#### Events alongside the books
+
+The catalogue can serve more than one collection. `--corpus` is repeatable, and
+`BETTERSEARCH_CATALOGUE` takes a comma-separated list:
+
+```bash
+BETTERSEARCH_INDEX_PATH=.bettersearch/real-events \
+    bettersearch ingest --corpus data/catalogue_real.json \
+                        --corpus data/events_northfield.json
+
+BETTERSEARCH_CATALOGUE="data/catalogue_real.json,data/events_northfield.json" \
+BETTERSEARCH_INDEX_PATH=.bettersearch/real-events \
+    uvicorn api.main:app --port 8000
+```
+
+**Expected**: `Documents 4114`. Try `getting my toddler to eat vegetables` — the
+Toddler Mealtimes Workshop should be the first result, above the books — and
+`somewhere to go on a Tuesday afternoon`, which should return six events, each
+card saying how many other dates the session runs.
+
+Rebuild the events with `python scripts/build_events.py`. They are invented, and
+the corpus file's own description says so; the standalone build reads that
+description into the page footnote, so it cannot be shipped without the caveat.
+
+To re-check that events are findable and not intrusive:
+
+```bash
+python scripts/check_events.py
+```
+
+**Expected**: 11 of 12 event-shaped queries reach an event, 0 of 5 known-item
+lookups show one, and the script concludes that one index is enough. If reach
+drops below 60% it says so and exits non-zero — that is the signal to retrieve
+each collection separately and fuse by rank with
+`bettersearch.fusion.reciprocal_rank_fusion`, which is unused today.
+
 #### Showing it to someone without a server
 
 `web/catalogue.html` is only a front end — every search POSTs to
@@ -111,15 +167,46 @@ paging still run live in the browser. It therefore answers **the example queries
 only** — anything else says so plainly rather than showing an empty result set,
 which would wrongly read as "the catalogue holds nothing on that".
 
+The committed copy is built against the **real 4,000-record catalogue**, not the
+invented demonstration one the served page uses by default — it is the corpus
+every measurement in the README refers to, so it is the one worth sending. Its
+example queries come from the reviewed eval set for the same reason.
+
 ```bash
-export BETTERSEARCH_INDEX_PATH=.bettersearch/catalogue
-bettersearch ingest --corpus data/catalogue_library.json   # if not already built
-python scripts/build_standalone.py
+BETTERSEARCH_INDEX_PATH=.bettersearch/real-events \
+    bettersearch ingest --corpus data/catalogue_real.json \
+                        --corpus data/events_northfield.json   # if not built
+
+python scripts/build_standalone.py \
+    --catalogue "data/catalogue_real.json,data/events_northfield.json" \
+    --index .bettersearch/real-events \
+    --query "something gentle to read before bed" \
+    --query "coping after someone dies" \
+    --query "getting my toddler to eat vegetables" \
+    --query "somewhere to go on a Tuesday afternoon" \
+    --query "how to keep bees in a small garden" \
+    --query "Agatha Christie"
 ```
 
-Rebuild it after changing `web/catalogue.html`, the catalogue data, or the
-example queries. The build reads the queries out of the page's own preset
-buttons, so those two cannot drift apart.
+**Expected**: `351 of 4114 records reachable from these queries`, and a file
+around 262 KB. Only the records some baked ranking can reach are shipped —
+carrying all 4,000 would add 3.2 MB nobody can navigate to. That is only
+affordable because the meaning lane stops at `SEMANTIC_TOP_K`; under the old
+relevance floor one query reached 3,665 records by itself.
+
+Two things the build does so the file cannot lie about itself. It rewrites the
+preset buttons and the search box to the queries actually baked, so no button is
+dead. And it replaces the page footnote with the corpus's own `description`
+field — the served page says the records are invented, which is true of the
+demonstration catalogue and false of this one, where the bibliographic data is
+real Open Library material and only the holdings are made up.
+
+Omit `--query` and `--catalogue` to build the demonstration-catalogue version
+instead; the queries are then read out of the page's own preset buttons, so
+those two cannot drift apart.
+
+Rebuild after changing `web/catalogue.html`, `web/offline-search.js`, the
+catalogue data, or `SEMANTIC_TOP_K`.
 
 ---
 

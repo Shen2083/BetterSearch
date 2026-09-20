@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import numpy as np
 import pytest
 
@@ -174,3 +176,47 @@ def test_truncation_is_counted_and_reported(index, documents, settings):
 
     report = ingest_documents(documents, provider=tiny, index=index, settings=settings)
     assert report.truncated_chunks == report.chunks_total
+
+
+# --- several corpus files as one collection -------------------------------
+
+
+def _corpus(path, records):
+    path.write_text(json.dumps({"documents": records}), encoding="utf-8")
+    return path
+
+
+def test_load_corpus_reads_several_files_as_one_collection(tmp_path):
+    """A library's books and its events are separate files, one search."""
+    from bettersearch.ingest import load_corpus
+
+    books = _corpus(tmp_path / "books.json",
+                    [{"doc_id": "b1", "title": "Knitting", "text": "..."}])
+    events = _corpus(tmp_path / "events.json",
+                     [{"doc_id": "ev-1", "title": "Knit and Natter", "text": "..."}])
+
+    documents = load_corpus([books, events])
+
+    assert [d.doc_id for d in documents] == ["b1", "ev-1"]
+
+
+def test_load_corpus_still_takes_a_single_path(tmp_path):
+    from bettersearch.ingest import load_corpus
+
+    books = _corpus(tmp_path / "books.json",
+                    [{"doc_id": "b1", "title": "Knitting", "text": "..."}])
+
+    assert len(load_corpus(books)) == 1
+
+
+def test_colliding_doc_ids_across_files_raise(tmp_path):
+    """Silently shadowing one would make a record unretrievable for no reason."""
+    from bettersearch.ingest import load_corpus
+
+    one = _corpus(tmp_path / "one.json",
+                  [{"doc_id": "same", "title": "A", "text": "..."}])
+    two = _corpus(tmp_path / "two.json",
+                  [{"doc_id": "same", "title": "B", "text": "..."}])
+
+    with pytest.raises(ValueError, match="duplicate doc_id 'same'"):
+        load_corpus([one, two])

@@ -155,6 +155,18 @@
   .avail b { color: var(--ok); }
   .avail b.none { color: var(--warm); }
 
+  /* Events sit in the same ranked list as books, so a card has to say which
+     it is at a glance - a Tuesday drop-in that reads like a book is worse than
+     not showing the drop-in at all. */
+  .kind { display: inline-block; font-size: 11px; font-weight: 700;
+          letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 7px;
+          border-radius: 2px; margin: 0 0 6px; }
+  .kind.event { color: #fff; background: var(--warm); }
+  .when { font-size: 14px; font-weight: 600; color: var(--ink); margin: 0 0 4px;
+          font-variant-numeric: tabular-nums; }
+  .when .repeats { font-weight: 400; color: var(--muted); }
+  .who-for { font-size: 13.5px; color: var(--muted); margin: 0 0 7px; }
+
   .empty { padding: 40px 0 24px; max-width: 58ch; }
   .empty p { margin: 0 0 9px; }
   .empty .big { font-family: var(--serif); font-size: 19px; color: var(--warm); }
@@ -272,7 +284,42 @@ function facetHtml(f) {
   </div>`;
 }
 
+function eventCardHtml(r) {
+  const places = Number(r.available || 0);
+  const also = r.repeats > 1
+    ? ` <span class="repeats">· and ${r.repeats - 1} other date${
+        r.repeats > 2 ? "s" : ""}</span>`
+    : "";
+  return `<li>
+    <div class="idx">${r.rank}.</div>
+    <div class="cover" style="background:${esc(r.cover)}">
+      ${esc(r.title).slice(0, 44)}
+      <div class="fmt">Event</div>
+    </div>
+    <div>
+      <span class="kind event">Event</span>
+      <p class="title">${esc(r.title)}</p>
+      <p class="when">${esc(r.when)}${also}</p>
+      <p class="who-for">${esc(r.audience)} &nbsp;·&nbsp; ${esc(r.location)}</p>
+      ${r.blurb ? `<p class="blurb">${esc(r.blurb)}</p>` : ""}
+      <div class="actions">
+        <button class="reserve" type="button" ${places ? "" : "disabled"}>
+          ${r.booking === "Book a place"
+            ? (places ? "Book a place" : "Fully booked")
+            : "Just turn up"}
+        </button>
+        <span class="avail">
+          ${esc(r.cost)}${places
+            ? ` &nbsp;·&nbsp; <b>${places}</b> place${places === 1 ? "" : "s"} left`
+            : " &nbsp;·&nbsp; <b class=\"none\">no places left</b>"}
+        </span>
+      </div>
+    </div>
+  </li>`;
+}
+
 function cardHtml(r) {
+  if (r.record_type === "event") return eventCardHtml(r);
   const placeholder = /^\[.*\]$/.test(r.title) || /^untitled/i.test(r.title);
   const unknownYear = !r.year || !/^\d{4}$/.test(r.year);
   const who = r.author

@@ -15,13 +15,20 @@ Here is the same idea in a library catalogue. One reader, one phrasing, the same
 
 ![A library catalogue search results page. The query "learning to be present" under the "Catalogue search" tab returns "No results", with the explanation that a keyword search can only return a record that literally contains what you typed](docs/screenshots/catalogue-keyword.png)
 
-**Search by meaning — 6 results.**
+**Search by meaning — 20 results.**
 
-![The same catalogue and the same query under the "Search by meaning" tab, now showing 1-6 of 6 records with working facets for availability, format and location. The first result is "Attention, and Other Small Miracles" by Sanne Verhoeven, whose record contains no summary at all](docs/screenshots/catalogue-meaning.png)
+![The same catalogue and the same query under the "Search by meaning" tab, now showing 1-10 of 20 records with working facets for availability, format and location. The first result is "Attention, and Other Small Miracles" by Sanne Verhoeven, whose record contains no summary at all](docs/screenshots/catalogue-meaning.png)
 
-Not one of those six records contains the word *learning* or the word
-*present*. Four of the six have no summary at all — nothing but a title, an
-author and a subject heading.
+Not one of those twenty records contains the word *learning* or the word
+*present*. Eighteen of the twenty have no summary at all — nothing but a title,
+an author and a subject heading.
+
+Twenty of seventy-four is a lot, and that is the honest state of it: the page
+returns a fixed top 20, a number measured against the 4,000-record corpus
+further down, not against this one. On a shelf this small the last few are
+thin. There is no corpus-independent right answer here — [see below](#settling-the-relevance-floor)
+for what replaced the threshold that used to do this job, and why a number
+that looked sensible was the wrong one.
 
 ---
 
@@ -99,7 +106,81 @@ around without passing as a real library. Rebuild it with
 `python scripts/build_catalogue.py`, and regenerate these screenshots with
 `python scripts/capture_screenshots.py` against a running server.
 
+**To send the page to someone**, `docs/catalogue-standalone.html` opens on a
+double-click with no server and no Python: the example searches are run through
+the real `Searcher` at build time and baked in, while facets, filtering and
+paging still run live in the browser. That copy is built against the **real
+4,000-record catalogue** rather than the invented one, so the file shows the
+corpus every measurement below refers to. It answers its six example queries and
+says so plainly for anything else, rather than returning nothing and letting that
+read as "the catalogue holds nothing on that". `RUNBOOK.md` has the build
+command.
+
+Worth opening it on `coping after someone dies` and switching modes. Meaning-based
+search returns *How to go on living when someone you love dies* and
+*Understanding dying, death, and bereavement*; catalogue search returns *Five
+Point Someone* and *John Dies at the End*, because they contain the words
+"someone" and "dies". That is the difference the rest of this document measures,
+in a file anyone can open.
+
 ---
+
+## Searching the events alongside the books
+
+A reader asking what to do about their CV wants Tuesday's job club at least as
+much as a book on interview technique, and a catalogue that only holds books
+cannot tell them. So the events are a second collection in the same index: one
+query reaches both, and they compete for the same result slots.
+
+```bash
+BETTERSEARCH_INDEX_PATH=.bettersearch/real-events \
+    bettersearch ingest --corpus data/catalogue_real.json \
+                        --corpus data/events_northfield.json
+```
+
+`getting my toddler to eat vegetables` now opens with the Toddler Mealtimes
+Workshop, above eighteen books that are also about the right thing.
+
+**The events are invented, so this demonstrates the idea and measures nothing
+about it.** There is no public feed of library events, and writing 114 of them
+reintroduces exactly the flattery that got the 74-record catalogue replaced by
+real Open Library data: the author of the queries also wrote the answers. What
+*is* worth checking is the plumbing, which can fail in two opposite directions —
+4,000 books against 114 events means an event may never surface at all, and the
+worse failure is an event surfacing where nobody wants one.
+
+```bash
+python scripts/check_events.py
+```
+
+| | |
+|---|---|
+| event-shaped queries reaching an event | **11 of 12** |
+| known-item lookups showing an event | **0 of 5** |
+| event results across the 41 book queries | **8 of 820 slots** |
+
+The decision this fed was written down before the script ran: *if events are
+invisible, retrieve the two collections separately and fuse by rank.* They are
+not invisible, so `reciprocal_rank_fusion` stays unused and the single index
+stands. Worth recording that the fallback was specified first — it is much
+easier to decide a fusion layer was necessary after watching it work.
+
+**Two things this turned up.**
+
+The one miss is `learn to knit`, where *Knit and Natter* sits at rank 49 behind
+48 knitting books. That is arguably right — someone asking to learn probably
+wants a book — but the mechanism is not judgement, it is supply. An event only
+wins where the shelves are thin, which is why *Tuesday Club*, *Repair Cafe* and
+*Digital Help Drop-in* come through and knitting does not.
+
+The other was a real defect. A weekly session is several records, one per date,
+so a query matching the session matches all of them: `something short I can
+finish in one sitting` filled its first five slots with five identical copies of
+a chair exercise class, on a cosine score of 0.30. Nothing in any record
+describes how long a book is, so in that vacuum "sitting" matched "sitting down"
+and won. Occurrences of one series now collapse to the best-ranked of them, and
+the card says *and 6 other dates* — which is how a reader thinks about it
+anyway: one thing that happens on Tuesdays, not seven things.
 
 ## The three modes
 
@@ -279,9 +360,9 @@ chunks — so staying local sidesteps most of this rather than creating it.
 
 ### 4. An absolute relevance threshold does not survive a real corpus
 
-`api/catalogue.py` cuts meaning-based results at a fixed `RELEVANCE_FLOOR = 0.15`,
+`api/catalogue.py` cut meaning-based results at a fixed `RELEVANCE_FLOOR = 0.15`,
 tuned by eye on 74 records. Measured against 4,000 real ones with the same 41
-queries, it stops being a threshold at all:
+queries, it stopped being a threshold at all:
 
 | results returned per query | min | median | p90 | max |
 |---|---|---|---|---|
@@ -301,10 +382,12 @@ threshold looks unchanged. It scales exactly the wrong way, and nothing errors.
 This is the same brittleness that showed up when renaming one author moved a
 headline query from 8 results to 6: a single global constant cannot carry this.
 
-**The fix is a relative cut**, and `≥ 0.85 × best` is the plausible candidate on
-these numbers. It is not yet applied, because which cut is *right* is a question
-about relevance, and that needs the judged eval set rather than a count that
-looks sensible. Sane-looking output is not evidence.
+**The obvious fix is a relative cut**, and `≥ 0.85 × best` is the plausible
+candidate on these numbers. It was not applied, because which cut is *right* is a
+question about relevance, and that needs the judged eval set rather than a count
+that looks sensible. Sane-looking output is not evidence — and when the
+judgements arrived they picked something else entirely. See *Settling the
+relevance floor* below.
 
 ### 5. Scaling while staying self-hosted
 
@@ -470,14 +553,17 @@ synopses against Haiku's 44 — would truncate more.
 ### Settling the relevance floor
 
 `RELEVANCE_FLOOR = 0.15` was tuned by eye on 74 records. Against real
-judgements:
+judgements, on the thin 4,000-record arm:
 
 | strategy | precision | recall | F1 | median results |
 |---|---|---|---|---|
-| **absolute 0.15 (current)** | **0.035** | 0.986 | 0.067 | 763 |
+| absolute 0.15 (old) | **0.035** | 0.986 | 0.067 | 763 |
 | relative ≥ 0.90 × best | 0.582 | 0.302 | 0.398 | 4 |
 | relative ≥ 0.85 × best | 0.502 | 0.400 | 0.445 | 9 |
 | largest-gap cut | 0.648 | 0.246 | 0.356 | 2 |
+| fixed top-5 | 0.522 | 0.291 | 0.373 | 5 |
+| fixed top-10 | 0.461 | 0.420 | 0.439 | 10 |
+| fixed top-15 | 0.418 | 0.556 | 0.477 | 15 |
 | **fixed top-20** | 0.398 | 0.667 | **0.498** | 20 |
 
 Precision **0.035**: the floor admits almost everything and calls it a result
@@ -487,20 +573,62 @@ buy precision by throwing away recall the pagination would have handled anyway.
 Judging by counts that "look sensible" would have picked the wrong answer; this
 is why the fix waited for the judgements.
 
+**Where the evidence stops.** The eval pooled each lane to depth 20, so no record
+below rank 20 has a judgement and every one of them scores as irrelevant. F1 is
+still *rising* at k=20 — 0.373, 0.439, 0.477, 0.498 across the sweep — and the
+fall after it (0.477 at 25, 0.339 at 50) is an artefact of running past the pool,
+not a peak. So the honest claim is narrow: **20 is the deepest cut this eval can
+vouch for, and it beats everything shallower.** Whether 30 would be better is
+unmeasured, and would need a deeper pool to answer.
+
+`api/catalogue.py` now retrieves `SEMANTIC_TOP_K = 20` directly instead of
+retrieving everything and filtering. `books like Agatha Christie` returns 20
+results rather than 3,665. Reproduce the whole table, both arms and the sweep:
+
+```bash
+python scripts/tune_cutoff.py thin=.bettersearch/real \
+    enriched=.bettersearch/real-enriched
+```
+
+**And 20 is not a universal constant.** It is measured for a 4,000-record
+catalogue. On the 74-record demonstration catalogue at the top of this file it
+is more than a quarter of the shelf, and results 11 to 20 for the headline query
+are a Punjabi book with no title and a DVD about a lighthouse — the same error
+as the floor it replaced, a number tuned on one corpus applied to another. The
+difference is that this one is labelled and settable (`BETTERSEARCH_TOP_K`)
+rather than buried, and no second number has been invented for the small
+catalogue: there are no judgements for it, and guessing one is how the first
+version of this went wrong.
+
+One visible consequence: facet counts in the sidebar now describe the 20 results
+returned, where before they described a 763-record set the reader could never
+page to. The keyword lane is untouched and still returns full depth — BM25 stops
+on its own, since a record sharing no term with the query does not match at all,
+while cosine similarity scores every record against every query and needs the
+list ended for it.
+
 ### Open: does the top model tier buy better retrieval?
 
 Enrichment above is Haiku 4.5 on all 4,000 records. Opus 5 was run on a
-120-record sample before the comparison was abandoned, and on those same
+289-record sample before the comparison was abandoned, and on those same
 records it is plainly the richer writer:
 
-| on the same 120 records | Haiku 4.5 | Opus 5 |
+| on the same 289 records | Haiku 4.5 | Opus 5 |
 |---|---|---|
-| `recognised: true` | 74% | **93%** |
-| synopsis words | 44 | **74** |
-| topics | 8.5 | **14.3** |
+| `recognised: true` | 52% | **76%** |
+| synopsis words | 39 | **65** |
+| topics | 7.6 | **13.5** |
+
+An earlier version of this table read 74% / 93% off the first 120 records.
+Those 120 are all detective and science fiction — the corpus is stored in the
+order it was fetched, subject by subject — and famous genre novels are the
+easiest thing in a catalogue for a model to recognise. Widening the sample to
+289 drops both models by more than twenty points. The ordering between them
+survives; the absolute rates did not, and a sample drawn from the top of a
+subject-ordered file is not a sample.
 
 **This does not answer whether Opus retrieves better, and it was never going to.**
-A valid Opus arm needs all 4,000 records enriched by Opus: with 300 enriched
+A valid Opus arm needs all 4,000 records enriched by Opus: with 289 enriched
 among 4,000 thin ones, the enriched records gain an advantage purely for being
 enriched. The sample supports a quality comparison, not a retrieval one. Buying
 the real answer costs about £37 of Opus enrichment against £7 for Haiku.
@@ -508,11 +636,11 @@ the real answer costs about £37 of Opus enrichment against £7 for Haiku.
 **The 4k result argues against assuming richer is better.** Enrichment already
 regressed five queries by diluting records — `Sue Monk Kidd` fell 1.000 → 0.387
 because topical prose crowded out an exact-author match. Opus writes 68% more
-synopsis and 68% more topics, so it would dilute harder. Richer could plausibly
+synopsis and 78% more topics, so it would dilute harder. Richer could plausibly
 retrieve *worse*, and the 79 chunks already pushed past MiniLM's 256-token cap
 would become more.
 
-The 120 Opus enrichments are committed at `data/enrichment_real_opus_sample.jsonl`
+The 289 Opus enrichments are committed at `data/enrichment_real_opus_sample.jsonl`
 so the quality figures above can be checked.
 
 ### How much to trust this

@@ -43,7 +43,12 @@
     return tags;
   }
 
+  function recordType(r) {
+    return [r.record_type === "event" ? "Events" : "Books"];
+  }
+
   const FACET_SPEC = [
+    ["record_type", "Books / Events", recordType],
     ["availability", "Availability", availability],
     ["format", "Format", (r) => (r.format ? [r.format] : [])],
     ["fiction", "Fiction / Non-fiction", (r) => [r.fiction ? "Fiction" : "Non-fiction"]],
@@ -95,6 +100,12 @@
       year: record.year || "",
       publisher: record.publisher || "",
       format: record.format || "",
+      record_type: record.record_type || "book",
+      audience: record.audience || "",
+      when: record.when || "",
+      booking: record.booking || "",
+      cost: record.cost || "",
+      repeats: Number(record.repeats || 1),
       subjects: record.subjects || [],
       blurb: record.blurb,
       location: record.location || "",
@@ -110,8 +121,15 @@
     const ranking = RANKINGS[norm(query) + "|" + mode];
     if (!ranking) return null; // not a baked query - caller explains
 
+    // Repeated occurrences of a weekly session were already collapsed by
+    // run_search at build time - a drop-in that happens every Tuesday is one
+    // thing to show, not seven - so the baked ranking holds one record per
+    // series and carries the occurrence count as a third element. Collapsing
+    // again here would be a second implementation of the same rule, free to
+    // drift from the first.
     const ranked = ranking
-      .map(([docId, score]) => [RECORDS[docId], score])
+      .map(([docId, score, repeats]) =>
+        [RECORDS[docId] && { ...RECORDS[docId], repeats: repeats || 1 }, score])
       .filter(([record]) => record);
 
     // Facets are counted before filtering, so the sidebar shows what you could
