@@ -123,12 +123,13 @@ says so plainly for anything else, rather than returning nothing and letting tha
 read as "the catalogue holds nothing on that". `RUNBOOK.md` has the build
 command.
 
-Worth opening it on `coping after someone dies` and switching modes. Meaning-based
-search returns *How to go on living when someone you love dies* and
-*Understanding dying, death, and bereavement*; catalogue search returns *Five
-Point Someone* and *John Dies at the End*, because they contain the words
-"someone" and "dies". That is the difference the rest of this document measures,
-in a file anyone can open.
+Worth opening it on `learning to take better photographs` and switching modes.
+Meaning-based search returns five photography books. Catalogue search returns
+the same book first, then *Again, but Better* (a young-adult romance) and
+*Write better, speak better* (public speaking), because they contain "better" —
+and, at fifth, *I will take a nap!*, a picture book about pigs, because it
+contains "take". That is the difference the rest of this document measures, in
+a file anyone can open.
 
 ---
 

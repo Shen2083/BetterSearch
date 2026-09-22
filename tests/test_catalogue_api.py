@@ -380,13 +380,13 @@ def test_meta_comes_from_the_corpus_not_the_page(tmp_path, monkeypatch):
 
     books = tmp_path / "books.json"
     books.write_text(json.dumps({
-        "description": "Records are real.", "presets": ["coping after someone dies"],
+        "description": "Records are real.", "presets": ["how to keep bees in a small garden"],
         "documents": [],
     }), encoding="utf-8")
     monkeypatch.setattr(mod, "CATALOGUE_PATHS", [books])
 
     meta = mod.load_meta()
-    assert meta["presets"] == ["coping after someone dies"]
+    assert meta["presets"] == ["how to keep bees in a small garden"]
     assert meta["description"] == "Records are real."
 
 

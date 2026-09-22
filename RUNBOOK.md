@@ -223,8 +223,8 @@ python scripts/build_standalone.py \
     --index .bettersearch/real-events
 ```
 
-**Expected**: `978 of 4114 records reachable from these queries`, and a file
-around 682 KB. The example queries are no longer listed here — they come from
+**Expected**: `1018 of 4114 records reachable from these queries`, and a file
+around 709 KB. The example queries are no longer listed here — they come from
 the corpus files, the same place the served page gets them, so the offline copy
 cannot offer a button the served page does not. `--query` still overrides them. Only the records some baked ranking can reach are shipped —
 carrying all 4,000 would add 3.2 MB nobody can navigate to. That is only

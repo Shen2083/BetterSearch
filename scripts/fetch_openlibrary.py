@@ -124,9 +124,12 @@ _JUNK_SUBJECT = re.compile(
 )
 MAX_SUBJECTS = 8
 
-#: Example queries offered by the page when this corpus is served.
+#: Deliberately none of them heavy. These sit on the page as buttons for a
+#: visitor to press, and a demonstration is not the place to open with
+#: bereavement - the grief query stays in the eval set, where it is evidence
+#: rather than a greeting.
 PRESETS = [
-    "coping after someone dies",
+    "learning to take better photographs",
     "something gentle to read before bed",
     "how to keep bees in a small garden",
     "books about the night sky for beginners",
