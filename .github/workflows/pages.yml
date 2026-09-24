@@ -1,0 +1,106 @@
+name: pages
+
+# Rebuilds the self-contained catalogue and publishes docs/ to GitHub Pages.
+#
+# Separate from `tests` on purpose. That workflow installs only the `dev` extra
+# and finishes in under a minute because it never touches a model; this one has
+# to download sentence-transformers and embed the whole corpus, so it is slower
+# and depends on Hugging Face being up. Keeping them apart means a bad day at
+# HuggingFace cannot turn the test suite red.
+#
+# One-time repository setting: Settings -> Pages -> Build and deployment ->
+# Source -> "GitHub Actions". Until that is switched from "Deploy from a
+# branch", the deploy step fails with "Pages site not found" however green the
+# build is.
+
+on:
+  push:
+    branches: [main]
+    # Rebuild only when something the page is made of changes.
+    paths:
+      - "web/**"
+      - "data/catalogue_real.json"
+      - "data/events_northfield.json"
+      - "scripts/build_standalone.py"
+      - "api/catalogue.py"
+      - "src/bettersearch/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never let two deploys race; queue instead of cancelling, so a push does not
+# leave the site half-published.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  # The browser must load the same model the vectors were built with, and it
+  # has to be small enough to send to a browser. Set once, used by both steps.
+  BROWSER_MODEL: BAAI/bge-small-en-v1.5
+  INDEX_PATH: .bettersearch/pages-small
+  CORPUS: data/catalogue_real.json,data/events_northfield.json
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install
+        # CPU-only torch: the GPU build is ~2 GB of wheels this never uses.
+        run: |
+          pip install --index-url https://download.pytorch.org/whl/cpu torch
+          pip install -e ".[local,api]"
+
+      - name: Cache the model
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-${{ env.BROWSER_MODEL }}
+
+      - name: Embed the corpus
+        env:
+          BETTERSEARCH_LOCAL_MODEL: ${{ env.BROWSER_MODEL }}
+          BETTERSEARCH_INDEX_PATH: ${{ env.INDEX_PATH }}
+        run: |
+          bettersearch ingest \
+            --corpus data/catalogue_real.json \
+            --corpus data/events_northfield.json
+
+      - name: Build the page
+        run: |
+          python scripts/build_standalone.py \
+            --catalogue "$CORPUS" \
+            --index "$INDEX_PATH" \
+            --model "$BROWSER_MODEL"
+
+      # The build already fails over 8 MB. This says the size out loud in the
+      # log as well, because a page that doubles in size still "works" and
+      # nobody would notice until someone on a train tried to open it.
+      - name: Report size
+        run: ls -lh docs/catalogue-standalone.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

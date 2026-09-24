@@ -114,14 +114,29 @@ around without passing as a real library. Rebuild it with
 `python scripts/capture_screenshots.py` against a running server.
 
 **To send the page to someone**, `docs/catalogue-standalone.html` opens on a
-double-click with no server and no Python: the example searches are run through
-the real `Searcher` at build time and baked in, while facets, filtering and
-paging still run live in the browser. That copy is built against the **real
-4,000-record catalogue** rather than the invented one, so the file shows the
-corpus every measurement below refers to. It answers its six example queries and
-says so plainly for anything else, rather than returning nothing and letting that
-read as "the catalogue holds nothing on that". `RUNBOOK.md` has the build
-command.
+double-click with no server and no Python — and it answers **anything you
+type**, not a list of questions decided in advance. The whole catalogue, its
+embedding vectors and the search itself are in the file: 4.8 MB, built against
+the **real 4,000-record catalogue** rather than the invented one.
+
+Both lanes really run. Keyword search is BM25 over the shipped records, ported
+from `src/bettersearch/keyword.py` and reproducing the API's ranking exactly —
+41 of 41 eval queries, identical ordering. Searching by meaning embeds your
+query in the browser with [transformers.js](https://github.com/huggingface/transformers.js)
+and scores it against int8 corpus vectors by dot product.
+
+**The page uses a smaller model than the server**, and says so. Corpus vectors
+and query must come from the same encoder, and nobody should be asked to
+download the 768-dimension `bge-base` to look at a demo. So the file ships
+`bge-small-en-v1.5` (384 dimensions, ~35 MB quantised, fetched once on first
+meaning search and then cached). Measured against the API on the same corpus:
+**94% top-20 overlap, and nDCG@10 of 0.586 against the server's 0.594.** The
+gap is a tail reshuffle among comparably relevant records, not a lost answer;
+`scripts/check_browser_parity.py` is where that number comes from and explains
+what it cannot remove.
+
+Keyword search needs no download at all, and the page says so if the model
+cannot load. `RUNBOOK.md` has the build command.
 
 Worth opening it on `learning to take better photographs` and switching modes.
 Meaning-based search returns five photography books. Catalogue search returns
@@ -643,9 +658,14 @@ the retrieval ceiling is the encoder or the records. Against `bge-base-en-v1.5`
 | | thin records | enriched records |
 |---|---|---|
 | MiniLM (384d) | 0.579 | 0.671 |
-| **bge-base (768d)** | **0.658** | **0.743** |
+| bge-small (384d) — *the browser page* | 0.610 | not built |
+| **bge-base (768d)** — *the server default* | **0.658** | **0.743** |
 
-*nDCG@10 on the four-lane pool.*
+*nDCG@10 on the four-lane pool.* `bge-small` is measured here because it is
+what `docs/catalogue-standalone.html` runs, and a page should not quote figures
+from a model it is not using. It sits where its size suggests: better than
+MiniLM, short of bge-base. Note it was **not** in the judging pool, so by the
+argument below it is if anything under-credited.
 
 **They stack, and almost additively.** Enrichment is worth +0.092 over the
 baseline, the encoder +0.079, and both together +0.164 against the 0.171 you
@@ -975,6 +995,35 @@ lives alongside the rest of the schema. Embedding work belongs in a Celery task,
 not the request cycle.
 
 ---
+
+## What runs where
+
+| | server (`uvicorn api.main:app`) | the standalone file |
+|---|---|---|
+| retrieval | Python, numpy index | JavaScript, in the page |
+| keyword | BM25 in `src/bettersearch/keyword.py` | the same BM25, ported |
+| query embedding | sentence-transformers, fp32 | transformers.js, ONNX int8 |
+| model | `bge-base-en-v1.5`, 768d | `bge-small-en-v1.5`, 384d |
+| corpus vectors | float32 in the index | int8 + per-vector scale, in the file |
+| first use | model resident, ~1.1 GB | ~35 MB download, then cached |
+| needs a network | no | only to fetch the model, once |
+
+The two differ by one model and one quantisation, both forced by what a browser
+can reasonably be asked to download, and both measured rather than assumed.
+
+### Third-party licences
+
+The page loads two things it does not ship:
+
+- **[transformers.js](https://github.com/huggingface/transformers.js)** —
+  Apache-2.0, from jsDelivr.
+- **[`BAAI/bge-small-en-v1.5`](https://huggingface.co/BAAI/bge-small-en-v1.5)** —
+  MIT, via the ONNX build at `Xenova/bge-small-en-v1.5`, from the Hugging Face
+  hub.
+
+Both permit redistribution, so the file can be hosted or emailed freely. The
+bibliographic records are Open Library, public domain; the holdings and the
+events are invented, as the page footer says.
 
 ## Scope
 
