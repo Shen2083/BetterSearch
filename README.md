@@ -325,6 +325,74 @@ $ bettersearch compare "Norman conquest"      # the same thing at the terminal
 
 ---
 
+## What happens when you search
+
+Both lanes search exactly the same indexed chunks — the BM25 index is built from
+whatever is already in the vector index — so the difference between the two
+columns is the retrieval method and nothing else.
+
+```mermaid
+flowchart TD
+    Q["Search box<br/>web/catalogue.html"] --> M{"which mode?"}
+
+    M -->|"Catalogue search"| T["tokenise the query<br/>lowercase, runs of a-z0-9, stopwords dropped"]
+    T --> B["BM25Index, held in memory<br/>built from the chunks already in the index"]
+    B --> KS["score every record sharing a term<br/>IDF × saturating term frequency, K1 1.5, B 0.75<br/>no shared term, no score — the list ends itself"]
+
+    M -->|"Search by meaning"| E["embed the query<br/>▶ the model runs here: bge-base-en-v1.5,<br/>the same one that built the index"]
+    E --> V["cosine similarity against every stored vector<br/>▶ the index lives here: .bettersearch/*.npz + .json"]
+    V --> C["keep the best 20<br/>▶ the cutoff applies here: SEMANTIC_TOP_K"]
+
+    KS --> D["one row per record<br/>de-duplicate by doc_id, collapse repeated events"]
+    C --> D
+    D --> F["count the facets over these results"]
+    F --> G["apply whichever filters the reader ticked"]
+    G --> R["render a page of cards"]
+```
+
+Typing in the box gives you one of two things. **Catalogue search** chops your
+words into terms, throws away the ones that carry no signal, and scores records
+by how unusual the shared words are and how often they appear — a record with
+nothing in common with your query simply never enters the list, which is why
+this mode can return three results or none. **Search by meaning** instead turns
+your sentence into a list of numbers using the same model the catalogue was
+indexed with, compares it against every record's numbers, and keeps the closest
+twenty; every record scores against every query, so something has to decide
+where the list stops, and that is the twenty. Both then converge: repeats are
+folded together, the facet counts are taken, your filters are applied, and what
+is left is drawn as cards.
+
+**Hybrid is not drawn because the catalogue page cannot reach it.** The library
+has a third mode that fuses the two lanes by rank, and `/search` exposes it, but
+`api/catalogue.py` accepts only `keyword` or `semantic` — so the page in front
+of a reader has two lanes, not three. Why it was left out is
+[measured, not assumed](#hybrid-loses-here-and-that-is-a-real-result).
+
+### And how a record got into the index in the first place
+
+```mermaid
+flowchart TD
+    J["corpus JSON<br/>data/catalogue_real.json"] --> DOC["one document per record<br/>title, plus the record rendered as text"]
+    DOC --> EN["optional: enrichment text appended<br/>to the original, never replacing it"]
+    EN --> CH["split into chunks<br/>450-token target, 60-token overlap, one hash each"]
+    CH --> SK{"hash already in the index?"}
+    SK -->|"yes"| SKIP["skipped — not embedded again"]
+    SK -->|"no"| EMB["embed in batches of 64<br/>▶ the model runs here"]
+    EMB --> ST["written with its model_id<br/>name@dimensions"]
+    ST --> DISK["▶ index on disk<br/>vectors in .npz, chunks in .json"]
+```
+
+Indexing is what makes searching by meaning possible, and it happens once rather
+than per search. Each record is turned into text, optionally given the extra
+descriptive sentences that enrichment produced, split into chunks and converted
+into numbers by the embedding model; those numbers are saved to disk alongside
+the name of the model that produced them. A chunk whose text has not changed
+keeps its existing numbers and is not re-embedded, so updating a catalogue costs
+only the records that actually moved. What the numbers buy is in the
+[measured results](#measured-results).
+
+---
+
 ## Configuration
 
 Everything is a `BETTERSEARCH_*` environment variable; no code change is needed
@@ -345,6 +413,64 @@ to switch provider or storage.
 API keys are read from `OPENAI_API_KEY` / `VOYAGE_API_KEY` / `ANTHROPIC_API_KEY`
 at the point of use and never stored by this package. Only enrichment needs an
 Anthropic key; indexing and search do not.
+
+---
+
+## Choosing the embedding model
+
+The default is `BAAI/bge-base-en-v1.5`, and the reason is an input limit rather
+than a leaderboard. This repository started on `all-MiniLM-L6-v2`, which reads
+at most 256 tokens. That was fine on thin records and stopped being fine once
+enrichment made them longer: **79 chunks were cut off mid-text**, and a sentence
+the model never read cannot be retrieved by any query. bge-base reads 512 and
+truncated none of them. The docstring at the top of
+[`src/bettersearch/embeddings/local.py`](src/bettersearch/embeddings/local.py)
+carries that figure, and the point behind it — the limit is architectural,
+because the positional embeddings stop there, so more CPU or a bigger GPU makes
+a model faster and never able to read further.
+
+Everything below is a drop-in swap. Sizes are approximate download sizes, and
+the token and dimension figures are the ones recorded in `SUGGESTED_MODELS`.
+Languages are taken from each model's own card.
+
+| Model | Input tokens | Dimensions | Download | Languages | Use when |
+|---|---|---|---|---|---|
+| `sentence-transformers/all-MiniLM-L6-v2` | 256 | 384 | 80 MB | English | The smallest and quickest to embed. Check `truncated_chunks` after ingesting — 256 tokens is the ceiling that cost 79 chunks here. |
+| `BAAI/bge-small-en-v1.5` | 512 | 384 | 130 MB | English | Half the vector width of the default at the same window. What the in-browser demo ships, because ~35 MB quantised is what a browser can be asked to download. |
+| **`BAAI/bge-base-en-v1.5`** | **512** | **768** | **440 MB** | **English** | **The default**, and what the served API runs. Its 512-token window covered every chunk in both corpora here. |
+| `intfloat/e5-large-v2` | 512 | 1024 | 1.3 GB | English | Same window as the default, one third wider vectors — so one third more index per record. |
+| `nomic-ai/nomic-embed-text-v1.5` | 8192 | 768 | 550 MB | English | Long records, at the default's vector width. Needs `BETTERSEARCH_LOCAL_TRUST_REMOTE_CODE=1`. |
+| `Alibaba-NLP/gte-large-en-v1.5` | 8192 | 1024 | 1.7 GB | English | Long records and wide vectors. Also needs `BETTERSEARCH_LOCAL_TRUST_REMOTE_CODE=1`. |
+| `BAAI/bge-m3` | 8192 | 1024 | 2.3 GB | Multilingual — its card claims 100+ working languages | A catalogue that is not in English. The largest download here. |
+
+The two that need `BETTERSEARCH_LOCAL_TRUST_REMOTE_CODE=1` ship their own
+modelling code, which `transformers` will only execute if you opt in. It is off
+by default because it runs code from the model repository on your machine.
+
+**Swapping one in.** Set `BETTERSEARCH_LOCAL_MODEL`, then rebuild the index —
+the swap is not finished until you do. Every vector is stored under a
+`model_id` of `name@dimensions`, and both writing and querying check it, so a
+mismatch raises `ModelMismatchError` rather than returning confident nonsense
+from two incompatible number spaces. `--force` does not get around this; it only
+skips the unchanged-content check. Delete the two index files, or point
+`BETTERSEARCH_INDEX_PATH` somewhere new:
+
+```bash
+export BETTERSEARCH_LOCAL_MODEL=BAAI/bge-small-en-v1.5
+rm .bettersearch/index.npz .bettersearch/index.json    # or use a fresh path
+bettersearch ingest --corpus data/catalogue_real.json
+bettersearch evaluate --queries data/eval_real.json
+```
+
+**Whether a swap was worth it is `bettersearch evaluate`'s question**, not the
+model card's — it scores every mode on the labelled queries, so you can compare
+before and after on your own corpus rather than on someone else's benchmark.
+Two cautions when you read the result. Watch `truncated_chunks` from the ingest
+as well as the scores, since a longer window only pays where your text is
+actually long — on both corpora here, nothing reaches even half the cap. And a
+model that was not among the arms used to build the judged pool is systematically
+under-credited: that is not a hypothetical, it is
+[what nearly sent this repository to the wrong conclusion](#comparing-embedding-models).
 
 ---
 
