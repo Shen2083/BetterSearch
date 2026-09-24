@@ -363,7 +363,7 @@ async function run() {
   $("status").textContent = "Searching…";
   // Undefined when served normally. The standalone build defines it, so the
   // file works from file:// with no search service behind it.
-  if (window.OFFLINE) { runOffline(query); return; }
+  if (window.OFFLINE) { await runOffline(query); return; }
   try {
     const res = await fetch("/catalogue/search", {
       method: "POST",
@@ -412,24 +412,31 @@ function render(d) {
   $("results").innerHTML = d.results.map(cardHtml).join("");
 }
 
-function runOffline(query) {
-  const data = window.OFFLINE.search(query, mode, filters, page, 10);
-  if (data) { render(data); return; }
+function blankResults() {
   $("count").textContent = "";
   $("pageno").textContent = "";
   $("prev").disabled = $("next").disabled = true;
   $("facets").innerHTML = "";
   $("results").innerHTML = "";
   $("clearall").hidden = true;
-  $("status").innerHTML = `<div class="empty">
-    <p class="big">This offline copy cannot answer that one.</p>
-    <p>Searching by meaning has to run the query through the search service,
-    and this is a single file with no service behind it — the example searches
-    were worked out in advance and saved into it. That is a limit of this copy,
-    <strong>not</strong> a statement that the catalogue holds nothing on the
-    subject.</p>
-    <p>Try one of the examples above the results.</p>
-  </div>`;
+}
+
+// The standalone file runs the search itself, so it can answer anything the
+// reader types - but searching by meaning needs the embedding model, and that
+// is a download. Say so rather than appearing to hang.
+async function runOffline(query) {
+  try {
+    render(await window.OFFLINE.search(query, mode, filters, page, 10));
+  } catch (err) {
+    blankResults();
+    $("status").innerHTML = `<div class="empty">
+      <p class="big">Searching by meaning is not available here.</p>
+      <p>This page runs the embedding model in your browser, which needs
+      WebAssembly and a connection the first time. ${esc(err.message || String(err))}</p>
+      <p><strong>Catalogue search still works</strong> — it runs entirely in
+      this file and needs nothing downloaded. Press “Catalogue search” above.</p>
+    </div>`;
+  }
 }
 
 function setMode(next) {
@@ -488,6 +495,21 @@ $("clearall").addEventListener("click", () => { filters = {}; page = 1; run(); }
 
 // Metadata first: it decides the opening query, so searching before it lands
 // would run the wrong one and then visibly replace it.
+if (window.OFFLINE && window.OFFLINE.onStatus) {
+  const info = window.OFFLINE.modelInfo();
+  window.OFFLINE.onStatus((state) => {
+    if (state === "loading") {
+      $("status").innerHTML = `<div class="empty">
+        <p class="big">Downloading the search model…</p>
+        <p>About 35 MB, once. It is the ${esc(info ? info.model : "embedding")}
+        model, and it runs in this page — after this, searching by meaning
+        works with no connection at all.</p></div>`;
+    }
+    // "ready" and "error" are both followed by a render or the catch above,
+    // so neither needs to write here and overwrite it.
+  });
+}
+
 loadMeta().then(run).catch((err) => {
   $("status").textContent = "Could not load the catalogue description: " + err;
 });

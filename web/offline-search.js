@@ -1,33 +1,190 @@
-/* Offline search for the standalone catalogue file.
+/* Live search in the browser for the standalone catalogue file.
  *
  * NOT loaded by the served page. `scripts/build_standalone.py` inlines this
- * file, plus a baked data blob, into a copy of catalogue.html so the result
- * works from file:// with no server.
+ * file, the whole corpus, and the corpus embedding vectors into a copy of
+ * catalogue.html, so the result answers **any** query from file:// with no
+ * server. Earlier builds baked a fixed list of answers; this one does the
+ * retrieval.
  *
- * Only retrieval needs Python - embedding the query, the vector index, BM25.
- * That part is precomputed at build time into RANKINGS: for each example query
- * and mode, the ordered [doc_id, score] list the Searcher returned. Everything
- * after retrieval is plain data work, so it is ported here from
- * api/catalogue.py and runs live: facet counts, filtering and pagination all
- * behave exactly as they do against the real API.
+ * Both lanes run here, and both are ports of the Python:
  *
- * Keep this in step with api/catalogue.py - _FACET_SPEC, build_facets,
- * matches_filters and to_card are mirrored below and must agree, or the
- * standalone file will quietly disagree with the served one.
+ *   keyword   BM25, mirroring src/bettersearch/keyword.py - same parameters,
+ *             same tokeniser, same stopwords, same IDF.
+ *   meaning   the query is embedded by transformers.js and scored against the
+ *             corpus vectors by dot product, mirroring the numpy index.
+ *
+ * Everything after retrieval - the top-k cut, collapsing repeated event dates,
+ * facet counts, filtering, paging - mirrors run_search in api/catalogue.py.
+ * Keep the two in step: scripts/check_browser_parity.py compares this file's
+ * ranking against the API's over the whole eval set and will say when they
+ * have drifted.
+ *
+ * THE ONE THING THAT MUST NOT CHANGE INDEPENDENTLY
+ * The corpus vectors were produced by the model named in the vectors block.
+ * The query must be embedded by that same model. Vectors from two different
+ * encoders are not more or less similar to each other, they are unrelated, and
+ * the page would return confident nonsense rather than failing. The build
+ * refuses a mismatch; do not work around it here.
  */
 (function () {
   "use strict";
 
-  const RECORDS = window.__OFFLINE_RECORDS__;
-  const RANKINGS = window.__OFFLINE_RANKINGS__;
+  const readJSON = (id) => {
+    const el = document.getElementById(id);
+    return el ? JSON.parse(el.textContent) : null;
+  };
 
-  // Match on a loosened form of the query, so the comma in the visible label
-  // "gentle crime novels, nothing too gory" still finds the baked ranking.
-  // The key separator is a plain "|" deliberately: a normalised query is only
-  // [a-z0-9 ], so "|" cannot collide, and unlike an exotic separator it
-  // survives the HTML parser. A NUL here does not - the tokenizer rewrites
-  // U+0000 in script data to U+FFFD, and every lookup then misses silently.
-  const norm = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const META = readJSON("catalogue-meta") || { presets: [], description: "" };
+  const RECORDS = readJSON("catalogue-records") || {};
+  const VECTORS = readJSON("catalogue-vectors");
+  // Read from api/catalogue.py at build time so the page and the API cannot
+  // disagree about how long a result list is.
+  const TOP_K = window.__SEMANTIC_TOP_K__ || 20;
+
+  function fromBase64(text) {
+    const binary = atob(text);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes;
+  }
+
+  // int8 codes, row-major, with one float32 scale per row (already divided by
+  // 127 at build time so scoring is one multiply rather than two).
+  const CODES = VECTORS ? new Int8Array(fromBase64(VECTORS.codes).buffer) : null;
+  const SCALES = VECTORS ? new Float32Array(fromBase64(VECTORS.scales).buffer) : null;
+  const DIMS = VECTORS ? VECTORS.dims : 0;
+  const DOC_IDS = VECTORS ? VECTORS.doc_ids : [];
+
+  // ---- status, so the page can say what it is waiting for -----------------
+  let onStatus = () => {};
+  const setStatus = (state, detail) => onStatus(state, detail || "");
+
+  // ---- BM25, mirrored from src/bettersearch/keyword.py --------------------
+  const K1 = 1.5;
+  const B = 0.75;
+  const STOPWORDS = new Set((
+    "a an and are as at be been but by can did do does for from had has have he " +
+    "her his how i if in into is it its of on or our that the their them then " +
+    "there these they this to was were what when where which who why will with " +
+    "you your"
+  ).split(" "));
+
+  function tokenize(text) {
+    const words = String(text).toLowerCase().match(/[a-z0-9]+/g) || [];
+    return words.filter((w) => !STOPWORDS.has(w));
+  }
+
+  let bm25 = null;
+  function buildBM25() {
+    // Built on first keyword search rather than at load: it costs a pass over
+    // the whole corpus, and a reader who only ever searches by meaning should
+    // not pay for it.
+    const ids = Object.keys(RECORDS);
+    const frequencies = [];
+    const lengths = [];
+    const documentFrequency = new Map();
+    for (const id of ids) {
+      const record = RECORDS[id];
+      const terms = tokenize(`${record.title} ${record.text || ""}`);
+      const counts = new Map();
+      for (const t of terms) counts.set(t, (counts.get(t) || 0) + 1);
+      frequencies.push(counts);
+      lengths.push(terms.length);
+      for (const t of counts.keys()) {
+        documentFrequency.set(t, (documentFrequency.get(t) || 0) + 1);
+      }
+    }
+    const total = ids.length;
+    const idf = new Map();
+    for (const [term, count] of documentFrequency) {
+      idf.set(term, Math.log(1 + (total - count + 0.5) / (count + 0.5)));
+    }
+    const average = lengths.length
+      ? lengths.reduce((a, b) => a + b, 0) / lengths.length
+      : 0;
+    bm25 = { ids, frequencies, lengths, idf, average };
+  }
+
+  function keywordRank(query) {
+    if (!bm25) buildBM25();
+    const terms = tokenize(query);
+    if (!terms.length) return [];
+    const hits = [];
+    for (let i = 0; i < bm25.ids.length; i++) {
+      const length = bm25.lengths[i];
+      if (length === 0) continue;
+      const norm = K1 * (1 - B + (B * length) / (bm25.average || 1));
+      let score = 0;
+      for (const term of terms) {
+        const frequency = bm25.frequencies[i].get(term);
+        if (!frequency) continue;
+        score += (bm25.idf.get(term) || 0) * ((frequency * (K1 + 1)) / (frequency + norm));
+      }
+      // Python keeps only positive scores, so a record sharing no term with
+      // the query is absent rather than present with score zero. That is what
+      // makes a keyword result count mean something.
+      if (score > 0) hits.push([bm25.ids[i], score]);
+    }
+    hits.sort((a, b) => b[1] - a[1]);
+    return hits;
+  }
+
+  // ---- meaning, via transformers.js ---------------------------------------
+  let embedder = null;
+  let embedderPromise = null;
+
+  function loadEmbedder() {
+    if (embedderPromise) return embedderPromise;
+    embedderPromise = (async () => {
+      setStatus("loading");
+      // Imported at first use, not at page load: it is a ~35 MB download and
+      // the keyword lane needs none of it.
+      const transformers = await import(
+        "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.1"
+      );
+      transformers.env.allowLocalModels = false;
+      embedder = await transformers.pipeline(
+        "feature-extraction", VECTORS.onnx_repo, { dtype: "q8" }
+      );
+      setStatus("ready");
+      return embedder;
+    })().catch((err) => {
+      embedderPromise = null; // let a later search try again
+      setStatus("error", err && err.message ? err.message : String(err));
+      throw err;
+    });
+    return embedderPromise;
+  }
+
+  async function semanticRank(query) {
+    if (!VECTORS) return [];
+    const pipe = await loadEmbedder();
+    // CLS pooling and L2 normalisation, which is how bge was trained and how
+    // sentence-transformers encodes it on the server. Mean pooling here would
+    // silently produce a different vector for the same words.
+    //
+    // The server does not prefix the query with bge's retrieval instruction,
+    // so this does not either - matching the server matters more, and the
+    // instruction was measured at 0.006 nDCG either way.
+    const output = await pipe(query, { pooling: "cls", normalize: true });
+    const q = output.data;
+
+    // Dot product against int8 rows. Both sides are L2-normalised, so this is
+    // cosine similarity, exactly as in the numpy index.
+    const count = SCALES.length;
+    const scored = new Array(count);
+    for (let i = 0; i < count; i++) {
+      const base = i * DIMS;
+      let total = 0;
+      for (let j = 0; j < DIMS; j++) total += CODES[base + j] * q[j];
+      scored[i] = [DOC_IDS[i], total * SCALES[i]];
+    }
+    scored.sort((a, b) => b[1] - a[1]);
+    // The cut happens here, on chunks, before anything is collapsed - which is
+    // where searcher.semantic(top_k=...) cuts on the server. Collapsing first
+    // would quietly return more than TOP_K records.
+    return scored.slice(0, TOP_K);
+  }
 
   // ---- mirrored from api/catalogue.py -------------------------------------
   function decade(year) {
@@ -67,15 +224,10 @@
         }
       }
       if (!counter.size) continue;
-      // Python: sorted(counter.items(), key=lambda kv: (-kv[1], kv[0]))
       const ordered = [...counter.entries()].sort(
         (a, b) => b[1] - a[1] || a[0].localeCompare(b[0])
       );
-      facets.push({
-        key,
-        label,
-        values: ordered.map(([value, count]) => ({ value, count })),
-      });
+      facets.push({ key, label, values: ordered.map(([value, count]) => ({ value, count })) });
     }
     return facets;
   }
@@ -116,21 +268,36 @@
     };
   }
 
-  // ---- the same shape /catalogue/search returns ---------------------------
-  function search(query, mode, filters, page, perPage) {
-    const ranking = RANKINGS[norm(query) + "|" + mode];
-    if (!ranking) return null; // not a baked query - caller explains
+  function collapse(hits) {
+    // One card per record, then one card per event series: a drop-in that runs
+    // every Tuesday is one thing to show, not seven, and `repeats` carries the
+    // rest for the card. Same order and same rules as run_search.
+    const seen = new Set();
+    const seriesAt = new Map();
+    const ranked = [];
+    for (const [docId, score] of hits) {
+      if (seen.has(docId)) continue;
+      seen.add(docId);
+      const record = RECORDS[docId];
+      if (!record) continue;
+      const series = record.series_id;
+      if (series != null) {
+        const at = seriesAt.get(series);
+        if (at != null) {
+          ranked[at][0] = { ...ranked[at][0], repeats: (ranked[at][0].repeats || 1) + 1 };
+          continue;
+        }
+        seriesAt.set(series, ranked.length);
+      }
+      ranked.push([record, score]);
+    }
+    return ranked;
+  }
 
-    // Repeated occurrences of a weekly session were already collapsed by
-    // run_search at build time - a drop-in that happens every Tuesday is one
-    // thing to show, not seven - so the baked ranking holds one record per
-    // series and carries the occurrence count as a third element. Collapsing
-    // again here would be a second implementation of the same rule, free to
-    // drift from the first.
-    const ranked = ranking
-      .map(([docId, score, repeats]) =>
-        [RECORDS[docId] && { ...RECORDS[docId], repeats: repeats || 1 }, score])
-      .filter(([record]) => record);
+  // ---- the same shape /catalogue/search returns ---------------------------
+  async function search(query, mode, filters, page, perPage) {
+    const hits = mode === "keyword" ? keywordRank(query) : await semanticRank(query);
+    const ranked = collapse(hits);
 
     // Facets are counted before filtering, so the sidebar shows what you could
     // narrow to rather than only what is already selected.
@@ -153,30 +320,38 @@
     };
   }
 
-  function knownQueries() {
-    return [...new Set(Object.keys(RANKINGS).map((k) => k.split("|")[0]))];
-  }
-
-  // The corpus metadata the served page fetches from /catalogue/meta. Baked in
-  // here because there is no service behind this file.
   function meta() {
-    return window.__OFFLINE_META__ || { presets: [], description: "" };
+    return META;
   }
 
-  window.OFFLINE = { search, knownQueries, meta };
+  function modelInfo() {
+    return VECTORS
+      ? { model: VECTORS.model, dims: VECTORS.dims, records: Object.keys(RECORDS).length }
+      : null;
+  }
 
-  // Say what this copy is, so nobody mistakes an unanswerable query for an
-  // empty catalogue. The page fills .footnote from the corpus description
-  // after this script runs, so wait for it rather than appending to an empty
-  // paragraph that is about to be overwritten.
-  const NOTE =
-    "This is a self-contained offline copy: the searches below are" +
-    " precomputed, so it answers the example queries only. The full version" +
-    " runs every query live against the search service.";
+  window.OFFLINE = {
+    search,
+    meta,
+    modelInfo,
+    onStatus: (cb) => { onStatus = cb; },
+  };
+
+  // Say what this copy is. The page fills .footnote from the corpus
+  // description after this script runs, so wait for that rather than appending
+  // to an empty paragraph that is about to be overwritten.
+  const NOTE = VECTORS
+    ? "This is a self-contained copy: the catalogue, its embeddings and the" +
+      " search all run in this page, with no server. Searching by meaning" +
+      " downloads the " + VECTORS.model + " model once (about 35 MB) and then" +
+      " works offline. The server uses a larger model, so its ranking can" +
+      " differ slightly."
+    : "This is a self-contained copy, but it was built without corpus vectors," +
+      " so only keyword search works.";
   const footnote = document.querySelector(".footnote");
   if (footnote) {
     new MutationObserver((_, observer) => {
-      if (footnote.textContent.includes(NOTE)) return;
+      if (footnote.textContent.includes("self-contained copy")) return;
       footnote.innerHTML += "<br>" + NOTE;
       observer.disconnect();
     }).observe(footnote, { childList: true, characterData: true, subtree: true });

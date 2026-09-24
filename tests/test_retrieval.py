@@ -189,3 +189,60 @@ def test_local_provider_reads_limits_from_the_model():
     assert provider.dimensions == expected_dims
     # model_id must carry the width, so a dimension change invalidates the index.
     assert provider.model_id.endswith(f"@{expected_dims}")
+
+
+# --- title weighting, which is deliberately switched off --------------------
+
+
+def _named() -> list[Chunk]:
+    """A title match and two author matches for the same word."""
+    return [
+        _chunk("a", "a", "Harry Potter and the Chamber of Secrets",
+               "Author: John Williams"),
+        _chunk("b", "b", "Woodworking", "Author: Harry Zarchy"),
+        _chunk("c", "c", "Our language", "Author: Simeon Potter"),
+    ]
+
+
+def test_title_weight_defaults_to_no_weighting():
+    """TITLE_WEIGHT is 1.0 on purpose - the sweep found it did not earn more.
+
+    If someone raises the default, this fails and sends them to
+    scripts/tune_title_weight.py, which is where the reasoning lives.
+    """
+    from bettersearch.keyword import TITLE_WEIGHT
+
+    assert TITLE_WEIGHT == 1.0
+
+    chunks = _named()
+    default = [h.chunk.doc_id for h in BM25Index(chunks).search("Harry Potter", top_k=3)]
+    explicit = [h.chunk.doc_id
+                for h in BM25Index(chunks, title_weight=1.0).search("Harry Potter", top_k=3)]
+    assert default == explicit
+
+
+def test_raising_the_title_weight_promotes_a_title_match():
+    """The knob works, even though it is not turned up: a term in the title
+    outweighs the same term in an author's name once the weight rises."""
+    chunks = _named()
+
+    def score(weight: float, doc_id: str) -> float:
+        hits = BM25Index(chunks, title_weight=weight).search("Harry Potter", top_k=3)
+        return next(h.score for h in hits if h.chunk.doc_id == doc_id)
+
+    # The gap between the title match and an author-only match widens.
+    assert score(3.0, "a") - score(3.0, "b") > score(1.0, "a") - score(1.0, "b")
+
+
+def test_title_weighting_keeps_the_length_normalisation_honest():
+    """Weighting term frequency without weighting document length would make
+    every titled record look short and therefore over-relevant."""
+    long_body = _chunk("long", "long", "Gardening", "Author: X. " + "soil " * 200)
+    short_body = _chunk("short", "short", "Gardening", "Author: Y.")
+    index = BM25Index([long_body, short_body], title_weight=5.0)
+    hits = {h.chunk.doc_id: h.score for h in index.search("Gardening", top_k=2)}
+
+    # The short record still wins on the same title term - but not absurdly, as
+    # it would if only the numerator were weighted.
+    assert hits["short"] > hits["long"]
+    assert hits["short"] < hits["long"] * 6

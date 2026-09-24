@@ -200,46 +200,72 @@ each collection separately and fuse by rank with
 `web/catalogue.html` is only a front end — every search POSTs to
 `/catalogue/search`, so opening it from disk gives "Failed to fetch" (Safari
 says "Load failed"). **`docs/catalogue-standalone.html` is the file to send.**
-It opens on a double-click, works offline, and needs no Python.
+It opens on a double-click, works offline, needs no Python — and answers any
+query typed into it, not a fixed list.
 
-Only retrieval needs the service, so the example searches are run through the
-real `Searcher` at build time and saved into the file; facets, filtering and
-paging still run live in the browser. It therefore answers **the example queries
-only** — anything else says so plainly rather than showing an empty result set,
-which would wrongly read as "the catalogue holds nothing on that".
+The whole corpus, its embedding vectors and the search all live in the file.
+Keyword search is BM25 in JavaScript, ported from `src/bettersearch/keyword.py`.
+Searching by meaning embeds the query in the browser with transformers.js.
 
-The committed copy is built against the **real 4,000-record catalogue**, not the
-invented demonstration one the served page uses by default — it is the corpus
-every measurement in the README refers to, so it is the one worth sending. Its
-example queries come from the reviewed eval set for the same reason.
+**The page runs a smaller model than the server, and it has to.** Corpus
+vectors and query must come from the same encoder, and `bge-base` is too large
+to send to a browser, so the page is built on `bge-small-en-v1.5` (384 dims,
+~35 MB quantised, downloaded on first meaning search then cached). Nothing
+about the API changes.
 
 ```bash
-BETTERSEARCH_INDEX_PATH=.bettersearch/real-events \
+BETTERSEARCH_LOCAL_MODEL=BAAI/bge-small-en-v1.5 \
+BETTERSEARCH_INDEX_PATH=.bettersearch/real-events-small \
     bettersearch ingest --corpus data/catalogue_real.json \
-                        --corpus data/events_northfield.json   # if not built
+                        --corpus data/events_northfield.json
 
 python scripts/build_standalone.py \
     --catalogue "data/catalogue_real.json,data/events_northfield.json" \
-    --index .bettersearch/real-events
+    --index .bettersearch/real-events-small \
+    --model BAAI/bge-small-en-v1.5
 ```
 
-**Expected**: `1018 of 4114 records reachable from these queries`, and a file
-around 709 KB. The example queries are no longer listed here — they come from
-the corpus files, the same place the served page gets them, so the offline copy
-cannot offer a button the served page does not. `--query` still overrides them. Only the records some baked ranking can reach are shipped —
-carrying all 4,000 would add 3.2 MB nobody can navigate to. That is only
-affordable because the meaning lane stops at `SEMANTIC_TOP_K`; under the old
-relevance floor one query reached 3,665 records by itself.
+**Expected**: `4114 records, 4114 chunks`, and a file of about **4.8 MB**. The
+build fails over 8 MB rather than quietly shipping something nobody will open
+on a train.
 
-The example queries and the footnote are baked in from the corpus and rendered
-by the same code the served page uses, so the file cannot offer a dead button or
-describe a different catalogue. This used to be two regex rewrites of the HTML;
-it is now just data.
+The vectors are taken out of the index rather than recomputed. That is the
+point: re-embedding in the builder would be a second path to "the same"
+numbers, and the day it drifted the page would rank differently from the API
+with nothing to show for it. `--model` must name the model the index was built
+with; the build refuses a mismatch, because scoring a query from one encoder
+against vectors from another returns confident nonsense rather than an error.
 
-Omit `--catalogue` to build the demonstration-catalogue version instead.
+#### Checking the page agrees with the API
 
-Rebuild after changing `web/catalogue.html`, `web/offline-search.js`, the
-catalogue data, or `SEMANTIC_TOP_K`.
+The page is a second implementation of retrieval, so it gets checked against
+the first over the whole eval set:
+
+```bash
+python scripts/check_browser_parity.py
+```
+
+**Expected**: top-20 overlap around **94%**, nDCG@10 within **0.01** of the
+server, keyword ordering identical on all 41 queries. Two things stop it being
+100%, both measured rather than waved away:
+
+| source | cost |
+|---|---|
+| int8 corpus vectors (storage) | 98.8% overlap on its own |
+| the browser's quantised ONNX model vs fp32 Python | the rest, down to 94% |
+
+The second is the price of a 35 MB download instead of 130 MB. Neither moves
+quality: nDCG@10 0.586 against the server's 0.594. If overlap ever collapses
+rather than drifting, suspect the page and the index no longer share a model.
+
+#### Publishing it
+
+`.github/workflows/pages.yml` rebuilds the file on pushes to `main` that touch
+the corpus, the page or the search code, and publishes `docs/` to GitHub Pages.
+
+**One repository setting has to be switched by hand**: Settings → Pages →
+Build and deployment → Source → **GitHub Actions**. Until then the deploy step
+fails with "Pages site not found" however green the build is.
 
 ---
 
