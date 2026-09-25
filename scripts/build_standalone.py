@@ -122,7 +122,8 @@ def json_block(name: str, payload: object) -> str:
 
 
 def build(out: Path, model: str) -> Path:
-    from api.catalogue import SEMANTIC_TOP_K, load_catalogue, load_meta
+    from api.catalogue import (EXPLAIN_HEADINGS, SEMANTIC_TOP_K,
+                              load_catalogue, load_meta)
 
     html = SOURCE.read_text(encoding="utf-8")
     if "window.OFFLINE" not in html:
@@ -179,7 +180,8 @@ def build(out: Path, model: str) -> Path:
         })
         # The cut is read from api/catalogue.py rather than repeated here, so
         # the page and the API cannot disagree about how long a result list is.
-        + f"<script>window.__SEMANTIC_TOP_K__ = {SEMANTIC_TOP_K};</script>\n"
+        + f"<script>window.__SEMANTIC_TOP_K__ = {SEMANTIC_TOP_K};"
+          f"window.__EXPLAIN_HEADINGS__ = {EXPLAIN_HEADINGS};</script>\n"
         + "<script>\n" + ENGINE.read_text(encoding="utf-8") + "</script>\n"
     )
 

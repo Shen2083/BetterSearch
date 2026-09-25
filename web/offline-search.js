@@ -40,6 +40,7 @@
   // Read from api/catalogue.py at build time so the page and the API cannot
   // disagree about how long a result list is.
   const TOP_K = window.__SEMANTIC_TOP_K__ || 20;
+  const EXPLAIN_HEADINGS = window.__EXPLAIN_HEADINGS__ || 2;
 
   function fromBase64(text) {
     const binary = atob(text);
@@ -183,7 +184,60 @@
     // The cut happens here, on chunks, before anything is collapsed - which is
     // where searcher.semantic(top_k=...) cuts on the server. Collapsing first
     // would quietly return more than TOP_K records.
-    return scored.slice(0, TOP_K);
+    //
+    // The query vector is handed back rather than stashed in a closure, so
+    // that two searches in flight at once cannot explain each other's cards.
+    return { hits: scored.slice(0, TOP_K), vector: q };
+  }
+
+  // ---- why a record is here, mirroring api/catalogue.py -------------------
+  function matchedTerms(query, record) {
+    const haystack = new Set(tokenize(
+      `${record.title || ""} ${record.author || ""} ` +
+      `${(record.subjects || []).join(" ")} ${record.text || ""}`
+    ));
+    const seen = [];
+    for (const term of tokenize(query)) {
+      if (haystack.has(term) && !seen.includes(term)) seen.push(term);
+    }
+    return seen;
+  }
+
+  async function closestHeadings(queryVector, records) {
+    // Only the page being shown is embedded, and each distinct heading only
+    // once - see _closest_headings in api/catalogue.py for why this is a
+    // description of the record rather than an explanation of the ranking.
+    const vocabulary = [];
+    const position = new Map();
+    for (const record of records) {
+      for (const heading of record.subjects || []) {
+        if (!position.has(heading)) {
+          position.set(heading, vocabulary.length);
+          vocabulary.push(heading);
+        }
+      }
+    }
+    if (!vocabulary.length) return records.map(() => []);
+
+    const pipe = await loadEmbedder();
+    const output = await pipe(vocabulary, { pooling: "cls", normalize: true });
+    const dims = output.dims[output.dims.length - 1];
+    const data = output.data;
+    const similarity = new Float32Array(vocabulary.length);
+    for (let i = 0; i < vocabulary.length; i++) {
+      const base = i * dims;
+      let total = 0;
+      for (let j = 0; j < dims; j++) total += data[base + j] * queryVector[j];
+      similarity[i] = total;
+    }
+    // Array.prototype.sort is stable, as Python's sorted is, so headings of
+    // equal similarity keep the order the record lists them in.
+    return records.map((record) =>
+      (record.subjects || [])
+        .slice()
+        .sort((a, b) => similarity[position.get(b)] - similarity[position.get(a)])
+        .slice(0, EXPLAIN_HEADINGS)
+    );
   }
 
   // ---- mirrored from api/catalogue.py -------------------------------------
@@ -296,7 +350,13 @@
 
   // ---- the same shape /catalogue/search returns ---------------------------
   async function search(query, mode, filters, page, perPage) {
-    const hits = mode === "keyword" ? keywordRank(query) : await semanticRank(query);
+    let hits;
+    let queryVector = null;
+    if (mode === "keyword") {
+      hits = keywordRank(query);
+    } else {
+      ({ hits, vector: queryVector } = await semanticRank(query));
+    }
     const ranked = collapse(hits);
 
     // Facets are counted before filtering, so the sidebar shows what you could
@@ -308,6 +368,19 @@
     const start = (page - 1) * perPage;
     const window_ = kept.slice(start, start + perPage);
 
+    const cards = window_.map(([record, score], i) =>
+      toCard(record, score, start + i + 1));
+
+    if (mode === "keyword") {
+      cards.forEach((card, i) => {
+        card.matched_terms = matchedTerms(query, window_[i][0]);
+      });
+    } else if (cards.length) {
+      const headings = await closestHeadings(
+        queryVector, window_.map(([record]) => record));
+      cards.forEach((card, i) => { card.closest_headings = headings[i]; });
+    }
+
     return {
       query,
       mode,
@@ -315,7 +388,7 @@
       page,
       per_page: perPage,
       showing: window_.length ? [start + 1, start + window_.length] : [0, 0],
-      results: window_.map(([record, score], i) => toCard(record, score, start + i + 1)),
+      results: cards,
       facets,
     };
   }

@@ -14,6 +14,7 @@ from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+from weakref import WeakKeyDictionary
 
 _DATA = Path(__file__).resolve().parent.parent / "data"
 #: Which catalogue the page serves. Settable so the 74-record demonstration
@@ -208,6 +209,117 @@ def to_card(record: dict, score: float, rank: int) -> dict[str, Any]:
     }
 
 
+#: How many of a record's own subject headings to surface on a card.
+EXPLAIN_HEADINGS = 2
+
+#: Heading vectors, kept per embedding provider. Weak keys so a provider that
+#: goes out of scope takes its vectors with it rather than leaking them for the
+#: life of the process.
+_HEADING_CACHE: "WeakKeyDictionary[Any, dict[str, Any]]" = WeakKeyDictionary()
+
+
+def _matched_terms(query: str, record: dict) -> list[str]:
+    """The query words this record actually contains.
+
+    For catalogue search this is a real explanation rather than a description:
+    BM25 scores on shared terms and nothing else, so the terms listed here are
+    precisely what put the record in the list.
+    """
+    from bettersearch.keyword import tokenize
+
+    haystack = set(
+        tokenize(
+            f"{record.get('title', '')} {record.get('author', '')} "
+            f"{' '.join(record.get('subjects') or [])} {record.get('text', '')}"
+        )
+    )
+    seen: list[str] = []
+    for term in tokenize(query):
+        if term in haystack and term not in seen:
+            seen.append(term)
+    return seen
+
+
+def _closest_headings(searcher, query: str, records: list[dict],
+                      *, limit: int = EXPLAIN_HEADINGS) -> list[list[str]]:
+    """Each record's own subject headings, ordered by closeness to the query.
+
+    **This is a description, not an explanation, and the difference matters.**
+    The ranking is computed over the whole record text; a dense vector does not
+    decompose into the fields that produced it, so no honest process can say
+    "it matched because of this heading". What this says is narrower and true:
+    of the headings this record really carries, these are the ones nearest to
+    what was asked. A reader who typed `something gentle to read before bed`
+    sees *Sleep · Relaxation* and can judge the result themselves.
+
+    The headings are real Open Library data. Enrichment text is a retrieval
+    bridge and is never surfaced here - a reader must not be shown generated
+    prose as though it were catalogue truth.
+
+    No similarity margin is applied. A cut-off would need a number, and every
+    eyeballed number in this project has eventually turned out to be tuned to
+    one corpus - the 0.15 relevance floor above being the expensive example. A
+    record's headings are true whether or not they are close, and showing the
+    closest two is a selection, not a claim.
+
+    Only the page being displayed is embedded: ten cards at a median of seven
+    headings is about seventy short strings in one batch, against a model
+    already resident because it just embedded the query.
+    """
+    import numpy as np
+
+    vocabulary: list[str] = []
+    position: dict[str, int] = {}
+    for record in records:
+        for heading in record.get("subjects") or []:
+            if heading not in position:
+                position[heading] = len(vocabulary)
+                vocabulary.append(heading)
+    if not vocabulary:
+        return [[] for _ in records]
+
+    provider = searcher.provider
+    # Headings repeat, so keep their vectors. The cache hangs off the provider
+    # rather than off this module: it is then keyed by the model that produced
+    # the vectors, cannot serve a stale encoder's numbers after
+    # BETTERSEARCH_LOCAL_MODEL changes, and dies with the searcher instead of
+    # outliving it. It is bounded by the corpus heading vocabulary.
+    #
+    # **What it is and is not worth, measured.** Explaining costs about 240 ms
+    # on a 151 ms search - 2.6x - when nothing is cached. Repeat a query whose
+    # headings are already held and that falls to ~0: 156 ms against 391 ms.
+    # But across the 41 *distinct* eval queries it bought nothing at all (first
+    # five searches 360 ms, last five 386 ms, no trend), because different
+    # queries return different records carrying different headings; 41 searches
+    # cached only 952 of the corpus's 7,601 headings. So this pays off exactly
+    # to the extent that real readers repeat each other, which library search
+    # logs suggest they do heavily - but that is an argument from elsewhere,
+    # not something this repository has measured.
+    #
+    # A plain dict is right here, unlike the lazy model load in Searcher: two
+    # threads racing to embed the same heading write the same value, which
+    # costs a duplicated batch and nothing else.
+    cache = _HEADING_CACHE.setdefault(provider, {})
+    missing = [h for h in vocabulary if h not in cache]
+    if missing:
+        for heading, vector in zip(missing, provider.embed_documents(missing)):
+            cache[heading] = vector
+
+    known = np.stack([cache[h] for h in vocabulary])
+    asked = provider.embed_query(query)
+    # Every provider returns L2-normalised vectors, so this is cosine.
+    similarity = known @ np.asarray(asked)
+
+
+    out: list[list[str]] = []
+    for record in records:
+        own = record.get("subjects") or []
+        out.append(
+            sorted(own, key=lambda h: -similarity[position[h]])[:limit]
+        )
+    return out
+
+
 def run_search(
     searcher,
     catalogue: dict[str, dict],
@@ -274,6 +386,23 @@ def run_search(
     start = (page - 1) * per_page
     window = kept[start : start + per_page]
 
+    cards = [to_card(r, s, start + i + 1) for i, (r, s) in enumerate(window)]
+
+    # Why each card is here, computed for the displayed page only. Catalogue
+    # search can be explained exactly - BM25 scores on shared terms, so the
+    # matched words *are* the reason. Meaning-based search cannot: the score
+    # comes from the whole record text and a dense vector does not decompose.
+    # The two fields are named differently to keep that asymmetry visible
+    # rather than papering over it with one word like "why".
+    if mode == "keyword":
+        for card, (record, _) in zip(cards, window):
+            card["matched_terms"] = _matched_terms(query, record)
+    elif cards:
+        for card, headings in zip(
+            cards, _closest_headings(searcher, query, [r for r, _ in window])
+        ):
+            card["closest_headings"] = headings
+
     return {
         "query": query,
         "mode": mode,
@@ -281,7 +410,7 @@ def run_search(
         "page": page,
         "per_page": per_page,
         "showing": [start + 1, start + len(window)] if window else [0, 0],
-        "results": [to_card(r, s, start + i + 1) for i, (r, s) in enumerate(window)],
+        "results": cards,
         "facets": [
             {"key": f.key, "label": f.label,
              "values": [{"value": v.value, "count": v.count} for v in f.values]}
