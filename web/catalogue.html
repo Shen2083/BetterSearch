@@ -145,6 +145,15 @@
   .subjects { font-size: 13px; color: var(--muted); margin: 0 0 9px; }
   .subjects span { display: inline-block; border: 1px solid var(--rule);
                    border-radius: 2px; padding: 1px 7px; margin: 0 5px 5px 0; }
+  /* The headings nearest what was asked, brought to the front of the row.
+     Deliberately quiet: this is the record's own cataloguing, shown in a more
+     useful order, not a claim about why the ranking put it here. */
+  .subjects span.near { border-color: var(--brand); color: var(--brand); }
+  .matched { font-size: 13px; color: var(--muted); margin: 0 0 9px; }
+  /* Not a chip - it labels the row rather than sitting in it. */
+  .subjects b.lead { font-weight: 600; font-size: 12.5px; color: var(--muted);
+                     margin-right: 3px; }
+  .matched b { font-weight: 600; color: var(--ink); }
   .actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
   .reserve { padding: 6px 15px; font: inherit; font-size: 13.5px; font-weight: 600;
              color: #fff; background: var(--brand); border: 1px solid var(--brand);
@@ -325,8 +334,27 @@ function cardHtml(r) {
   // Only fold the year into the publisher line when it is a real year -
   // otherwise it prints twice, once here and once as the flagged unknown.
   const pub = [r.publisher, unknownYear ? null : r.year].filter(Boolean).join(", ");
-  const subs = (r.subjects || []).slice(0, 4)
-    .map(s => `<span>${esc(s)}</span>`).join("");
+  // Meaning-based search hands back the headings nearest the query; show those
+  // first and mark them, so the four that fit are the four worth reading.
+  // Array.prototype.sort is stable, so everything else keeps catalogue order.
+  const near = new Set(r.closest_headings || []);
+  const subs = (r.subjects || []).slice()
+    .sort((a, b) => (near.has(b) ? 1 : 0) - (near.has(a) ? 1 : 0))
+    .slice(0, 4)
+    .map(s => `<span class="${near.has(s) ? "near" : ""}">${esc(s)}</span>`)
+    .join("");
+  // Say it in words as well as in colour. A coloured border alone asks the
+  // reader to notice a hue difference and guess what it means, which is no
+  // use to anyone who cannot distinguish it.
+  const lead = near.size
+    ? `<b class="lead">Closest to your search:</b> ` : "";
+  // Catalogue search names what is *absent*, because with BM25 that is the
+  // half that explains the result list - see _missing_terms in
+  // api/catalogue.py. Nothing is said when the whole query matched.
+  const missing = (r.missing_terms || []).length
+    ? `<p class="matched">Not in this record:
+         ${r.missing_terms.map(t => `<b>${esc(t)}</b>`).join(", ")}</p>`
+    : "";
   const online = r.format === "eAudiobook";
   return `<li>
     <div class="idx">${r.rank}.</div>
@@ -342,7 +370,8 @@ function cardHtml(r) {
       ${r.blurb
         ? `<p class="blurb">${esc(r.blurb)}</p>`
         : `<p class="norec">No summary in this record.</p>`}
-      <p class="subjects">${subs || "<span>No subject headings</span>"}</p>
+      <p class="subjects">${lead}${subs || "<span>No subject headings</span>"}</p>
+      ${missing}
       <div class="actions">
         <button class="reserve" type="button" ${r.available ? "" : "disabled"}>
           ${online ? "Borrow" : (r.available ? "Place reservation" : "Join waiting list")}

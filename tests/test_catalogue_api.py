@@ -21,6 +21,7 @@ from collections import Counter
 import pytest
 
 from api.catalogue import (
+    EXPLAIN_HEADINGS,
     SEMANTIC_TOP_K,
     build_facets,
     matches_filters,
@@ -37,6 +38,53 @@ class StubHit:
         self.score = score
 
 
+class WordOverlapProvider:
+    """Embeds text as a bag of words, so cosine similarity *is* word overlap.
+
+    The conftest provider hashes whole strings, which is right for plumbing and
+    useless here: these tests ask which heading is **closest** to a query, and a
+    hash makes closeness meaningless. This fake knows nothing about meaning
+    either, but a heading sharing words with the query is reliably closer than
+    one that does not, which is enough to assert on.
+
+    ``batches`` records the size of every ``embed_documents`` call, so a test
+    can hold the adapter to embedding once per search rather than once per card.
+    """
+
+    DIMENSIONS = 64
+
+    def __init__(self) -> None:
+        self.model_id = "word-overlap@64"
+        self.dimensions = self.DIMENSIONS
+        self.max_input_tokens = 10_000
+        self.batches: list[int] = []
+
+    def _vector(self, text: str):
+        import re
+        import zlib
+
+        import numpy as np
+
+        vector = np.zeros(self.DIMENSIONS, dtype=np.float32)
+        for word in re.findall(r"[a-z0-9]+", text.lower()):
+            # crc32 rather than hash(): str hashing is salted per process, and
+            # a fake that changes its mind between runs is worse than no fake.
+            vector[zlib.crc32(word.encode()) % self.DIMENSIONS] += 1.0
+        norm = float(np.linalg.norm(vector))
+        return vector / norm if norm else vector
+
+    def embed_documents(self, texts):
+        import numpy as np
+
+        self.batches.append(len(texts))
+        if not texts:
+            return np.zeros((0, self.DIMENSIONS), dtype=np.float32)
+        return np.stack([self._vector(t) for t in texts])
+
+    def embed_query(self, text):
+        return self._vector(text)
+
+
 class StubSearcher:
     """Returns a fixed ranking, honouring top_k the way a real Searcher does.
 
@@ -49,6 +97,7 @@ class StubSearcher:
         self.doc_ids = doc_ids
         self.keyword_top_k: int | None = None
         self.semantic_top_k: int | None = None
+        self.provider = WordOverlapProvider()
 
     def _hits(self, top_k: int) -> list[StubHit]:
         n = len(self.doc_ids)
@@ -436,3 +485,143 @@ def test_every_shipped_corpus_declares_its_own_presets():
         raw = json.loads((root / "data" / name).read_text(encoding="utf-8"))
         assert raw.get("presets"), f"{name} declares no example queries"
         assert raw.get("description"), f"{name} does not describe itself"
+
+
+# --- saying why a record is here ------------------------------------------
+#
+# The adapter explains the two modes differently on purpose. Catalogue search
+# can be explained exactly, because BM25 scores on shared terms and nothing
+# else. Meaning-based search cannot: the score comes from the whole record
+# text, and a dense vector does not decompose into the fields that produced it.
+# So one mode reports matched terms and the other reports the record's own
+# closest headings - a description, not a causal claim - and these tests hold
+# that line, because the tempting next step is to relabel the headings "why it
+# matched" and quietly start lying to the reader.
+
+
+def headed_catalogue() -> dict[str, dict]:
+    return {
+        "doc-sleep": {
+            "doc_id": "doc-sleep", "title": "Quiet Nights",
+            "text": "Author: A Writer\nPublished: 1999", "author": "A Writer",
+            "subjects": ["Sleep", "Bicycle repair", "Fiction"],
+            "format": "Book", "location": "Northfield Central",
+            "available": 1, "copies": 2, "year": "1999",
+        },
+        "doc-bike": {
+            "doc_id": "doc-bike", "title": "The Cyclist Handbook",
+            "text": "Author: B Writer\nPublished: 2001", "author": "B Writer",
+            "subjects": ["Bicycle repair", "Cycling"],
+            "format": "Book", "location": "Ashcombe Branch",
+            "available": 0, "copies": 1, "year": "2001",
+        },
+        "doc-bare": {
+            "doc_id": "doc-bare", "title": "Untitled Donation",
+            "text": "Author: Unknown", "author": "Unknown", "subjects": [],
+            "format": "Book", "location": "Ashcombe Branch",
+            "available": 2, "copies": 2, "year": "1980",
+        },
+    }
+
+
+@pytest.fixture
+def headed() -> dict[str, dict]:
+    return headed_catalogue()
+
+
+@pytest.fixture
+def headed_searcher(headed: dict[str, dict]) -> StubSearcher:
+    return StubSearcher(list(headed))
+
+
+def test_closest_heading_is_the_one_nearest_the_query(headed_searcher, headed):
+    data = run_search(headed_searcher, headed, query="sleep", mode="semantic")
+
+    card = next(c for c in data["results"] if c["doc_id"] == "doc-sleep")
+    assert card["closest_headings"][0] == "Sleep"
+
+
+def test_closest_headings_only_ever_come_from_the_record(headed_searcher, headed):
+    """Never an invented label, and never enrichment prose dressed as truth."""
+    data = run_search(headed_searcher, headed, query="cycling", mode="semantic")
+
+    for card in data["results"]:
+        own = set(headed[card["doc_id"]]["subjects"])
+        assert set(card["closest_headings"]) <= own
+
+
+def test_closest_headings_are_capped(headed_searcher, headed):
+    data = run_search(headed_searcher, headed, query="sleep", mode="semantic")
+
+    for card in data["results"]:
+        assert len(card["closest_headings"]) <= EXPLAIN_HEADINGS
+
+
+def test_a_record_with_no_headings_says_nothing_rather_than_breaking(
+    headed_searcher, headed
+):
+    data = run_search(headed_searcher, headed, query="sleep", mode="semantic")
+
+    card = next(c for c in data["results"] if c["doc_id"] == "doc-bare")
+    assert card["closest_headings"] == []
+
+
+def test_headings_are_embedded_once_per_search_not_once_per_card(
+    headed_searcher, headed
+):
+    """The cost claim: one batch for the page, and each heading embedded once.
+
+    Embedding per card would multiply a search by the page size, and embedding
+    duplicates would do it again - `Bicycle repair` is carried by two of these
+    three records.
+    """
+    run_search(headed_searcher, headed, query="sleep", mode="semantic")
+
+    distinct = {h for r in headed.values() for h in r["subjects"]}
+    assert headed_searcher.provider.batches == [len(distinct)]
+
+
+def test_catalogue_search_names_the_words_the_record_lacks(headed_searcher, headed):
+    """The absent word is what explains the result list.
+
+    `The Cyclist Handbook` holds both words, so it has nothing to report.
+    `Everyday Bicycling` does not carry "handbook", and that is exactly why a
+    reader searching for one is looking at it.
+    """
+    data = run_search(headed_searcher, headed, query="cycling handbook",
+                      mode="keyword")
+
+    bike = next(c for c in data["results"] if c["doc_id"] == "doc-bike")
+    sleep = next(c for c in data["results"] if c["doc_id"] == "doc-sleep")
+    assert bike["missing_terms"] == []
+    assert sleep["missing_terms"] == ["cycling", "handbook"]
+
+
+def test_missing_terms_ignore_stopwords(headed_searcher, headed):
+    """"the" is dropped before scoring, so it cannot be reported as missing."""
+    data = run_search(headed_searcher, headed, query="the cycling submarine",
+                      mode="keyword")
+
+    card = next(c for c in data["results"] if c["doc_id"] == "doc-bike")
+    assert card["missing_terms"] == ["submarine"]
+
+
+def test_nothing_is_said_when_the_whole_query_matched(headed_searcher, headed):
+    """An empty list, so the page can drop the line rather than state nothing."""
+    data = run_search(headed_searcher, headed, query="cycling", mode="keyword")
+
+    card = next(c for c in data["results"] if c["doc_id"] == "doc-bike")
+    assert card["missing_terms"] == []
+
+
+def test_catalogue_search_never_loads_the_model(headed_searcher, headed):
+    """Explaining must not undo the deferred provider in Searcher.provider.
+
+    A keyword-only search pays nothing for the model today, and reaching for an
+    embedding to decorate a card would silently cost ~1.1 GB and several seconds
+    on the first search of every server start.
+    """
+    data = run_search(headed_searcher, headed, query="cycling", mode="keyword")
+
+    assert headed_searcher.provider.batches == []
+    assert all("closest_headings" not in c for c in data["results"])

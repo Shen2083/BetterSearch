@@ -50,7 +50,8 @@ CHROMIUM = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
 
 
 def server_rankings(queries: list[str], catalogue_paths: str, index: str,
-                    model: str, top_k: int) -> dict[str, list[str]]:
+                    model: str, top_k: int, mode: str,
+                    explained: dict) -> dict[str, list[str]]:
     os.environ["BETTERSEARCH_CATALOGUE"] = catalogue_paths
     os.environ["BETTERSEARCH_INDEX_PATH"] = index
     os.environ["BETTERSEARCH_LOCAL_MODEL"] = model
@@ -61,14 +62,17 @@ def server_rankings(queries: list[str], catalogue_paths: str, index: str,
     searcher = Searcher(settings=load_settings())
     out = {}
     for query in queries:
-        data = run_search(searcher, catalogue, query=query, mode="semantic",
+        data = run_search(searcher, catalogue, query=query, mode=mode,
                           page=1, per_page=top_k)
         out[query] = [r["doc_id"] for r in data["results"]]
+        explained[query] = {r["doc_id"]: r.get("closest_headings")
+                            or r.get("missing_terms") or []
+                            for r in data["results"]}
     return out
 
 
-async def browser_rankings(page_path: Path, queries: list[str],
-                           top_k: int) -> dict[str, list[str]]:
+async def browser_rankings(page_path: Path, queries: list[str], top_k: int,
+                           mode: str, explained: dict) -> dict[str, list[str]]:
     from playwright.async_api import async_playwright
 
     proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy")
@@ -90,13 +94,16 @@ async def browser_rankings(page_path: Path, queries: list[str],
 
         # First call downloads the model; give it room, then the rest are fast.
         for i, query in enumerate(queries):
-            ids = await page.evaluate(
-                """async ([q, k]) => {
-                    const d = await window.OFFLINE.search(q, "semantic", {}, 1, k);
-                    return d.results.map(r => r.doc_id);
+            rows = await page.evaluate(
+                """async ([q, k, mode]) => {
+                    const d = await window.OFFLINE.search(q, mode, {}, 1, k);
+                    return d.results.map(r => [r.doc_id,
+                        r.closest_headings || r.missing_terms || []]);
                 }""",
-                [query, top_k],
+                [query, top_k, mode],
             )
+            ids = [r[0] for r in rows]
+            explained[query] = {r[0]: r[1] for r in rows}
             out[query] = ids
             if i == 0:
                 print(f"  model loaded, first query returned {len(ids)} records")
@@ -117,17 +124,21 @@ def main() -> int:
     ap.add_argument("--model", default="BAAI/bge-small-en-v1.5")
     ap.add_argument("--top-k", type=int, default=20)
     ap.add_argument("--show", type=int, default=8, help="worst N queries to list")
+    ap.add_argument("--mode", default="semantic", choices=("semantic", "keyword"))
     args = ap.parse_args()
 
     raw = json.loads(args.queries.read_text(encoding="utf-8"))
     queries = [q["query"] for q in (raw["queries"] if isinstance(raw, dict) else raw)]
     print(f"\n{len(queries)} queries · top-{args.top_k} · {args.page.name}\n")
 
+    browser_why: dict[str, dict] = {}
+    server_why: dict[str, dict] = {}
     print("browser:")
-    browser = asyncio.run(browser_rankings(args.page, queries, args.top_k))
+    browser = asyncio.run(browser_rankings(args.page, queries, args.top_k,
+                                           args.mode, browser_why))
     print("server:")
     server = server_rankings(queries, args.catalogue, args.index, args.model,
-                             args.top_k)
+                             args.top_k, args.mode, server_why)
     print(f"  {len(server)} rankings computed\n")
 
     overlaps, identical, first_same = [], 0, 0
@@ -163,6 +174,26 @@ def main() -> int:
         srv = statistics.mean(ndcg(server[q], graded[q]) for q in queries)
         print(f"  nDCG@10              browser {b:.3f}   server {srv:.3f}   "
               f"difference {b - srv:+.3f}")
+    # The page now also says *why* a record is here, and that is a second
+    # implementation of a second thing - so it needs holding to the same
+    # standard as the ranking. Compared only on records both sides returned:
+    # a record one side never retrieved has no explanation to disagree about.
+    #
+    # Do not expect 100%, even with both sides on the same model. Which two of
+    # a record's seven headings sit closest to a query is often a near tie, and
+    # the page reads those distances off q8 ONNX weights while Python reads
+    # them off fp32 - the same difference that moves the ranking. Measured at
+    # 89% on the eval set. A sharp fall from there means the port has drifted;
+    # a few points either way is quantisation.
+    shared_records = agree = 0
+    for query in queries:
+        for doc, why in server_why.get(query, {}).items():
+            if doc in browser_why.get(query, {}):
+                shared_records += 1
+                agree += browser_why[query][doc] == why
+    if shared_records:
+        print(f"  same explanation     {agree}/{shared_records} shared records "
+              f"({agree / shared_records:.1%})")
     print(f"  identical ordering   {identical}/{len(queries)}")
     print(f"  same first result    {first_same}/{len(queries)}")
 

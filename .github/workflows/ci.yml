@@ -3,8 +3,12 @@ name: tests
 on:
   push:
     branches: [main, "claude/**"]
+  # Every pull request, whatever it targets. This was filtered to PRs against
+  # main, and the repository's default branch is not main - so a PR from a
+  # working branch into the default branch matched neither trigger and ran no
+  # tests at all. A change big enough to open a PR for is a change worth
+  # testing, and which branch it happens to target does not change that.
   pull_request:
-    branches: [main]
 
 jobs:
   test:
