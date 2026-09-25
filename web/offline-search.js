@@ -191,16 +191,16 @@
   }
 
   // ---- why a record is here, mirroring api/catalogue.py -------------------
-  function matchedTerms(query, record) {
+  function missingTerms(query, record) {
     const haystack = new Set(tokenize(
       `${record.title || ""} ${record.author || ""} ` +
       `${(record.subjects || []).join(" ")} ${record.text || ""}`
     ));
-    const seen = [];
+    const absent = [];
     for (const term of tokenize(query)) {
-      if (haystack.has(term) && !seen.includes(term)) seen.push(term);
+      if (!haystack.has(term) && !absent.includes(term)) absent.push(term);
     }
-    return seen;
+    return absent;
   }
 
   async function closestHeadings(queryVector, records) {
@@ -373,7 +373,7 @@
 
     if (mode === "keyword") {
       cards.forEach((card, i) => {
-        card.matched_terms = matchedTerms(query, window_[i][0]);
+        card.missing_terms = missingTerms(query, window_[i][0]);
       });
     } else if (cards.length) {
       const headings = await closestHeadings(

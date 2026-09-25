@@ -581,24 +581,37 @@ def test_headings_are_embedded_once_per_search_not_once_per_card(
     assert headed_searcher.provider.batches == [len(distinct)]
 
 
-def test_catalogue_search_reports_the_terms_that_actually_matched(
-    headed_searcher, headed
-):
+def test_catalogue_search_names_the_words_the_record_lacks(headed_searcher, headed):
+    """The absent word is what explains the result list.
+
+    `The Cyclist Handbook` holds both words, so it has nothing to report.
+    `Everyday Bicycling` does not carry "handbook", and that is exactly why a
+    reader searching for one is looking at it.
+    """
     data = run_search(headed_searcher, headed, query="cycling handbook",
                       mode="keyword")
 
-    card = next(c for c in data["results"] if c["doc_id"] == "doc-bike")
-    assert card["matched_terms"] == ["cycling", "handbook"]
+    bike = next(c for c in data["results"] if c["doc_id"] == "doc-bike")
+    sleep = next(c for c in data["results"] if c["doc_id"] == "doc-sleep")
+    assert bike["missing_terms"] == []
+    assert sleep["missing_terms"] == ["cycling", "handbook"]
 
 
-def test_matched_terms_exclude_words_the_record_does_not_have(
-    headed_searcher, headed
-):
+def test_missing_terms_ignore_stopwords(headed_searcher, headed):
+    """"the" is dropped before scoring, so it cannot be reported as missing."""
     data = run_search(headed_searcher, headed, query="the cycling submarine",
                       mode="keyword")
 
     card = next(c for c in data["results"] if c["doc_id"] == "doc-bike")
-    assert card["matched_terms"] == ["cycling"]      # "the" is a stopword
+    assert card["missing_terms"] == ["submarine"]
+
+
+def test_nothing_is_said_when_the_whole_query_matched(headed_searcher, headed):
+    """An empty list, so the page can drop the line rather than state nothing."""
+    data = run_search(headed_searcher, headed, query="cycling", mode="keyword")
+
+    card = next(c for c in data["results"] if c["doc_id"] == "doc-bike")
+    assert card["missing_terms"] == []
 
 
 def test_catalogue_search_never_loads_the_model(headed_searcher, headed):

@@ -218,12 +218,22 @@ EXPLAIN_HEADINGS = 2
 _HEADING_CACHE: "WeakKeyDictionary[Any, dict[str, Any]]" = WeakKeyDictionary()
 
 
-def _matched_terms(query: str, record: dict) -> list[str]:
-    """The query words this record actually contains.
+def _missing_terms(query: str, record: dict) -> list[str]:
+    """The query words this record does **not** contain.
+
+    The first version of this reported the words that matched, and the page
+    showed it: five results in a row, each saying `cycling`. True, identical,
+    and useless - when every record matched the same word, saying so tells a
+    reader nothing they cannot see in the title.
+
+    The absence is the informative half. Searching `cycling handbook` returns
+    bike books because *handbook* is in none of them, and that one word
+    explains the whole result list. Empty when everything matched, so the line
+    disappears rather than stating the obvious.
 
     For catalogue search this is a real explanation rather than a description:
-    BM25 scores on shared terms and nothing else, so the terms listed here are
-    precisely what put the record in the list.
+    BM25 scores on shared terms and nothing else, so a term absent from the
+    record contributed nothing to its rank.
     """
     from bettersearch.keyword import tokenize
 
@@ -233,11 +243,11 @@ def _matched_terms(query: str, record: dict) -> list[str]:
             f"{' '.join(record.get('subjects') or [])} {record.get('text', '')}"
         )
     )
-    seen: list[str] = []
+    absent: list[str] = []
     for term in tokenize(query):
-        if term in haystack and term not in seen:
-            seen.append(term)
-    return seen
+        if term not in haystack and term not in absent:
+            absent.append(term)
+    return absent
 
 
 def _closest_headings(searcher, query: str, records: list[dict],
@@ -389,14 +399,14 @@ def run_search(
     cards = [to_card(r, s, start + i + 1) for i, (r, s) in enumerate(window)]
 
     # Why each card is here, computed for the displayed page only. Catalogue
-    # search can be explained exactly - BM25 scores on shared terms, so the
-    # matched words *are* the reason. Meaning-based search cannot: the score
-    # comes from the whole record text and a dense vector does not decompose.
-    # The two fields are named differently to keep that asymmetry visible
-    # rather than papering over it with one word like "why".
+    # search can be explained exactly - BM25 scores on shared terms, so a word
+    # the record lacks is a word that contributed nothing. Meaning-based search
+    # cannot: the score comes from the whole record text and a dense vector
+    # does not decompose. The two fields are named differently to keep that
+    # asymmetry visible rather than papering over it with one word like "why".
     if mode == "keyword":
         for card, (record, _) in zip(cards, window):
-            card["matched_terms"] = _matched_terms(query, record)
+            card["missing_terms"] = _missing_terms(query, record)
     elif cards:
         for card, headings in zip(
             cards, _closest_headings(searcher, query, [r for r, _ in window])

@@ -150,6 +150,9 @@
      useful order, not a claim about why the ranking put it here. */
   .subjects span.near { border-color: var(--brand); color: var(--brand); }
   .matched { font-size: 13px; color: var(--muted); margin: 0 0 9px; }
+  /* Not a chip - it labels the row rather than sitting in it. */
+  .subjects b.lead { font-weight: 600; font-size: 12.5px; color: var(--muted);
+                     margin-right: 3px; }
   .matched b { font-weight: 600; color: var(--ink); }
   .actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
   .reserve { padding: 6px 15px; font: inherit; font-size: 13.5px; font-weight: 600;
@@ -340,10 +343,17 @@ function cardHtml(r) {
     .slice(0, 4)
     .map(s => `<span class="${near.has(s) ? "near" : ""}">${esc(s)}</span>`)
     .join("");
-  // Catalogue search says exactly what matched, because with BM25 it can.
-  const matched = (r.matched_terms || []).length
-    ? `<p class="matched">Your words in this record:
-         ${r.matched_terms.map(t => `<b>${esc(t)}</b>`).join(", ")}</p>`
+  // Say it in words as well as in colour. A coloured border alone asks the
+  // reader to notice a hue difference and guess what it means, which is no
+  // use to anyone who cannot distinguish it.
+  const lead = near.size
+    ? `<b class="lead">Closest to your search:</b> ` : "";
+  // Catalogue search names what is *absent*, because with BM25 that is the
+  // half that explains the result list - see _missing_terms in
+  // api/catalogue.py. Nothing is said when the whole query matched.
+  const missing = (r.missing_terms || []).length
+    ? `<p class="matched">Not in this record:
+         ${r.missing_terms.map(t => `<b>${esc(t)}</b>`).join(", ")}</p>`
     : "";
   const online = r.format === "eAudiobook";
   return `<li>
@@ -360,8 +370,8 @@ function cardHtml(r) {
       ${r.blurb
         ? `<p class="blurb">${esc(r.blurb)}</p>`
         : `<p class="norec">No summary in this record.</p>`}
-      <p class="subjects">${subs || "<span>No subject headings</span>"}</p>
-      ${matched}
+      <p class="subjects">${lead}${subs || "<span>No subject headings</span>"}</p>
+      ${missing}
       <div class="actions">
         <button class="reserve" type="button" ${r.available ? "" : "disabled"}>
           ${online ? "Borrow" : (r.available ? "Place reservation" : "Join waiting list")}

@@ -66,7 +66,7 @@ def server_rankings(queries: list[str], catalogue_paths: str, index: str,
                           page=1, per_page=top_k)
         out[query] = [r["doc_id"] for r in data["results"]]
         explained[query] = {r["doc_id"]: r.get("closest_headings")
-                            or r.get("matched_terms") or []
+                            or r.get("missing_terms") or []
                             for r in data["results"]}
     return out
 
@@ -98,7 +98,7 @@ async def browser_rankings(page_path: Path, queries: list[str], top_k: int,
                 """async ([q, k, mode]) => {
                     const d = await window.OFFLINE.search(q, mode, {}, 1, k);
                     return d.results.map(r => [r.doc_id,
-                        r.closest_headings || r.matched_terms || []]);
+                        r.closest_headings || r.missing_terms || []]);
                 }""",
                 [query, top_k, mode],
             )
