@@ -1051,8 +1051,13 @@ function setMode(next) {
 }
 
 $("form").addEventListener("submit", (e) => { e.preventDefault(); page = 1; run(); });
-$("m-keyword").addEventListener("click", () => setMode("keyword"));
-$("m-semantic").addEventListener("click", () => setMode("semantic"));
+// The blended build removes the mode buttons, so there is nothing to bind to.
+// Binding regardless threw on page load - the search still worked, which is
+// exactly why it went unnoticed until the parity run reported a page error.
+if (!BLENDED) {
+  $("m-keyword").addEventListener("click", () => setMode("keyword"));
+  $("m-semantic").addEventListener("click", () => setMode("semantic"));
+}
 $("prev").addEventListener("click", () => { if (page > 1) { page--; run(); } });
 $("next").addEventListener("click", () => { page++; run(); });
 
