@@ -78,18 +78,30 @@ jobs:
             --corpus data/catalogue_real.json \
             --corpus data/events_northfield.json
 
-      - name: Build the page
+      # Two pages from one source, differing only in the interaction, so a
+      # librarian can be shown both and the comparison is not confounded by a
+      # different corpus or a different model.
+      - name: Build the page with the mode toggle
         run: |
           python scripts/build_standalone.py \
             --catalogue "$CORPUS" \
             --index "$INDEX_PATH" \
             --model "$BROWSER_MODEL"
 
-      # The build already fails over 8 MB. This says the size out loud in the
-      # log as well, because a page that doubles in size still "works" and
-      # nobody would notice until someone on a train tried to open it.
-      - name: Report size
-        run: ls -lh docs/catalogue-standalone.html
+      - name: Build the blended page
+        run: |
+          python scripts/build_standalone.py \
+            --catalogue "$CORPUS" \
+            --index "$INDEX_PATH" \
+            --model "$BROWSER_MODEL" \
+            --interaction blended \
+            --out docs/catalogue-blended.html
+
+      # The build already fails over 8 MB each. This says both sizes out loud
+      # in the log as well, because a page that doubles in size still "works"
+      # and nobody would notice until someone on a train tried to open it.
+      - name: Report sizes
+        run: ls -lh docs/catalogue-standalone.html docs/catalogue-blended.html
 
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -1122,6 +1122,54 @@ not the request cycle.
 
 ---
 
+## Two versions of the box
+
+The page ships in two interactions, built from one source by
+`scripts/build_standalone.py --interaction toggle|blended`, so a librarian can
+be shown both without the comparison being confounded by a different corpus or
+a different model.
+
+| | |
+|---|---|
+| `docs/catalogue-standalone.html` | the reader picks catalogue search or search by meaning |
+| `docs/catalogue-blended.html` | one box; meaning, with named records lifted and labelled |
+
+**Why a blend rather than a router.** Two simpler answers were measured first
+and both failed. Reciprocal rank fusion scored **0.741 against semantic's
+0.890**, because blending two full rankings drags a good list down with a
+mostly-empty one. Routing — classify the query, send it down one lane — turned
+out to have nothing to fix: meaning-based search wins *both* kinds of query,
+**103/113 against keyword's 99/113** on name lookups and **0.658 against
+0.443** on need-shaped ones. `scripts/check_query_routing.py` has both.
+
+So the blend keeps the meaning ranking as the spine and promotes records the
+reader arguably **named**, using the one signal neither lane can see: word
+order. BM25 is a bag of words and an embedding blurs proper nouns, so a phrase
+in sequence is free information. Three predicates, in
+[`src/bettersearch/exact.py`](src/bettersearch/exact.py), none needing a model:
+an exact title, a run of three-or-more content words inside a title, or an
+author name.
+
+The thresholds are measured. Against the 36 need-shaped eval queries and the 5
+known-item controls beside them:
+
+| signal | fires on needs | catches controls |
+|---|---|---|
+| 2-word phrase in a title | **11/36** — unusable | 3/5 |
+| 3-word phrase in a title | 1/36 | 1/5 |
+| query equals an author name | **0/36** | 3/5 |
+
+**What it is worth, stated honestly: not a relevance improvement.** nDCG@10
+over the judged queries is 0.658 with it and without it, identical at every
+phrase length and every cap; name lookups go from 103/113 to 104/113 at rank 1.
+One query in 113 is noise. It earns its place by **labelling** — a card reading
+"by this author" is legible where a cosine score is not — and by making a
+**guarantee**: a record whose exact title someone typed is on page one because
+a rule puts it there, not because the encoder happened to agree.
+
+Held to the Python by `scripts/check_browser_parity.py --blend`: where both
+implementations return the same record they give it the same reason, **49/49**.
+
 ## What runs where
 
 | | server (`uvicorn api.main:app`) | the standalone file |

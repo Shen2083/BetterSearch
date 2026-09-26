@@ -6,27 +6,62 @@
 <title>BetterSearch — Northfield Libraries catalogue</title>
 <!--
   GitHub Pages serves this directory, and a directory without an index.html
-  answers the site root with a 404. The demo itself is a 4.8 MB file, so this
-  forwards rather than duplicating it.
+  answers the site root with a 404.
+
+  This used to forward straight to the demo. It now offers both, because there
+  are two of them and the point is the comparison: the same catalogue and the
+  same model, differing only in what the reader is asked to do. Anyone sent
+  here for "the demo" is one click away rather than zero, which is the price of
+  not choosing on their behalf.
 -->
-<meta http-equiv="refresh" content="0; url=catalogue-standalone.html" />
-<link rel="canonical" href="catalogue-standalone.html" />
 <style>
   body { font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-         Helvetica, Arial, sans-serif; margin: 12vh auto; max-width: 34rem;
+         Helvetica, Arial, sans-serif; margin: 10vh auto; max-width: 40rem;
          padding: 0 20px; color: #1d2b2f; background: #fbfaf8; }
+  h1 { font-size: 21px; margin: 0 0 6px; }
   a { color: #1f4d52; }
   p { margin: 0 0 12px; }
   .muted { color: #6a7579; font-size: 14px; }
+  ul { list-style: none; padding: 0; margin: 22px 0; }
+  li { border: 1px solid #e3ded6; border-radius: 3px; padding: 14px 16px;
+       margin: 0 0 12px; background: #fff; }
+  li a { font-weight: 600; font-size: 17px; text-decoration: none; }
+  li a:hover { text-decoration: underline; }
+  li p { margin: 4px 0 0; }
 </style>
 </head>
 <body>
-  <p><a href="catalogue-standalone.html">Open the catalogue demonstration →</a></p>
+  <h1>Northfield Libraries — catalogue search</h1>
   <p class="muted">
-    A library catalogue searched by meaning. The whole corpus, its embeddings
-    and the search itself run in the page — the first search by meaning
-    downloads a ~35&nbsp;MB model once, then works offline. Keyword search needs
-    no download.
+    A library catalogue searched by meaning. Two versions of the same thing,
+    built from the same 4,000 records and the same model. The only difference
+    is what the reader has to decide.
+  </p>
+
+  <ul>
+    <li>
+      <a href="catalogue-standalone.html">Two search modes →</a>
+      <p class="muted">
+        The reader chooses: catalogue search, which finds the words you typed,
+        or search by meaning, which finds records about what you asked for.
+        Switching between them on one query is the clearest way to see the
+        difference.
+      </p>
+    </li>
+    <li>
+      <a href="catalogue-blended.html">One search box →</a>
+      <p class="muted">
+        No choice to make. Every search goes by meaning, and records you
+        appear to have <em>named</em> — an exact title, an author, a phrase in
+        sequence — are lifted to the top and say why they are there.
+      </p>
+    </li>
+  </ul>
+
+  <p class="muted">
+    Both run entirely in the page: the catalogue, its embeddings and the search
+    itself, with no server. The first search by meaning downloads a ~35&nbsp;MB
+    model once, then works offline. Keyword matching needs no download at all.
   </p>
   <p class="muted">
     Records are real, from Open&nbsp;Library. Availability, branches and the
