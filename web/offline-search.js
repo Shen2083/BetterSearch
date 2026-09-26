@@ -403,20 +403,24 @@
     // fixing is the titled record sitting nowhere on page one. Nothing is
     // dropped - a result at rank 7 moves to rank 8.
     if (!matches.length) return [ranked, {}];
+    // Labelling and lifting are different jobs and the cap governs only the
+    // second - see promote() in src/bettersearch/exact.py for why that
+    // distinction is worth keeping apart.
     const reasons = {};
-    for (const match of matches.slice(0, MAX_PROMOTED)) {
+    for (const match of matches) {
       if (RECORDS[match.doc_id] && !(match.doc_id in reasons)) {
         reasons[match.doc_id] = match.reason;
       }
     }
-    const ids = Object.keys(reasons);
-    if (!ids.length) return [ranked, {}];
+    const moving = Object.keys(reasons).slice(0, MAX_PROMOTED);
+    if (!moving.length) return [ranked, {}];
 
     const existing = new Map(ranked.map((row) => [row[0].doc_id, row]));
     // Inserted rows score 0: the page never shows a score, and inventing a
     // similarity for a record matched by its title would be making one up.
-    const lifted = ids.map((id) => existing.get(id) || [RECORDS[id], 0]);
-    const rest = ranked.filter((row) => !(row[0].doc_id in reasons));
+    const lifted = moving.map((id) => existing.get(id) || [RECORDS[id], 0]);
+    const moved = new Set(moving);
+    const rest = ranked.filter((row) => !moved.has(row[0].doc_id));
     return [lifted.concat(rest), reasons];
   }
 

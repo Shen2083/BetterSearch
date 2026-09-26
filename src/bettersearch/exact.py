@@ -155,7 +155,7 @@ def find(query: str, records: Iterable[dict], *,
 def promote(ranked: list, matches: list[ExactMatch],
             catalogue: dict[str, dict], *,
             limit: int = MAX_PROMOTED) -> tuple[list, dict[str, str]]:
-    """Lift named records to the top of a ranking, inserting any it lacks.
+    """Label every named record, and lift the first `limit` of them.
 
     Inserting is the point rather than a detail. Reordering alone could only
     shuffle what meaning-based search already found, and the case worth fixing
@@ -172,20 +172,28 @@ def promote(ranked: list, matches: list[ExactMatch],
     similarity for a record that was matched by its title rather than by a
     vector would be making a number up.
 
-    Returns the reordered list and a doc_id -> reason map for the cards.
+    Returns the reordered list and a doc_id -> reason map covering **every**
+    match, not only the ones that moved - see the comment below.
     """
     if not matches:
         return ranked, {}
 
-    reasons = {m.doc_id: m.describe() for m in matches[:limit]
-               if m.doc_id in catalogue}
+    # **Labelling and lifting are different jobs, and the cap governs only the
+    # second.** Merging them is the obvious mistake and it shipped once: with
+    # one slice doing both, a fourth book by the author a reader had just named
+    # sat unlabelled directly beneath three labelled ones, because the ranking
+    # had already placed it and so it was never lifted. That distinction is
+    # real in here and invisible, and meaningless, to the person reading the
+    # page. Every match gets its reason; only `limit` of them move.
+    reasons = {m.doc_id: m.describe() for m in matches if m.doc_id in catalogue}
     if not reasons:
         return ranked, {}
 
+    # A prolific author or a common phrase can label many records, which is
+    # correct - ten Christie novels on one page should all say so.
+    moving = list(reasons)[:limit]
     existing = {row[0]["doc_id"]: row for row in ranked}
-    lifted = [
-        existing.get(doc_id) or (catalogue[doc_id], 0.0)
-        for doc_id in reasons
-    ]
-    rest = [row for row in ranked if row[0]["doc_id"] not in reasons]
+    lifted = [existing.get(doc_id) or (catalogue[doc_id], 0.0)
+              for doc_id in moving]
+    rest = [row for row in ranked if row[0]["doc_id"] not in set(moving)]
     return lifted + rest, reasons

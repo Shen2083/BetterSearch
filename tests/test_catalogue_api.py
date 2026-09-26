@@ -734,3 +734,35 @@ def test_blending_is_off_unless_asked(named):
 
     assert data["results"][0]["doc_id"] == "doc-far"
     assert all("promoted" not in c for c in data["results"])
+
+
+def test_every_match_is_labelled_even_past_the_lifting_cap(named):
+    """The flaw a screenshot caught, which no test had.
+
+    Three Christie novels carried "by this author" and the fourth, sitting
+    right beneath them, carried nothing - because one slice was deciding both
+    who moved and who got a reason. The cap is about reordering; a reader
+    looking at four books by the author they just named should be told so four
+    times.
+    """
+    catalogue = dict(named)
+    for i in range(4):
+        catalogue[f"doc-kidd-{i}"] = {
+            "doc_id": f"doc-kidd-{i}", "title": f"Novel {i}",
+            "author": "Sue Monk Kidd", "text": "", "format": "Book",
+            "location": "Northfield Central", "available": 1, "copies": 1,
+            "subjects": [], "year": "2000",
+        }
+    # Remove the other records carrying that author so the count is exact.
+    del catalogue["doc-bees"], catalogue["doc-other"]
+
+    searcher = StubSearcher(list(catalogue))
+    data = run_search(searcher, catalogue, query="sue monk kidd",
+                      mode="semantic", per_page=50, blend=True)
+
+    labelled = [c for c in data["results"] if c.get("promoted")]
+    assert len(labelled) == 4, "all four should say why they are here"
+    assert all(c["promoted"] == "by this author" for c in labelled)
+    # Only the cap's worth were reordered: the first three are the lifted ones.
+    assert [c["doc_id"] for c in data["results"][:3]] == [
+        "doc-kidd-0", "doc-kidd-1", "doc-kidd-2"]
