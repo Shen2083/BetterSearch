@@ -313,6 +313,11 @@ web/catalogue.html    the catalogue prototype
 The library is framework-agnostic. `api/` and `cli.py` are thin callers, and
 neither is imported by the core.
 
+For the full picture — every component, what each one does, how a request
+travels through them, and the interfaces to extend — see
+**[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**, also available as
+[a PDF](docs/ARCHITECTURE.pdf).
+
 `web/index.html` is the view for working on retrieval rather than for showing
 anyone — all three modes on one screen, scored, so a change in chunking or model
 is visible immediately:

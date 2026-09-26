@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 648" width="1000" height="648"
+     role="img" aria-label="A catalogue search request end to end: validated, routed to either the keyword or the semantic lane, merged into one ranked list, then de-duplicated, promoted, faceted, paged, carded and explained.">
+<style>
+  .bg    { fill: #ffffff; }
+  .card  { fill: #ffffff; stroke: #D8DEE2; stroke-width: 1.5; }
+  .accent{ fill: #ffffff; stroke: #1B4D3E; stroke-width: 1.8; }
+  .lane  { fill: #F4F6F7; stroke: none; }
+  .mono  { font: 13px 'DejaVu Sans Mono','Liberation Mono',monospace; fill: #1B4D3E; }
+  .note  { font: 12.5px 'Liberation Sans','DejaVu Sans',Helvetica,sans-serif; fill: #55636B; }
+  .lbl   { font: 600 13px 'Liberation Sans','DejaVu Sans',Helvetica,sans-serif; fill: #1A1F23; }
+  .edge  { stroke: #55636B; stroke-width: 1.6; fill: none; }
+</style>
+<defs>
+  <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#55636B"/>
+  </marker>
+</defs>
+<rect class="bg" x="0" y="0" width="1000" height="648"/>
+
+<!-- entry -->
+<rect class="card" x="290" y="16" width="420" height="54" rx="3"/>
+<text class="mono" x="306" y="38">POST /catalogue/search</text>
+<text class="note" x="306" y="58">api.main.catalogue_search — Pydantic validates, then delegates</text>
+<path class="edge" d="M500,70 L500,98" marker-end="url(#a)"/>
+
+<!-- orchestrator -->
+<rect class="accent" x="250" y="98" width="500" height="54" rx="3"/>
+<text class="mono" x="266" y="120">api.catalogue.run_search</text>
+<text class="note" x="266" y="140">the only place ranking becomes something a reader can look at</text>
+
+<!-- branch -->
+<path class="edge" d="M500,152 L500,168 L250,168 L250,186" marker-end="url(#a)"/>
+<path class="edge" d="M500,152 L500,168 L750,168 L750,186" marker-end="url(#a)"/>
+
+<!-- lanes -->
+<rect class="lane" x="16" y="186" width="468" height="150" rx="3"/>
+<rect class="lane" x="516" y="186" width="468" height="150" rx="3"/>
+<text class="lbl" x="32" y="208">mode = "keyword"</text>
+<text class="lbl" x="532" y="208">mode = "semantic"</text>
+
+<rect class="card" x="32" y="218" width="436" height="50" rx="3"/>
+<text class="mono" x="46" y="238">Searcher.keyword</text>
+<text class="note" x="46" y="256">top_k = len(catalogue) — BM25 already cuts itself off</text>
+
+<rect class="card" x="532" y="218" width="436" height="50" rx="3"/>
+<text class="mono" x="546" y="238">Searcher.semantic → provider.embed_query</text>
+<text class="note" x="546" y="256">top_k = SEMANTIC_TOP_K (20); the model loads on first use</text>
+
+<rect class="card" x="32" y="276" width="436" height="50" rx="3"/>
+<text class="mono" x="46" y="296">BM25Index.search</text>
+<text class="note" x="46" y="314">built lazily from index.all_chunks(); K1 = 1.5, B = 0.75</text>
+
+<rect class="card" x="532" y="276" width="436" height="50" rx="3"/>
+<text class="mono" x="546" y="296">NumpyVectorIndex.query</text>
+<text class="note" x="546" y="314">one dot product against every vector — exact, not approximate</text>
+
+<!-- merge -->
+<path class="edge" d="M250,336 L250,354 L500,354 L500,372" marker-end="url(#a)"/>
+<path class="edge" d="M750,336 L750,354 L500,354" />
+<rect class="card" x="290" y="372" width="420" height="38" rx="3"/>
+<text class="note" x="500" y="396" text-anchor="middle">one ranked list of (record, score) — everything below is shared</text>
+<path class="edge" d="M500,410 L500,432" marker-end="url(#a)"/>
+
+<!-- shared tail -->
+<rect class="card" x="16" y="432" width="226" height="62" rx="3"/>
+<text class="mono" x="30" y="452">de-duplicate</text>
+<text class="note" x="30" y="470">one row per doc_id, then</text>
+<text class="note" x="30" y="487">series_id folded into one</text>
+
+<rect class="card" x="258" y="432" width="226" height="62" rx="3"/>
+<text class="mono" x="272" y="452">exact.find/promote</text>
+<text class="note" x="272" y="470">only when blend = true;</text>
+<text class="note" x="272" y="487">labels all, lifts three</text>
+
+<rect class="card" x="500" y="432" width="226" height="62" rx="3"/>
+<text class="mono" x="514" y="452">build_facets</text>
+<text class="note" x="514" y="470">counted over the whole list,</text>
+<text class="note" x="514" y="487">before any filter is applied</text>
+
+<rect class="card" x="742" y="432" width="242" height="62" rx="3"/>
+<text class="mono" x="756" y="452">filter → slice → to_card</text>
+<text class="note" x="756" y="470">the page window only, so</text>
+<text class="note" x="756" y="487">the cost below is bounded</text>
+
+<path class="edge" d="M242,463 L252,463" marker-end="url(#a)"/>
+<path class="edge" d="M484,463 L494,463" marker-end="url(#a)"/>
+<path class="edge" d="M726,463 L736,463" marker-end="url(#a)"/>
+
+<!-- explanation -->
+<path class="edge" d="M863,494 L863,512 L242,512 L242,530" marker-end="url(#a)"/>
+<path class="edge" d="M863,494 L863,512 L742,512 L742,530" marker-end="url(#a)"/>
+<rect class="card" x="16" y="530" width="452" height="54" rx="3"/>
+<text class="mono" x="30" y="552">_missing_terms</text>
+<text class="note" x="30" y="571">keyword: which of your words this record does not have</text>
+
+<rect class="card" x="516" y="530" width="468" height="54" rx="3"/>
+<text class="mono" x="530" y="552">_closest_headings</text>
+<text class="note" x="530" y="571">semantic: which of its own subjects sit nearest your query</text>
+
+<!-- response -->
+<text class="note" x="500" y="620" text-anchor="middle">returns { query, mode, total, page, per_page, showing, results[], facets[] }</text>
+<text class="note" x="500" y="638" text-anchor="middle">— the same shape the browser build produces, which is what makes them comparable</text>
+</svg>

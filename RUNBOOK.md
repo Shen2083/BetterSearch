@@ -339,13 +339,20 @@ fonts and controlled page breaks.
 python scripts/render_pdf.py docs/approach-technical.html
 python scripts/render_pdf.py docs/approach-client.html
 python scripts/render_pdf.py README.md --out docs/README.pdf
+python scripts/render_pdf.py docs/ARCHITECTURE.md --out docs/ARCHITECTURE.pdf
 python scripts/build_standalone.py          # docs/catalogue-standalone.html
 ```
 
 The two approach documents are written as HTML and rendered directly.
-`docs/README.pdf` is converted from `README.md` — **rebuild it after any
-substantive README edit**, because nothing forces it and a stale PDF is not
-visible in a diff. Use `--keep-html` to inspect the generated HTML in a browser
+`docs/README.pdf` and `docs/ARCHITECTURE.pdf` are converted from their markdown
+— **rebuild them after any substantive edit**, because nothing forces it and a
+stale PDF is not visible in a diff.
+
+`docs/ARCHITECTURE.md` draws its diagrams from `docs/architecture/*.svg` rather
+than from Mermaid, because markdown-it has no Mermaid plugin here and would
+print a fenced ```mermaid block as its own source. A relative image works in
+both targets: GitHub renders it, and Chromium resolves it against the
+intermediate HTML, which is written beside the markdown. Use `--keep-html` to inspect the generated HTML in a browser
 while changing the print stylesheet, which lives in `scripts/render_pdf.py`.
 
 Two things the markdown path does deliberately, both of which only matter in a
