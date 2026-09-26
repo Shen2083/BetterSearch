@@ -210,16 +210,37 @@ def main() -> int:
         # unlike the heading similarities above. **Exact is the bar here.**
         # Anything short of it is a porting bug between two implementations of
         # the same rule, not quantisation, and gets found rather than excused.
-        same = sum(server_promoted.get(q, {}) == browser_promoted.get(q, {})
-                   for q in queries)
-        fired = sum(bool(server_promoted.get(q)) for q in queries)
-        print(f"  promotions agree     {same}/{len(queries)} queries "
-              f"({fired} of which promoted anything)")
+        # Compared per record, and only on records both sides returned - the
+        # same restriction the explanation check above uses, and for the same
+        # reason. Labels now attach to every match in the window rather than
+        # to the handful that were lifted, and the two windows already differ
+        # by about 6% from q8 quantisation. Comparing the dicts wholesale
+        # therefore counts a ranking difference as a labelling disagreement,
+        # which reads as a porting bug and is not one. What has to hold is
+        # narrower and real: **where both sides returned the same record, they
+        # give it the same reason.**
+        shared = agree = 0
         for query in queries:
-            if server_promoted.get(query, {}) != browser_promoted.get(query, {}):
-                print(f"    ! {query}")
-                print(f"      server:  {server_promoted.get(query)}")
-                print(f"      browser: {browser_promoted.get(query)}")
+            server_rows = server_promoted.get(query, {})
+            browser_rows = browser_promoted.get(query, {})
+            for doc, reason in server_rows.items():
+                if doc in browser_rows:
+                    shared += 1
+                    agree += browser_rows[doc] == reason
+                    if browser_rows[doc] != reason:
+                        print(f"    ! {query}: {doc}")
+                        print(f"      server {reason!r} vs browser "
+                              f"{browser_rows[doc]!r}")
+        fired = sum(bool(server_promoted.get(q)) for q in queries)
+        if shared:
+            print(f"  promotions agree     {agree}/{shared} shared records "
+                  f"({agree / shared:.1%}, {fired} queries promoted anything)")
+        # A record only one side returned has no disagreement to report, but a
+        # large gap here means the rankings diverged, not the rules.
+        only_one = sum(len(set(server_promoted.get(q, {})) ^ set(browser_promoted.get(q, {})))
+                       for q in queries)
+        print(f"  labelled by one side only  {only_one} "
+              f"(ranking difference, not a rule difference)")
     print(f"  identical ordering   {identical}/{len(queries)}")
     print(f"  same first result    {first_same}/{len(queries)}")
 
