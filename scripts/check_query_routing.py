@@ -173,6 +173,8 @@ def main() -> int:
     ap.add_argument("--queries", type=Path, default=ROOT / "data/eval_real.json")
     ap.add_argument("--count", type=int, default=120)
     ap.add_argument("--seed", type=int, default=20260926)
+    ap.add_argument("--blend", action="store_true",
+                    help="simulate promoting exact matches into the ranking")
     ap.add_argument("--judge", action="store_true",
                     help="score the rule against the judgements (loads a model)")
     ap.add_argument("--index", default=".bettersearch/real-bge")
@@ -224,7 +226,9 @@ def main() -> int:
     print("  project exists to fix; a name routed to meaning merely comes back")
     print("  vague. Judge the first error first.\n")
 
-    if args.judge:
+    if args.blend:
+        simulate_blend(records, by_id, evaluation, named, args)
+    elif args.judge:
         judge(measured, meaning, evaluation, named, args)
     else:
         print("  Pass --judge to score the rule against the judgements rather")
@@ -313,6 +317,98 @@ def judge(measured: dict, meaning: list[str], evaluation,
               f"{f'{top5}/{len(named)}':>19}")
     return None
 
+
+def simulate_blend(records, by_id, evaluation, named, args) -> None:
+    """Does promoting exact matches into the meaning ranking actually help?
+
+    Two things have to hold at once, and they are stated here before the run
+    so the result cannot be read generously after the fact:
+
+      * judged quality must not fall. Semantic scores 0.658 nDCG@10 over the
+        41 judged queries; if promotion pushes relevant records off page one
+        that number drops and the answer is no.
+      * name recall must rise. Semantic finds the right record at rank 1 for
+        103 of the 113 generated name lookups; this is the case promotion is
+        for, so it has to improve.
+
+    A gain on names bought with a loss on needs is not a trade worth making -
+    the needs are what this whole repository is about.
+    """
+    import os
+
+    os.environ.setdefault("BETTERSEARCH_INDEX_PATH", args.index)
+    os.environ.setdefault("BETTERSEARCH_LOCAL_MODEL", args.model)
+    from bettersearch import Searcher, load_settings
+    from bettersearch.evaluate import ndcg_at_k
+    from bettersearch.exact import find, promote
+
+    items = evaluation["queries"] if isinstance(evaluation, dict) else evaluation
+    relevant = {q["query"]: tuple(q["relevant_doc_ids"]) for q in items}
+    searcher = Searcher(settings=load_settings())
+
+    def semantic_rows(query, depth=20):
+        rows, seen = [], set()
+        for hit in searcher.semantic(query, top_k=depth * 2):
+            doc = hit.chunk.doc_id
+            if doc in seen or doc not in by_id:
+                continue
+            seen.add(doc)
+            rows.append((by_id[doc], float(hit.score)))
+            if len(rows) == depth:
+                break
+        return rows
+
+    print("\nsimulating the blend (loads the model once)\n")
+    print(f"  {'phrase':>7}{'cap':>5}{'nDCG@10 needs':>16}{'names @1':>11}"
+          f"{'names top5':>12}{'needs touched':>15}")
+    print("  " + "-" * 64)
+
+    baseline_rows = {q: semantic_rows(q) for q in relevant}
+    named_rows = {q: semantic_rows(q) for q, _ in named}
+
+    base_ndcg = statistics.mean(
+        ndcg_at_k([r["doc_id"] for r, _ in baseline_rows[q]], relevant[q], 10)
+        for q in relevant)
+    base_first = sum(bool(named_rows[q]) and named_rows[q][0][0]["doc_id"] in want
+                     for q, want in named)
+    base_top5 = sum(any(r["doc_id"] in want for r, _ in named_rows[q][:5])
+                    for q, want in named)
+    print(f"  {'-':>7}{'-':>5}{base_ndcg:>16.3f}"
+          f"{f'{base_first}/{len(named)}':>11}{f'{base_top5}/{len(named)}':>12}"
+          f"{'0 (baseline)':>15}")
+
+    for phrase in (3, 4):
+        for cap in (1, 2, 3, 5):
+            touched = 0
+            gains = []
+            for query in relevant:
+                matches = find(query, records, phrase_tokens=phrase)
+                rows, reasons = promote(baseline_rows[query], matches,
+                                        by_id, limit=cap)
+                touched += bool(reasons)
+                gains.append(ndcg_at_k([r["doc_id"] for r, _ in rows],
+                                       relevant[query], 10))
+            first = top5 = 0
+            for query, want in named:
+                matches = find(query, records, phrase_tokens=phrase)
+                rows, _ = promote(named_rows[query], matches, by_id, limit=cap)
+                first += bool(rows) and rows[0][0]["doc_id"] in want
+                top5 += any(r["doc_id"] in want for r, _ in rows[:5])
+            print(f"  {phrase:>7}{cap:>5}{statistics.mean(gains):>16.3f}"
+                  f"{f'{first}/{len(named)}':>11}{f'{top5}/{len(named)}':>12}"
+                  f"{f'{touched}/{len(relevant)}':>15}")
+
+    print("\n  by hand, the query that started all of this:\n")
+    for query in ("Harry Potter", "Agatha Christie",
+                  "something gentle to read before bed"):
+        matches = find(query, records)
+        rows, reasons = promote(semantic_rows(query), matches, by_id)
+        print(f"    {query}")
+        for record, _ in rows[:3]:
+            mark = reasons.get(record["doc_id"], "")
+            print(f"      {record['title'][:44]:<46}{mark}")
+        print()
+    return None
 
 if __name__ == "__main__":
     raise SystemExit(main())
