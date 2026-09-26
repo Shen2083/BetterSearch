@@ -33,6 +33,38 @@ use, because readers misremember. Half the known-item set is deliberately
 damaged - one word dropped from each title - so a rule that only survives
 verbatim strings is visible as such.
 
+WHAT IT SAID: THERE IS NOTHING TO ROUTE
+---------------------------------------
+No router was built, because the premise turned out to be false.
+
+The design assumed the lanes are good at different things - keyword for names,
+meaning for needs - so a classifier could send each query to its strength. On
+this corpus, with bge-base, meaning-based search is simply better at both:
+
+    the 113 generated name lookups     rank 1        top 5
+      keyword                          99/113       108/113
+      semantic                        103/113       109/113
+
+    the 41 judged need-shaped queries  nDCG@10
+      keyword                            0.443
+      semantic                           0.658
+
+Semantic wins the name lookups too, on queries generated verbatim from titles
+and author names - conditions that favour a lexical matcher - and it wins them
+while also winning everything else. A router could only move queries from the
+better lane to the worse one.
+
+This also retires the complaint that started it. `Harry Potter` was never a
+routing failure: of 4,000 records exactly one contains the phrase and it is a
+film score by John Williams. No classifier fixes a corpus.
+
+The useful conclusion is simpler than the feature it replaced. If the toggle
+should go - and it should, because no reader should have to choose a retrieval
+algorithm - then it goes by making the box always search by meaning. No
+classifier, no threshold, no second code path to keep in step across two
+implementations. The keyword lane earns its keep in the standalone build for a
+different reason entirely: it needs no 35 MB download.
+
 WHICH ERROR MATTERS MORE
 ------------------------
 They are not symmetric. Sending a *meaning* query down the keyword lane returns
