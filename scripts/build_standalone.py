@@ -121,9 +121,10 @@ def json_block(name: str, payload: object) -> str:
     return f'<script type="application/json" id="{name}">{text}</script>\n'
 
 
-def build(out: Path, model: str) -> Path:
+def build(out: Path, model: str, interaction: str = "toggle") -> Path:
     from api.catalogue import (EXPLAIN_HEADINGS, SEMANTIC_TOP_K,
                               load_catalogue, load_meta)
+    from bettersearch.exact import MAX_PROMOTED, PHRASE_TOKENS
 
     html = SOURCE.read_text(encoding="utf-8")
     if "window.OFFLINE" not in html:
@@ -181,7 +182,10 @@ def build(out: Path, model: str) -> Path:
         # The cut is read from api/catalogue.py rather than repeated here, so
         # the page and the API cannot disagree about how long a result list is.
         + f"<script>window.__SEMANTIC_TOP_K__ = {SEMANTIC_TOP_K};"
-          f"window.__EXPLAIN_HEADINGS__ = {EXPLAIN_HEADINGS};</script>\n"
+          f"window.__EXPLAIN_HEADINGS__ = {EXPLAIN_HEADINGS};"
+          f"window.__PHRASE_TOKENS__ = {PHRASE_TOKENS};"
+          f"window.__MAX_PROMOTED__ = {MAX_PROMOTED};"
+          f'window.__INTERACTION__ = "{interaction}";</script>\n' 
         + "<script>\n" + ENGINE.read_text(encoding="utf-8") + "</script>\n"
     )
 
@@ -210,6 +214,10 @@ def main() -> int:
     parser.add_argument("--index", type=Path,
                         help="index to take corpus vectors from "
                              "(default: BETTERSEARCH_INDEX_PATH)")
+    parser.add_argument("--interaction", default="toggle",
+                        choices=("toggle", "blended"),
+                        help="toggle keeps the two modes; blended is one box "
+                             "with named records promoted into the ranking")
     parser.add_argument("--model", default=DEFAULT_MODEL,
                         help=f"the model the index was built with, which the "
                              f"browser must also load (default: {DEFAULT_MODEL})")
@@ -221,7 +229,7 @@ def main() -> int:
     if args.index:
         os.environ["BETTERSEARCH_INDEX_PATH"] = str(args.index)
 
-    out = build(args.out, args.model)
+    out = build(args.out, args.model, args.interaction)
     size = out.stat().st_size
     print(f"\n{SOURCE.relative_to(ROOT)} -> {out}  ({size / 1e6:.2f} MB)")
     if size > 8_000_000:

@@ -154,6 +154,11 @@
   .subjects b.lead { font-weight: 600; font-size: 12.5px; color: var(--muted);
                      margin-right: 3px; }
   .matched b { font-weight: 600; color: var(--ink); }
+  /* Why a record was lifted above the meaning ranking. Says the reason in
+     words - a reader should never have to infer a promotion from position. */
+  .promoted { display: inline-block; font-size: 12.5px; font-weight: 600;
+              color: var(--brand); border: 1px solid var(--brand);
+              border-radius: 2px; padding: 1px 7px; margin: 0 0 8px; }
   .actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
   .reserve { padding: 6px 15px; font: inherit; font-size: 13.5px; font-weight: 600;
              color: #fff; background: var(--brand); border: 1px solid var(--brand);
@@ -269,6 +274,13 @@ const esc = (s) => String(s).replace(/[&<>"']/g, c =>
   ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
 
 let mode = "semantic";
+// Set by scripts/build_standalone.py --interaction. The served page and the
+// toggle build leave it false; the blended build has one box and no toggle.
+const BLENDED = window.__INTERACTION__ === "blended";
+if (BLENDED) {
+  const modes = document.querySelector(".modes");
+  if (modes) modes.remove();
+}
 let page = 1;
 let filters = {};
 let collapsed = {};
@@ -363,6 +375,7 @@ function cardHtml(r) {
       <div class="fmt">${esc(r.format)}</div>
     </div>
     <div>
+      ${r.promoted ? `<p class="promoted">${esc(r.promoted)}</p>` : ""}
       <p class="title ${placeholder ? "placeholder" : ""}">${esc(r.title)}</p>
       <p class="byline">${who}</p>
       <p class="publine">${pub ? esc(pub) : ""}${unknownYear
@@ -413,9 +426,16 @@ function render(d) {
 
   const m = $("method");
   m.className = "method" + (d.mode === "semantic" ? " meaning" : "");
-  m.innerHTML = d.mode === "semantic"
-    ? `Matched by <b>meaning</b> — records about this subject, whatever words they use.`
-    : `Matched by <b>keywords</b> — records containing the words you typed.`;
+  // In the blended build there is no mode for a reader to have chosen, so the
+  // line describes what the page does rather than which button is lit.
+  const named = d.results.filter(r => r.promoted).length;
+  m.innerHTML = BLENDED
+    ? `Matched by <b>meaning</b> — records about this subject, whatever words`
+      + ` they use.${named ? ` ${named} matched what you typed exactly and`
+      + ` ${named === 1 ? "is" : "are"} shown first.` : ""}`
+    : d.mode === "semantic"
+      ? `Matched by <b>meaning</b> — records about this subject, whatever words they use.`
+      : `Matched by <b>keywords</b> — records containing the words you typed.`;
 
   $("count").textContent = d.total
     ? `Showing ${d.showing[0]} – ${d.showing[1]} of ${d.total}`
@@ -455,7 +475,7 @@ function blankResults() {
 // is a download. Say so rather than appearing to hang.
 async function runOffline(query) {
   try {
-    render(await window.OFFLINE.search(query, mode, filters, page, 10));
+    render(await window.OFFLINE.search(query, mode, filters, page, 10, BLENDED));
   } catch (err) {
     blankResults();
     $("status").innerHTML = `<div class="empty">

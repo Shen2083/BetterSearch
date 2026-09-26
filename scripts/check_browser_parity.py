@@ -50,8 +50,8 @@ CHROMIUM = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
 
 
 def server_rankings(queries: list[str], catalogue_paths: str, index: str,
-                    model: str, top_k: int, mode: str,
-                    explained: dict) -> dict[str, list[str]]:
+                    model: str, top_k: int, mode: str, explained: dict,
+                    promoted: dict, blend: bool) -> dict[str, list[str]]:
     os.environ["BETTERSEARCH_CATALOGUE"] = catalogue_paths
     os.environ["BETTERSEARCH_INDEX_PATH"] = index
     os.environ["BETTERSEARCH_LOCAL_MODEL"] = model
@@ -63,16 +63,19 @@ def server_rankings(queries: list[str], catalogue_paths: str, index: str,
     out = {}
     for query in queries:
         data = run_search(searcher, catalogue, query=query, mode=mode,
-                          page=1, per_page=top_k)
+                          page=1, per_page=top_k, blend=blend)
         out[query] = [r["doc_id"] for r in data["results"]]
         explained[query] = {r["doc_id"]: r.get("closest_headings")
                             or r.get("missing_terms") or []
                             for r in data["results"]}
+        promoted[query] = {r["doc_id"]: r["promoted"]
+                           for r in data["results"] if r.get("promoted")}
     return out
 
 
 async def browser_rankings(page_path: Path, queries: list[str], top_k: int,
-                           mode: str, explained: dict) -> dict[str, list[str]]:
+                           mode: str, explained: dict, promoted: dict,
+                           blend: bool) -> dict[str, list[str]]:
     from playwright.async_api import async_playwright
 
     proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy")
@@ -95,15 +98,17 @@ async def browser_rankings(page_path: Path, queries: list[str], top_k: int,
         # First call downloads the model; give it room, then the rest are fast.
         for i, query in enumerate(queries):
             rows = await page.evaluate(
-                """async ([q, k, mode]) => {
-                    const d = await window.OFFLINE.search(q, mode, {}, 1, k);
+                """async ([q, k, mode, blend]) => {
+                    const d = await window.OFFLINE.search(q, mode, {}, 1, k, blend);
                     return d.results.map(r => [r.doc_id,
-                        r.closest_headings || r.missing_terms || []]);
+                        r.closest_headings || r.missing_terms || [],
+                        r.promoted || null]);
                 }""",
-                [query, top_k, mode],
+                [query, top_k, mode, blend],
             )
             ids = [r[0] for r in rows]
             explained[query] = {r[0]: r[1] for r in rows}
+            promoted[query] = {r[0]: r[2] for r in rows if r[2]}
             out[query] = ids
             if i == 0:
                 print(f"  model loaded, first query returned {len(ids)} records")
@@ -125,6 +130,8 @@ def main() -> int:
     ap.add_argument("--top-k", type=int, default=20)
     ap.add_argument("--show", type=int, default=8, help="worst N queries to list")
     ap.add_argument("--mode", default="semantic", choices=("semantic", "keyword"))
+    ap.add_argument("--blend", action="store_true",
+                    help="check the blended build's promotions too")
     args = ap.parse_args()
 
     raw = json.loads(args.queries.read_text(encoding="utf-8"))
@@ -133,12 +140,16 @@ def main() -> int:
 
     browser_why: dict[str, dict] = {}
     server_why: dict[str, dict] = {}
+    browser_promoted: dict[str, dict] = {}
+    server_promoted: dict[str, dict] = {}
     print("browser:")
     browser = asyncio.run(browser_rankings(args.page, queries, args.top_k,
-                                           args.mode, browser_why))
+                                           args.mode, browser_why,
+                                           browser_promoted, args.blend))
     print("server:")
     server = server_rankings(queries, args.catalogue, args.index, args.model,
-                             args.top_k, args.mode, server_why)
+                             args.top_k, args.mode, server_why,
+                             server_promoted, args.blend)
     print(f"  {len(server)} rankings computed\n")
 
     overlaps, identical, first_same = [], 0, 0
@@ -194,6 +205,21 @@ def main() -> int:
     if shared_records:
         print(f"  same explanation     {agree}/{shared_records} shared records "
               f"({agree / shared_records:.1%})")
+    if args.blend:
+        # Promotion is deterministic string work with no floating point in it,
+        # unlike the heading similarities above. **Exact is the bar here.**
+        # Anything short of it is a porting bug between two implementations of
+        # the same rule, not quantisation, and gets found rather than excused.
+        same = sum(server_promoted.get(q, {}) == browser_promoted.get(q, {})
+                   for q in queries)
+        fired = sum(bool(server_promoted.get(q)) for q in queries)
+        print(f"  promotions agree     {same}/{len(queries)} queries "
+              f"({fired} of which promoted anything)")
+        for query in queries:
+            if server_promoted.get(query, {}) != browser_promoted.get(query, {}):
+                print(f"    ! {query}")
+                print(f"      server:  {server_promoted.get(query)}")
+                print(f"      browser: {browser_promoted.get(query)}")
     print(f"  identical ordering   {identical}/{len(queries)}")
     print(f"  same first result    {first_same}/{len(queries)}")
 

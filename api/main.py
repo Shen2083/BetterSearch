@@ -57,6 +57,9 @@ class CatalogueRequest(BaseModel):
     per_page: int = Field(default=10, ge=1, le=50)
     #: facet key -> selected values, e.g. {"format": ["Large print"]}
     filters: dict[str, list[str]] = Field(default_factory=dict)
+    #: Lift records the reader arguably named - an exact title, an author, a
+    #: phrase in sequence - above the ranking, each with a reason for the card.
+    blend: bool = False
 
 
 def _ok(data: dict) -> JSONResponse:
@@ -120,6 +123,7 @@ def catalogue_search(request: CatalogueRequest) -> JSONResponse:
             filters=request.filters,
             page=request.page,
             per_page=request.per_page,
+            blend=request.blend,
         )
     )
 
