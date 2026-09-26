@@ -30,6 +30,25 @@ The one need query that trips the phrase rule is `second world war in the
 pacific`, and a book whose title contains that exact phrase is a defensible
 thing to put in front of that reader rather than a bug.
 
+WHAT IT IS WORTH, MEASURED
+--------------------------
+Not a relevance improvement, and the page should not be sold as one.
+
+    nDCG@10 over the 41 judged queries    0.658 -> 0.658
+    right record at rank 1, 113 names   103/113 -> 104/113
+    right record in the top 5           109/113 -> 110/113
+
+Identical on needs at every setting, and one query better on names. The gain
+is inside the noise. bge-base already answers name lookups well, which is the
+same finding that killed the router, and promotion has little left to add.
+
+It earns its place for three other reasons. It **labels** - a card saying "by
+this author" is legible in a way a cosine score never is. It makes a
+**guarantee** rather than an improvement: a record whose exact title someone
+typed will be on page one because a rule says so, not because the encoder
+happened to agree. And it costs nothing to be wrong about, since the judged
+score does not move.
+
 WHAT THIS IS NOT
 ----------------
 It is not fusion and it is not routing, both of which were measured here and
@@ -49,11 +68,17 @@ from typing import Iterable
 from .keyword import tokenize
 
 #: Shortest run of words that counts as a phrase. Two fires on a third of
-#: ordinary questions; see the table above.
+#: ordinary questions; see the table above. Three and four score identically,
+#: so three is kept for the extra reach at no measured cost.
 PHRASE_TOKENS = 3
 
-#: How many named records may be promoted above the meaning ranking. The cap is
-#: what stops a broad phrase filling page one.
+#: How many named records may be promoted above the meaning ranking.
+#:
+#: **Chosen by judgement, not by measurement, and the sweep says so.** Caps of
+#: 1, 2, 3 and 5 produce identical numbers on every metric, because promotion
+#: rarely changes the top of a list that bge-base had already ordered well.
+#: Three is a display decision: a reader who types an author's name is better
+#: served by three of their books than by one.
 MAX_PROMOTED = 3
 
 
@@ -75,7 +100,13 @@ class ExactMatch:
 
 
 def _runs(terms: list[str], length: int) -> set[str]:
-    """Every consecutive run of `length` terms, order preserved."""
+    """Every consecutive run of `length` terms, order preserved.
+
+    The terms are already stopword-free, so "three words" here means three
+    *content* words and is stricter than three typed ones: `the secret life of
+    bees` is the run `secret life bees`. That is why it does not match *The
+    Secret Life of Mermaids*, which shares only two content words in sequence.
+    """
     return {" ".join(terms[i:i + length]) for i in range(len(terms) - length + 1)}
 
 

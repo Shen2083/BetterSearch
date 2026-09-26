@@ -339,6 +339,7 @@ def run_search(
     filters: dict[str, list[str]] | None = None,
     page: int = 1,
     per_page: int = 10,
+    blend: bool = False,
 ) -> dict[str, Any]:
     filters = filters or {}
     depth = len(catalogue)
@@ -384,6 +385,21 @@ def run_search(
             series_at[series] = len(ranked)
         ranked.append((record, hit.score))
 
+    # Blended mode lifts records the reader arguably *named* - an exact title,
+    # an author, a phrase in sequence - above the meaning ranking, each with a
+    # reason the card can show. It runs after retrieval and before facets, so
+    # the sidebar counts describe the list actually presented.
+    #
+    # Measured at no change to judged quality (nDCG 0.658 either way) and one
+    # name lookup in 113 better, so this is a guarantee and a label rather than
+    # a relevance win - see src/bettersearch/exact.py.
+    promoted: dict[str, str] = {}
+    if blend:
+        from bettersearch.exact import find, promote
+
+        ranked, promoted = promote(
+            ranked, find(query, catalogue.values()), catalogue)
+
     # Facets are counted before filtering, so the sidebar shows what you could
     # narrow to rather than only what is already selected. Under the old floor
     # this counted over a 763-record shadow set the reader could never page to;
@@ -397,6 +413,10 @@ def run_search(
     window = kept[start : start + per_page]
 
     cards = [to_card(r, s, start + i + 1) for i, (r, s) in enumerate(window)]
+
+    for card in cards:
+        if (reason := promoted.get(card["doc_id"])) is not None:
+            card["promoted"] = reason
 
     # Why each card is here, computed for the displayed page only. Catalogue
     # search can be explained exactly - BM25 scores on shared terms, so a word
