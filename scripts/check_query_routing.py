@@ -63,7 +63,7 @@ should go - and it should, because no reader should have to choose a retrieval
 algorithm - then it goes by making the box always search by meaning. No
 classifier, no threshold, no second code path to keep in step across two
 implementations. The keyword lane earns its keep in the standalone build for a
-different reason entirely: it needs no 35 MB download.
+different reason entirely: it needs no model download at all.
 
 WHICH ERROR MATTERS MORE
 ------------------------

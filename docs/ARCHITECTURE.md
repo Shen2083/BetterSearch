@@ -64,14 +64,15 @@ index either as local numpy arrays or as a `pgvector` table in Postgres. This is
 the shape that scales, and the one a real integration would use.
 
 **The standalone file.** `scripts/build_standalone.py` inlines the corpus, its
-vectors and the entire search engine into one ~4.85 MB HTML file. Opening it
+vectors and the entire search engine into one ~6.96 MB HTML file. Opening it
 runs a real semantic search with no server, no API key and no network after the
 model has been fetched once. This is the shape you can email to someone.
 
-They exist for different reasons and are deliberately not the same build: the
-browser gets a smaller model and int8 vectors because that is what a page can
-reasonably be asked to download, and those two differences are measured rather
-than assumed.
+Both run the same encoder. The browser stores its corpus vectors as int8 rather
+than float32, which is the one remaining difference and is measured rather than
+assumed. The page shipped a smaller model until September 2026, on an argument
+about download size that turned out to be wrong about the download size; the
+cost was a demo that behaved differently from the service it was demonstrating.
 
 ## 4. The four ideas the design rests on
 

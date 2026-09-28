@@ -41,8 +41,8 @@ concurrency:
 env:
   # The browser must load the same model the vectors were built with, and it
   # has to be small enough to send to a browser. Set once, used by both steps.
-  BROWSER_MODEL: BAAI/bge-small-en-v1.5
-  INDEX_PATH: .bettersearch/pages-small
+  BROWSER_MODEL: BAAI/bge-base-en-v1.5
+  INDEX_PATH: .bettersearch/pages-base
   CORPUS: data/catalogue_real.json,data/events_northfield.json
 
 jobs:

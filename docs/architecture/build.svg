@@ -82,5 +82,5 @@
 <text class="note" x="532" y="408">the block, and splices corpus, vectors and engine into one</text>
 <text class="note" x="532" y="426">HTML file. Refuses outright if the index was built with a</text>
 <text class="note" x="532" y="444">different model from the one the page will load.</text>
-<text class="note" x="532" y="468">~4.85 MB, no server, works offline after the first search.</text>
+<text class="note" x="532" y="468">~6.96 MB, no server, offline after the first search.</text>
 </svg>

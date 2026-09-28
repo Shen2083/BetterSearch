@@ -125,15 +125,20 @@ from `src/bettersearch/keyword.py` and reproducing the API's ranking exactly —
 query in the browser with [transformers.js](https://github.com/huggingface/transformers.js)
 and scores it against int8 corpus vectors by dot product.
 
-**The page uses a smaller model than the server**, and says so. Corpus vectors
-and query must come from the same encoder, and nobody should be asked to
-download the 768-dimension `bge-base` to look at a demo. So the file ships
-`bge-small-en-v1.5` (384 dimensions, ~35 MB quantised, fetched once on first
-meaning search and then cached). Measured against the API on the same corpus:
-**94% top-20 overlap, and nDCG@10 of 0.586 against the server's 0.594.** The
-gap is a tail reshuffle among comparably relevant records, not a lost answer;
-`scripts/check_browser_parity.py` is where that number comes from and explains
-what it cannot remove.
+**The page runs the same model as the server**, and says so. Corpus vectors and
+query must come from the same encoder, so the file ships `bge-base-en-v1.5`
+(768 dimensions, ~110 MB quantised, fetched once on first meaning search and
+then cached). Measured against the API on the same corpus: **93.5% top-20
+overlap, and nDCG@10 of 0.645 against the server's 0.651.** What is left is a
+tail reshuffle among comparably relevant records, caused by int8 vectors and a
+quantised model rather than by a different one; `scripts/check_browser_parity.py`
+is where those numbers come from and explains what it cannot remove.
+
+It shipped `bge-small` until September 2026, on the reasoning that nobody should
+be asked to download `bge-base` to look at a demo. The quantised build is 110 MB
+against small's 34 MB, so that reasoning was wrong about its own premise, and it
+was expensive: the demo you send someone ranked differently from the service you
+tested, silently, and was the weaker of the two.
 
 Keyword search needs no download at all, and the page says so if the model
 cannot load. `RUNBOOK.md` has the build command.
@@ -441,7 +446,7 @@ Languages are taken from each model's own card.
 | Model | Input tokens | Dimensions | Download | Languages | Use when |
 |---|---|---|---|---|---|
 | `sentence-transformers/all-MiniLM-L6-v2` | 256 | 384 | 80 MB | English | The smallest and quickest to embed. Check `truncated_chunks` after ingesting — 256 tokens is the ceiling that cost 79 chunks here. |
-| `BAAI/bge-small-en-v1.5` | 512 | 384 | 130 MB | English | Half the vector width of the default at the same window. What the in-browser demo ships, because ~35 MB quantised is what a browser can be asked to download. |
+| `BAAI/bge-small-en-v1.5` | 512 | 384 | 130 MB | English | Half the vector width of the default at the same window, and ~34 MB quantised. A lighter in-browser build, one `--model` flag away — but only worth it against a matching server. |
 | **`BAAI/bge-base-en-v1.5`** | **512** | **768** | **440 MB** | **English** | **The default**, and what the served API runs. Its 512-token window covered every chunk in both corpora here. |
 | `intfloat/e5-large-v2` | 512 | 1024 | 1.3 GB | English | Same window as the default, one third wider vectors — so one third more index per record. |
 | `nomic-ai/nomic-embed-text-v1.5` | 8192 | 768 | 550 MB | English | Long records, at the default's vector width. Needs `BETTERSEARCH_LOCAL_TRUST_REMOTE_CODE=1`. |
@@ -789,12 +794,14 @@ the retrieval ceiling is the encoder or the records. Against `bge-base-en-v1.5`
 | | thin records | enriched records |
 |---|---|---|
 | MiniLM (384d) | 0.579 | 0.671 |
-| bge-small (384d) — *the browser page* | 0.610 | not built |
-| **bge-base (768d)** — *the server default* | **0.658** | **0.743** |
+| bge-small (384d) — *the browser page until Sept 2026* | 0.610 | not built |
+| **bge-base (768d)** — *the server **and** the browser page* | **0.658** | **0.743** |
 
-*nDCG@10 on the four-lane pool.* `bge-small` is measured here because it is
-what `docs/catalogue-standalone.html` runs, and a page should not quote figures
-from a model it is not using. It sits where its size suggests: better than
+*nDCG@10 on the four-lane pool.* `bge-small` was measured because it was what
+`docs/catalogue-standalone.html` ran, and a page should not quote figures from a
+model it is not using. The page now runs `bge-base`, so the 0.658 row describes
+both — but the small row stays, because it is the measurement that made the
+0.048 gap concrete enough to act on. It sits where its size suggests: better than
 MiniLM, short of bge-base. Note it was **not** in the judging pool, so by the
 argument below it is if anything under-credited.
 
@@ -1182,13 +1189,21 @@ implementations return the same record they give it the same reason, **49/49**.
 | retrieval | Python, numpy index | JavaScript, in the page |
 | keyword | BM25 in `src/bettersearch/keyword.py` | the same BM25, ported |
 | query embedding | sentence-transformers, fp32 | transformers.js, ONNX int8 |
-| model | `bge-base-en-v1.5`, 768d | `bge-small-en-v1.5`, 384d |
+| model | `bge-base-en-v1.5`, 768d | **the same**, `bge-base-en-v1.5`, 768d |
 | corpus vectors | float32 in the index | int8 + per-vector scale, in the file |
-| first use | model resident, ~1.1 GB | ~35 MB download, then cached |
+| first use | model resident, ~1.1 GB | ~110 MB download, then cached |
 | needs a network | no | only to fetch the model, once |
 
-The two differ by one model and one quantisation, both forced by what a browser
-can reasonably be asked to download, and both measured rather than assumed.
+They now run the same encoder, so a query that ranks one way on the server ranks
+that way in the file you send someone. The only difference left is
+quantisation — int8 corpus vectors and a quantised ONNX model against fp32 —
+which is measured by `scripts/check_browser_parity.py` rather than assumed.
+
+The page used to run `bge-small` on the argument that a browser could not be
+asked to download `bge-base`. The quantised build is 110 MB against 34 MB, so
+the argument was wrong about its own premise, and it cost more than it saved:
+the demo behaved differently from the service, silently, and was the weaker of
+the two.
 
 ### Third-party licences
 
@@ -1196,8 +1211,8 @@ The page loads two things it does not ship:
 
 - **[transformers.js](https://github.com/huggingface/transformers.js)** —
   Apache-2.0, from jsDelivr.
-- **[`BAAI/bge-small-en-v1.5`](https://huggingface.co/BAAI/bge-small-en-v1.5)** —
-  MIT, via the ONNX build at `Xenova/bge-small-en-v1.5`, from the Hugging Face
+- **[`BAAI/bge-base-en-v1.5`](https://huggingface.co/BAAI/bge-base-en-v1.5)** —
+  MIT, via the ONNX build at `Xenova/bge-base-en-v1.5`, from the Hugging Face
   hub.
 
 Both permit redistribution, so the file can be hosted or emailed freely. The

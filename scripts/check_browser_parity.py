@@ -3,8 +3,8 @@
 
     python scripts/check_browser_parity.py \
         --page docs/catalogue-standalone.html \
-        --index .bettersearch/real-events-small \
-        --model BAAI/bge-small-en-v1.5
+        --index .bettersearch/real-events-base \
+        --model BAAI/bge-base-en-v1.5
 
 The standalone page does its own retrieval now: it embeds the query with
 transformers.js and scores it against int8 corpus vectors. That is a second
@@ -20,12 +20,20 @@ WHAT WOULD MAKE THEM DIFFER, AND WHICH OF IT IS FIXABLE
 * **Corpus vectors** are lifted from the index rather than recomputed, so they
   are the same numbers on both sides. Not a source of difference.
 * **int8 storage.** The page stores each vector as int8 with a per-vector
-  scale. That is lossy, and it is the cost of not shipping 6 MB of float32.
-* **The model itself.** The page loads the *quantised* ONNX build - the whole
-  point is that a reader downloads 35 MB, not 130 MB - while Python runs fp32
-  weights. The same sentence therefore gets slightly different query vectors:
-  measured at about 0.01 per component. This one cannot be removed without
-  making the page far heavier, so it is measured instead.
+  scale. That is lossy, and it is the cost of not shipping 12 MB of float32.
+* **The model itself.** The page loads the *quantised* ONNX build - a reader
+  downloads 110 MB rather than the 440 MB of fp32 weights - while Python runs
+  those weights. The same sentence therefore gets slightly different query
+  vectors. This one cannot be removed without making the page far heavier, so
+  it is measured instead.
+
+Both sides now run **the same encoder**, `bge-base-en-v1.5`. They did not
+always: the page ran `bge-small` while the server ran `bge-base`, and this
+script compared the page against a Python side deliberately configured to match
+the page rather than to match the server. It was therefore green while the
+thing anyone would actually compare - the demo against the live service -
+disagreed on most queries. Defaults matter in a check: one that is run with no
+arguments is the one that gets run.
 
 A near-identical top 20 with a little churn at the bottom is the expected
 result. Wholesale disagreement means something is actually wrong - most likely
@@ -125,8 +133,8 @@ def main() -> int:
     ap.add_argument("--queries", type=Path, default=ROOT / "data/eval_real.json")
     ap.add_argument("--catalogue",
                     default="data/catalogue_real.json,data/events_northfield.json")
-    ap.add_argument("--index", default=".bettersearch/real-events-small")
-    ap.add_argument("--model", default="BAAI/bge-small-en-v1.5")
+    ap.add_argument("--index", default=".bettersearch/real-events-base")
+    ap.add_argument("--model", default="BAAI/bge-base-en-v1.5")
     ap.add_argument("--top-k", type=int, default=20)
     ap.add_argument("--show", type=int, default=8, help="worst N queries to list")
     ap.add_argument("--mode", default="semantic", choices=("semantic", "keyword"))

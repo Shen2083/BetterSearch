@@ -179,6 +179,11 @@ Toddler Mealtimes Workshop should be the first result, above the books — and
 `somewhere to go on a Tuesday afternoon`, which should return six events, each
 card saying how many other dates the session runs.
 
+This uses the default encoder, `bge-base-en-v1.5`, and so does the standalone
+page — see below. **If a query ranks differently here and in the file you send
+someone, the two are not on the same index**; check `GET /health` for the
+`model_id` before suspecting anything subtler.
+
 Rebuild the events with `python scripts/build_events.py`. They are invented, and
 the corpus file's own description says so; the standalone build reads that
 description into the page footnote, so it cannot be shipped without the caveat.
@@ -207,27 +212,37 @@ The whole corpus, its embedding vectors and the search all live in the file.
 Keyword search is BM25 in JavaScript, ported from `src/bettersearch/keyword.py`.
 Searching by meaning embeds the query in the browser with transformers.js.
 
-**The page runs a smaller model than the server, and it has to.** Corpus
-vectors and query must come from the same encoder, and `bge-base` is too large
-to send to a browser, so the page is built on `bge-small-en-v1.5` (384 dims,
-~35 MB quantised, downloaded on first meaning search then cached). Nothing
-about the API changes.
+**The page runs the same encoder as the server.** Corpus vectors and query must
+come from the same model, so the page loads the ONNX build of `bge-base-en-v1.5`
+— 110 MB, fetched on the first meaning search and then cached. Nothing about the
+API changes.
+
+This section used to say the page ran a smaller model *and had to*, because
+`bge-base` was "too large to send to a browser". Nobody had looked at the file.
+The quantised build is 110 MB against `bge-small`'s 34 MB — three times, not the
+order of magnitude the claim assumed — and the price of the assumption was that
+the demo you email behaved differently from the service you tested, with no
+error anywhere to say so. It is also the weaker model: nDCG@10 0.610 against
+0.658.
 
 ```bash
-BETTERSEARCH_LOCAL_MODEL=BAAI/bge-small-en-v1.5 \
-BETTERSEARCH_INDEX_PATH=.bettersearch/real-events-small \
+BETTERSEARCH_INDEX_PATH=.bettersearch/real-events-base \
     bettersearch ingest --corpus data/catalogue_real.json \
                         --corpus data/events_northfield.json
 
 python scripts/build_standalone.py \
     --catalogue "data/catalogue_real.json,data/events_northfield.json" \
-    --index .bettersearch/real-events-small \
-    --model BAAI/bge-small-en-v1.5
+    --index .bettersearch/real-events-base
 ```
 
-**Expected**: `4114 records, 4114 chunks`, and a file of about **4.8 MB**. The
+**Expected**: `4114 records, 4114 chunks`, and a file of about **7.0 MB**. The
 build fails over 8 MB rather than quietly shipping something nobody will open
-on a train.
+on a train — so the headroom is now about 1 MB, and a much larger corpus needs
+either a smaller encoder or a different plan.
+
+A deliberately lighter page is still one flag away — `--model
+BAAI/bge-small-en-v1.5` against a `bge-small` index — at 4.8 MB and a 34 MB
+download. Just do not then compare it to a `bge-base` server.
 
 The vectors are taken out of the index rather than recomputed. That is the
 point: re-embedding in the builder would be a second path to "the same"
@@ -245,18 +260,36 @@ the first over the whole eval set:
 python scripts/check_browser_parity.py
 ```
 
-**Expected**: top-20 overlap around **94%**, nDCG@10 within **0.01** of the
-server, keyword ordering identical on all 41 queries. Two things stop it being
-100%, both measured rather than waved away:
+**Expected**, measured on `bge-base` over the 41 judged queries:
 
-| source | cost |
-|---|---|
-| int8 corpus vectors (storage) | 98.8% overlap on its own |
-| the browser's quantised ONNX model vs fp32 Python | the rest, down to 94% |
+| | browser | server | |
+|---|---|---|---|
+| top-20 overlap | — | — | **93.5%** mean, 70% worst |
+| nDCG@10, meaning | 0.645 | 0.651 | **−0.006** |
+| nDCG@10, keyword | 0.439 | 0.439 | **0.000** |
+| ordering, keyword | — | — | **identical on 41/41** |
+| promotion labels (`--blend`) | — | — | **50/50 records agree** |
+| explanations | — | — | 85.1% of shared records |
 
-The second is the price of a 35 MB download instead of 130 MB. Neither moves
-quality: nDCG@10 0.586 against the server's 0.594. If overlap ever collapses
-rather than drifting, suspect the page and the index no longer share a model.
+Run the keyword and blended lanes too — `--mode keyword` and `--blend` — because
+they are the model-free parts and **exact is the bar**: BM25 and exact matching
+are string work, so anything short of 41/41 and 100% is a porting bug, not
+quantisation.
+
+Only two things stop the meaning lane being 100%, both measured rather than
+waved away: int8 corpus vectors (98.8% overlap on their own) and the browser's
+quantised ONNX model against fp32 Python, which accounts for the rest. That
+second one is the price of a 110 MB download instead of 440 MB, and it does not
+move quality — 0.006 nDCG, in the browser's favour on some queries.
+
+Explanation agreement is a little lower than it was on `bge-small` (85.1%
+against ~89%). That is the expected direction: 768 dimensions give near-tied
+subject headings more places to cross over under quantisation than 384 do. It
+is churn at the margin, not a porting fault — which is exactly why the
+model-free lanes are checked separately, where no such excuse exists.
+
+If overlap ever collapses rather than drifting, suspect the page and the index
+no longer share a model.
 
 #### Publishing it
 

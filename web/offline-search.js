@@ -144,8 +144,8 @@
     if (embedderPromise) return embedderPromise;
     embedderPromise = (async () => {
       setStatus("loading");
-      // Imported at first use, not at page load: it is a ~35 MB download and
-      // the keyword lane needs none of it.
+      // Imported at first use, not at page load: it is a large download
+      // (see VECTORS.onnx_mb) and the keyword lane needs none of it.
       const transformers = await import(
         "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.1"
       );
@@ -516,8 +516,17 @@
   }
 
   function modelInfo() {
+    // `mb` is the size of the ONNX build the page will actually fetch, baked in
+    // by scripts/build_standalone.py. It is reported rather than written into
+    // the copy: the page once told every reader "about 35 MB" while fetching
+    // something else entirely, because the number lived in prose.
     return VECTORS
-      ? { model: VECTORS.model, dims: VECTORS.dims, records: Object.keys(RECORDS).length }
+      ? {
+          model: VECTORS.model,
+          dims: VECTORS.dims,
+          mb: VECTORS.onnx_mb || null,
+          records: Object.keys(RECORDS).length,
+        }
       : null;
   }
 
@@ -535,9 +544,10 @@
   const NOTE = VECTORS
     ? "This is a self-contained copy: the catalogue, its embeddings and the" +
       " search all run in this page, with no server. Searching by meaning" +
-      " downloads the " + VECTORS.model + " model once (about 35 MB) and then" +
-      " works offline. The server uses a larger model, so its ranking can" +
-      " differ slightly."
+      " downloads the " + VECTORS.model + " model once" +
+      (VECTORS.onnx_mb ? " (about " + VECTORS.onnx_mb + " MB)" : "") +
+      " and then works offline. It is the same model the server runs, so the" +
+      " ranking here is the ranking there."
     : "This is a self-contained copy, but it was built without corpus vectors," +
       " so only keyword search works.";
   const footnote = document.querySelector(".footnote");

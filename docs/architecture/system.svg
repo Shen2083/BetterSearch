@@ -84,7 +84,7 @@
 <text class="note" x="652" y="368">BM25 · int8 vectors · transformers.js</text>
 <rect class="card" x="638" y="386" width="330" height="50" rx="3"/>
 <text class="mono" x="652" y="407">docs/catalogue-*.html</text>
-<text class="note" x="652" y="426">one ~4.85 MB file, and no server</text>
+<text class="note" x="652" y="426">one ~6.96 MB file, and no server</text>
 <text class="grn"  x="638" y="459">Held equal to the Python by</text>
 <text class="monos" x="638" y="476" fill="#1B4D3E">scripts/check_browser_parity.py</text>
 

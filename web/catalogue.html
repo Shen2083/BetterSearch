@@ -449,12 +449,29 @@ function render(d) {
 
   if (!d.total) {
     $("results").innerHTML = "";
+    // The size comes from the build when this is the self-contained copy, and
+    // is left out when it cannot be known. It used to be the literal "74",
+    // which stayed in the page through a corpus fifty times that size and
+    // shipped, wrong, to every reader of the standalone file.
+    const info = window.OFFLINE ? window.OFFLINE.modelInfo() : null;
+    const held = info && info.records
+      ? `The catalogue holds ${info.records.toLocaleString()} items. `
+      : "";
+    // Telling someone who searched by meaning that a keyword search cannot
+    // match their wording describes a search they did not run.
+    const why = d.mode === "keyword"
+      ? `${held}A keyword search can only return a record that literally
+         contains what you typed — if a reader's wording differs from the
+         cataloguer's, the item cannot be found at all.`
+      : `${held}Nothing in it came close enough to what you asked for.`;
+    const next = d.mode === "keyword" && !BLENDED
+      ? `<p>Switch to <strong>Search by meaning</strong> to see what is
+         actually here.</p>`
+      : "<p>Try describing what you are after in different words.</p>";
     $("status").innerHTML = `<div class="empty">
       <p class="big">Nothing in the catalogue matched those words.</p>
-      <p>The catalogue holds 74 items. A keyword search can only return a record
-      that literally contains what you typed — if a reader's wording differs from
-      the cataloguer's, the item cannot be found at all.</p>
-      <p>Switch to <strong>Search by meaning</strong> to see what is actually here.</p>
+      <p>${why}</p>
+      ${next}
     </div>`;
     return;
   }
@@ -555,9 +572,10 @@ if (window.OFFLINE && window.OFFLINE.onStatus) {
     if (state === "loading") {
       $("status").innerHTML = `<div class="empty">
         <p class="big">Downloading the search model…</p>
-        <p>About 35 MB, once. It is the ${esc(info ? info.model : "embedding")}
-        model, and it runs in this page — after this, searching by meaning
-        works with no connection at all.</p></div>`;
+        <p>About ${info && info.mb ? info.mb : "35"} MB, once. It is the
+        ${esc(info ? info.model : "embedding")} model, and it runs in this
+        page — after this, searching by meaning works with no connection at
+        all.</p></div>`;
     }
     // "ready" and "error" are both followed by a render or the catch above,
     // so neither needs to write here and overwrite it.
