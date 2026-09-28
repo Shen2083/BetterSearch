@@ -625,3 +625,144 @@ def test_catalogue_search_never_loads_the_model(headed_searcher, headed):
 
     assert headed_searcher.provider.batches == []
     assert all("closest_headings" not in c for c in data["results"])
+
+
+# --- blended mode ---------------------------------------------------------
+#
+# Promotion lifts records a reader arguably *named* - an exact title, an
+# author, a phrase in sequence - above a ranking that is otherwise unchanged.
+# It is measured at no gain in judged quality, so what these tests protect is
+# the promise rather than a score: that it fires on names, stays silent on
+# ordinary questions, and never loses a record the reader would have seen.
+
+
+def named_catalogue() -> dict[str, dict]:
+    base = {"text": "", "format": "Book", "location": "Northfield Central",
+            "available": 1, "copies": 1, "subjects": [], "year": "2000"}
+    return {
+        "doc-joy": {**base, "doc_id": "doc-joy", "title": "Joy of Cooking",
+                    "author": "Irma Rombauer"},
+        "doc-bees": {**base, "doc_id": "doc-bees",
+                     "title": "The Secret Life of Bees", "author": "Sue Monk Kidd"},
+        "doc-mermaid": {**base, "doc_id": "doc-mermaid",
+                        "title": "The Secret Life of Mermaids",
+                        "author": "A Writer"},
+        "doc-other": {**base, "doc_id": "doc-other", "title": "Quiet Nights",
+                      "author": "Sue Monk Kidd"},
+        "doc-far": {**base, "doc_id": "doc-far", "title": "Something Else",
+                    "author": "Nobody At All"},
+    }
+
+
+@pytest.fixture
+def named() -> dict[str, dict]:
+    return named_catalogue()
+
+
+def test_an_exact_title_is_promoted_with_its_reason(named):
+    """Typing a title should put that record first, whatever the ranking said."""
+    searcher = StubSearcher(["doc-far", "doc-other", "doc-joy"])
+    data = run_search(searcher, named, query="joy of cooking", mode="semantic",
+                      blend=True)
+
+    assert data["results"][0]["doc_id"] == "doc-joy"
+    assert data["results"][0]["promoted"] == "this exact title"
+
+
+def test_an_author_name_promotes_that_author(named):
+    searcher = StubSearcher(["doc-far", "doc-joy", "doc-bees", "doc-other"])
+    data = run_search(searcher, named, query="sue monk kidd", mode="semantic",
+                      blend=True)
+
+    top = [c["doc_id"] for c in data["results"][:2]]
+    assert set(top) == {"doc-bees", "doc-other"}
+    assert all(c["promoted"] == "by this author" for c in data["results"][:2])
+
+
+def test_a_phrase_inside_a_longer_title_is_promoted(named):
+    """Three *content* words in order, inside a title that says more.
+
+    Stopwords go before the phrase is cut, so `the secret life of bees` is the
+    three tokens `secret life bees`. That is stricter than three typed words,
+    and deliberately: it is why `the secret life of mermaids` does not match
+    *The Secret Life of Bees* - they share only two content words in sequence.
+    """
+    searcher = StubSearcher(["doc-far", "doc-joy", "doc-bees"])
+    data = run_search(searcher, named, query="secret life of bees documentary",
+                      mode="semantic", blend=True)
+
+    assert data["results"][0]["doc_id"] == "doc-bees"
+    assert data["results"][0]["promoted"] == "contains your exact phrase"
+
+
+def test_a_near_miss_phrase_is_not_promoted(named):
+    """Two content words in sequence is not a phrase, whatever it looks like."""
+    searcher = StubSearcher(["doc-far", "doc-bees", "doc-mermaid"])
+    data = run_search(searcher, named, query="the secret life of mermaids",
+                      mode="semantic", blend=True)
+
+    bees = next(c for c in data["results"] if c["doc_id"] == "doc-bees")
+    assert "promoted" not in bees
+    assert data["results"][0]["promoted"] == "this exact title"   # the mermaids one
+
+
+def test_an_ordinary_question_promotes_nothing(named):
+    """The whole design rests on this staying quiet - a 2-word rule did not."""
+    searcher = StubSearcher(list(named))
+    data = run_search(searcher, named, query="something gentle to read before bed",
+                      mode="semantic", blend=True)
+
+    assert all("promoted" not in c for c in data["results"])
+
+
+def test_promotion_never_loses_a_record(named):
+    """A result at rank 7 moves to rank 8. It does not disappear."""
+    searcher = StubSearcher(list(named))
+    plain = run_search(searcher, named, query="joy of cooking", mode="semantic",
+                       per_page=50)
+    blended = run_search(searcher, named, query="joy of cooking", mode="semantic",
+                         per_page=50, blend=True)
+
+    assert ({c["doc_id"] for c in blended["results"]}
+            >= {c["doc_id"] for c in plain["results"]})
+
+
+def test_blending_is_off_unless_asked(named):
+    """The toggle build must be untouched by any of this."""
+    searcher = StubSearcher(["doc-far", "doc-joy"])
+    data = run_search(searcher, named, query="joy of cooking", mode="semantic")
+
+    assert data["results"][0]["doc_id"] == "doc-far"
+    assert all("promoted" not in c for c in data["results"])
+
+
+def test_every_match_is_labelled_even_past_the_lifting_cap(named):
+    """The flaw a screenshot caught, which no test had.
+
+    Three Christie novels carried "by this author" and the fourth, sitting
+    right beneath them, carried nothing - because one slice was deciding both
+    who moved and who got a reason. The cap is about reordering; a reader
+    looking at four books by the author they just named should be told so four
+    times.
+    """
+    catalogue = dict(named)
+    for i in range(4):
+        catalogue[f"doc-kidd-{i}"] = {
+            "doc_id": f"doc-kidd-{i}", "title": f"Novel {i}",
+            "author": "Sue Monk Kidd", "text": "", "format": "Book",
+            "location": "Northfield Central", "available": 1, "copies": 1,
+            "subjects": [], "year": "2000",
+        }
+    # Remove the other records carrying that author so the count is exact.
+    del catalogue["doc-bees"], catalogue["doc-other"]
+
+    searcher = StubSearcher(list(catalogue))
+    data = run_search(searcher, catalogue, query="sue monk kidd",
+                      mode="semantic", per_page=50, blend=True)
+
+    labelled = [c for c in data["results"] if c.get("promoted")]
+    assert len(labelled) == 4, "all four should say why they are here"
+    assert all(c["promoted"] == "by this author" for c in labelled)
+    # Only the cap's worth were reordered: the first three are the lifted ones.
+    assert [c["doc_id"] for c in data["results"][:3]] == [
+        "doc-kidd-0", "doc-kidd-1", "doc-kidd-2"]

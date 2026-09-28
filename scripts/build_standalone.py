@@ -3,8 +3,8 @@
 
     python scripts/build_standalone.py \
         --catalogue "data/catalogue_real.json,data/events_northfield.json" \
-        --index .bettersearch/real-events-small \
-        --model BAAI/bge-small-en-v1.5
+        --index .bettersearch/real-events-base \
+        --model BAAI/bge-base-en-v1.5
 
 The served page is only a front end: every search POSTs to /catalogue/search,
 so opening web/catalogue.html from disk shows "Failed to fetch" (Safari says
@@ -31,11 +31,23 @@ vectors. So:
 
 That last point is the constraint that shapes everything: **the browser model
 and the corpus vectors must be the same model.** Vectors from one encoder
-scored against a query from another are not similar, they are noise. So this
-build uses `bge-small-en-v1.5` (384 dims, ~35 MB quantised) while the server
-default stays `bge-base-en-v1.5` (768 dims) - a browser cannot reasonably be
-asked to download the base model. `--model` records which was used and the page
-says so; nothing about the API changes.
+scored against a query from another are not similar, they are noise.
+
+This build therefore uses the **same encoder the server runs**,
+`bge-base-en-v1.5` at 768 dims. It did not always. It shipped `bge-small` for
+months on the reasoning that a browser cannot be asked to download the base
+model, and that reasoning was never checked against the actual file: the ONNX
+q8 build at `Xenova/bge-base-en-v1.5` is 110 MB, against small's 34 MB. Three
+times the download, not the order of magnitude the argument assumed.
+
+What it bought was worse than that cost. Someone tuning a query on the server
+was tuning a different system from the one in the file they then emailed, and
+the divergence showed up as "the standalone gives different results" with no
+error anywhere to explain it - twice, before it was traced. nDCG@10 is 0.658
+against small's 0.610, so the page was also the weaker of the two.
+
+`--model` still records which encoder was used, and `bge-small` is still in
+ONNX_REPO, so a deliberately smaller page remains one flag away.
 
 The server does not prefix queries with bge's retrieval instruction, so neither
 does the page. Matching the server matters more than the instruction, which was
@@ -43,12 +55,14 @@ measured at 0.006 nDCG either way.
 
 VECTOR STORAGE
 --------------
-float32 would be 6 MB for this corpus before base64. The vectors are
+float32 would be 12 MB for this corpus before base64. The vectors are
 L2-normalised, so each component is small and int8 with a per-vector scale
-loses almost nothing: a dot product over 384 dimensions averages the error out.
+loses almost nothing: a dot product over 768 dimensions averages the error out,
+and the wider the vector the more of it averages away.
 Stored as base64 in a <script type="application/json"> block, that is about
-2 MB. `scripts/check_browser_parity.py` measures what the quantisation costs
-against the server's own ranking rather than assuming it is nothing.
+4 MB, and the finished page about 7 MB against the 8 MB budget below.
+`scripts/check_browser_parity.py` measures what the quantisation costs against
+the server's own ranking rather than assuming it is nothing.
 """
 
 from __future__ import annotations
@@ -72,8 +86,23 @@ DEFAULT_OUT = ROOT / "docs" / "catalogue-standalone.html"
 
 #: The ONNX build transformers.js loads. Must be the same weights as the index
 #: the vectors came from, or the query and the corpus live in different spaces.
-DEFAULT_MODEL = "BAAI/bge-small-en-v1.5"
-ONNX_REPO = {"BAAI/bge-small-en-v1.5": "Xenova/bge-small-en-v1.5"}
+DEFAULT_MODEL = "BAAI/bge-base-en-v1.5"
+ONNX_REPO = {
+    "BAAI/bge-base-en-v1.5": "Xenova/bge-base-en-v1.5",
+    "BAAI/bge-small-en-v1.5": "Xenova/bge-small-en-v1.5",
+}
+
+#: Size of each ONNX repo's q8 build, in MB, as the hub reports it.
+#:
+#: This is baked into the page so the reader is told the real number. It used to
+#: be typed into three separate strings in web/, and when the encoder changed
+#: all three still said "about 35 MB" - a page confidently describing a download
+#: three times smaller than the one it was making. A figure a reader sees should
+#: come from the build that produced it, not from a comment someone forgot.
+ONNX_MB = {
+    "Xenova/bge-base-en-v1.5": 110,
+    "Xenova/bge-small-en-v1.5": 34,
+}
 
 
 def quantise(vectors: np.ndarray) -> tuple[bytes, bytes]:
@@ -121,9 +150,10 @@ def json_block(name: str, payload: object) -> str:
     return f'<script type="application/json" id="{name}">{text}</script>\n'
 
 
-def build(out: Path, model: str) -> Path:
+def build(out: Path, model: str, interaction: str = "toggle") -> Path:
     from api.catalogue import (EXPLAIN_HEADINGS, SEMANTIC_TOP_K,
                               load_catalogue, load_meta)
+    from bettersearch.exact import MAX_PROMOTED, PHRASE_TOKENS
 
     html = SOURCE.read_text(encoding="utf-8")
     if "window.OFFLINE" not in html:
@@ -171,6 +201,9 @@ def build(out: Path, model: str) -> Path:
         + json_block("catalogue-vectors", {
             "model": model,
             "onnx_repo": ONNX_REPO[model],
+            # Baked so the page can tell the reader the real download size
+            # rather than a number typed into the copy and left behind.
+            "onnx_mb": ONNX_MB[ONNX_REPO[model]],
             "dims": int(vectors.shape[1]),
             "doc_ids": doc_ids,
             # Both base64 of little-endian buffers: int8 codes row-major, and
@@ -181,7 +214,10 @@ def build(out: Path, model: str) -> Path:
         # The cut is read from api/catalogue.py rather than repeated here, so
         # the page and the API cannot disagree about how long a result list is.
         + f"<script>window.__SEMANTIC_TOP_K__ = {SEMANTIC_TOP_K};"
-          f"window.__EXPLAIN_HEADINGS__ = {EXPLAIN_HEADINGS};</script>\n"
+          f"window.__EXPLAIN_HEADINGS__ = {EXPLAIN_HEADINGS};"
+          f"window.__PHRASE_TOKENS__ = {PHRASE_TOKENS};"
+          f"window.__MAX_PROMOTED__ = {MAX_PROMOTED};"
+          f'window.__INTERACTION__ = "{interaction}";</script>\n' 
         + "<script>\n" + ENGINE.read_text(encoding="utf-8") + "</script>\n"
     )
 
@@ -210,6 +246,10 @@ def main() -> int:
     parser.add_argument("--index", type=Path,
                         help="index to take corpus vectors from "
                              "(default: BETTERSEARCH_INDEX_PATH)")
+    parser.add_argument("--interaction", default="toggle",
+                        choices=("toggle", "blended"),
+                        help="toggle keeps the two modes; blended is one box "
+                             "with named records promoted into the ranking")
     parser.add_argument("--model", default=DEFAULT_MODEL,
                         help=f"the model the index was built with, which the "
                              f"browser must also load (default: {DEFAULT_MODEL})")
@@ -221,7 +261,7 @@ def main() -> int:
     if args.index:
         os.environ["BETTERSEARCH_INDEX_PATH"] = str(args.index)
 
-    out = build(args.out, args.model)
+    out = build(args.out, args.model, args.interaction)
     size = out.stat().st_size
     print(f"\n{SOURCE.relative_to(ROOT)} -> {out}  ({size / 1e6:.2f} MB)")
     if size > 8_000_000:

@@ -3,8 +3,8 @@
 
     python scripts/check_browser_parity.py \
         --page docs/catalogue-standalone.html \
-        --index .bettersearch/real-events-small \
-        --model BAAI/bge-small-en-v1.5
+        --index .bettersearch/real-events-base \
+        --model BAAI/bge-base-en-v1.5
 
 The standalone page does its own retrieval now: it embeds the query with
 transformers.js and scores it against int8 corpus vectors. That is a second
@@ -20,12 +20,20 @@ WHAT WOULD MAKE THEM DIFFER, AND WHICH OF IT IS FIXABLE
 * **Corpus vectors** are lifted from the index rather than recomputed, so they
   are the same numbers on both sides. Not a source of difference.
 * **int8 storage.** The page stores each vector as int8 with a per-vector
-  scale. That is lossy, and it is the cost of not shipping 6 MB of float32.
-* **The model itself.** The page loads the *quantised* ONNX build - the whole
-  point is that a reader downloads 35 MB, not 130 MB - while Python runs fp32
-  weights. The same sentence therefore gets slightly different query vectors:
-  measured at about 0.01 per component. This one cannot be removed without
-  making the page far heavier, so it is measured instead.
+  scale. That is lossy, and it is the cost of not shipping 12 MB of float32.
+* **The model itself.** The page loads the *quantised* ONNX build - a reader
+  downloads 110 MB rather than the 440 MB of fp32 weights - while Python runs
+  those weights. The same sentence therefore gets slightly different query
+  vectors. This one cannot be removed without making the page far heavier, so
+  it is measured instead.
+
+Both sides now run **the same encoder**, `bge-base-en-v1.5`. They did not
+always: the page ran `bge-small` while the server ran `bge-base`, and this
+script compared the page against a Python side deliberately configured to match
+the page rather than to match the server. It was therefore green while the
+thing anyone would actually compare - the demo against the live service -
+disagreed on most queries. Defaults matter in a check: one that is run with no
+arguments is the one that gets run.
 
 A near-identical top 20 with a little churn at the bottom is the expected
 result. Wholesale disagreement means something is actually wrong - most likely
@@ -50,8 +58,8 @@ CHROMIUM = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
 
 
 def server_rankings(queries: list[str], catalogue_paths: str, index: str,
-                    model: str, top_k: int, mode: str,
-                    explained: dict) -> dict[str, list[str]]:
+                    model: str, top_k: int, mode: str, explained: dict,
+                    promoted: dict, blend: bool) -> dict[str, list[str]]:
     os.environ["BETTERSEARCH_CATALOGUE"] = catalogue_paths
     os.environ["BETTERSEARCH_INDEX_PATH"] = index
     os.environ["BETTERSEARCH_LOCAL_MODEL"] = model
@@ -63,16 +71,19 @@ def server_rankings(queries: list[str], catalogue_paths: str, index: str,
     out = {}
     for query in queries:
         data = run_search(searcher, catalogue, query=query, mode=mode,
-                          page=1, per_page=top_k)
+                          page=1, per_page=top_k, blend=blend)
         out[query] = [r["doc_id"] for r in data["results"]]
         explained[query] = {r["doc_id"]: r.get("closest_headings")
                             or r.get("missing_terms") or []
                             for r in data["results"]}
+        promoted[query] = {r["doc_id"]: r["promoted"]
+                           for r in data["results"] if r.get("promoted")}
     return out
 
 
 async def browser_rankings(page_path: Path, queries: list[str], top_k: int,
-                           mode: str, explained: dict) -> dict[str, list[str]]:
+                           mode: str, explained: dict, promoted: dict,
+                           blend: bool) -> dict[str, list[str]]:
     from playwright.async_api import async_playwright
 
     proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy")
@@ -95,15 +106,17 @@ async def browser_rankings(page_path: Path, queries: list[str], top_k: int,
         # First call downloads the model; give it room, then the rest are fast.
         for i, query in enumerate(queries):
             rows = await page.evaluate(
-                """async ([q, k, mode]) => {
-                    const d = await window.OFFLINE.search(q, mode, {}, 1, k);
+                """async ([q, k, mode, blend]) => {
+                    const d = await window.OFFLINE.search(q, mode, {}, 1, k, blend);
                     return d.results.map(r => [r.doc_id,
-                        r.closest_headings || r.missing_terms || []]);
+                        r.closest_headings || r.missing_terms || [],
+                        r.promoted || null]);
                 }""",
-                [query, top_k, mode],
+                [query, top_k, mode, blend],
             )
             ids = [r[0] for r in rows]
             explained[query] = {r[0]: r[1] for r in rows}
+            promoted[query] = {r[0]: r[2] for r in rows if r[2]}
             out[query] = ids
             if i == 0:
                 print(f"  model loaded, first query returned {len(ids)} records")
@@ -120,11 +133,13 @@ def main() -> int:
     ap.add_argument("--queries", type=Path, default=ROOT / "data/eval_real.json")
     ap.add_argument("--catalogue",
                     default="data/catalogue_real.json,data/events_northfield.json")
-    ap.add_argument("--index", default=".bettersearch/real-events-small")
-    ap.add_argument("--model", default="BAAI/bge-small-en-v1.5")
+    ap.add_argument("--index", default=".bettersearch/real-events-base")
+    ap.add_argument("--model", default="BAAI/bge-base-en-v1.5")
     ap.add_argument("--top-k", type=int, default=20)
     ap.add_argument("--show", type=int, default=8, help="worst N queries to list")
     ap.add_argument("--mode", default="semantic", choices=("semantic", "keyword"))
+    ap.add_argument("--blend", action="store_true",
+                    help="check the blended build's promotions too")
     args = ap.parse_args()
 
     raw = json.loads(args.queries.read_text(encoding="utf-8"))
@@ -133,12 +148,16 @@ def main() -> int:
 
     browser_why: dict[str, dict] = {}
     server_why: dict[str, dict] = {}
+    browser_promoted: dict[str, dict] = {}
+    server_promoted: dict[str, dict] = {}
     print("browser:")
     browser = asyncio.run(browser_rankings(args.page, queries, args.top_k,
-                                           args.mode, browser_why))
+                                           args.mode, browser_why,
+                                           browser_promoted, args.blend))
     print("server:")
     server = server_rankings(queries, args.catalogue, args.index, args.model,
-                             args.top_k, args.mode, server_why)
+                             args.top_k, args.mode, server_why,
+                             server_promoted, args.blend)
     print(f"  {len(server)} rankings computed\n")
 
     overlaps, identical, first_same = [], 0, 0
@@ -194,6 +213,42 @@ def main() -> int:
     if shared_records:
         print(f"  same explanation     {agree}/{shared_records} shared records "
               f"({agree / shared_records:.1%})")
+    if args.blend:
+        # Promotion is deterministic string work with no floating point in it,
+        # unlike the heading similarities above. **Exact is the bar here.**
+        # Anything short of it is a porting bug between two implementations of
+        # the same rule, not quantisation, and gets found rather than excused.
+        # Compared per record, and only on records both sides returned - the
+        # same restriction the explanation check above uses, and for the same
+        # reason. Labels now attach to every match in the window rather than
+        # to the handful that were lifted, and the two windows already differ
+        # by about 6% from q8 quantisation. Comparing the dicts wholesale
+        # therefore counts a ranking difference as a labelling disagreement,
+        # which reads as a porting bug and is not one. What has to hold is
+        # narrower and real: **where both sides returned the same record, they
+        # give it the same reason.**
+        shared = agree = 0
+        for query in queries:
+            server_rows = server_promoted.get(query, {})
+            browser_rows = browser_promoted.get(query, {})
+            for doc, reason in server_rows.items():
+                if doc in browser_rows:
+                    shared += 1
+                    agree += browser_rows[doc] == reason
+                    if browser_rows[doc] != reason:
+                        print(f"    ! {query}: {doc}")
+                        print(f"      server {reason!r} vs browser "
+                              f"{browser_rows[doc]!r}")
+        fired = sum(bool(server_promoted.get(q)) for q in queries)
+        if shared:
+            print(f"  promotions agree     {agree}/{shared} shared records "
+                  f"({agree / shared:.1%}, {fired} queries promoted anything)")
+        # A record only one side returned has no disagreement to report, but a
+        # large gap here means the rankings diverged, not the rules.
+        only_one = sum(len(set(server_promoted.get(q, {})) ^ set(browser_promoted.get(q, {})))
+                       for q in queries)
+        print(f"  labelled by one side only  {only_one} "
+              f"(ranking difference, not a rule difference)")
     print(f"  identical ordering   {identical}/{len(queries)}")
     print(f"  same first result    {first_same}/{len(queries)}")
 

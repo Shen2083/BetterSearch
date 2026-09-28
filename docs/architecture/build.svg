@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 496" width="1000" height="496"
+     role="img" aria-label="The ingest pipeline: corpus JSON is chunked, hashed, embedded in batches and written to a two-file index, which is then read either by the server at request time or by the standalone build, which quantises it to int8 and bakes it into one HTML page.">
+<style>
+  .bg    { fill: #ffffff; }
+  .card  { fill: #ffffff; stroke: #D8DEE2; stroke-width: 1.5; }
+  .accent{ fill: #ffffff; stroke: #1B4D3E; stroke-width: 1.8; }
+  .panel { fill: #F4F6F7; stroke: #D8DEE2; stroke-width: 1.5; }
+  .mono  { font: 13px 'DejaVu Sans Mono','Liberation Mono',monospace; fill: #1B4D3E; }
+  .note  { font: 12.5px 'Liberation Sans','DejaVu Sans',Helvetica,sans-serif; fill: #55636B; }
+  .lbl   { font: 600 14px 'Liberation Sans','DejaVu Sans',Helvetica,sans-serif; fill: #1A1F23; }
+  .edge  { stroke: #55636B; stroke-width: 1.6; fill: none; }
+</style>
+<defs>
+  <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#55636B"/>
+  </marker>
+</defs>
+<rect class="bg" x="0" y="0" width="1000" height="496"/>
+
+<text class="lbl" x="16" y="26">Ingest — run once, offline</text>
+
+<rect class="card" x="16" y="38" width="180" height="62" rx="3"/>
+<text class="mono" x="30" y="58">load_corpus</text>
+<text class="note" x="30" y="76">several JSON files;</text>
+<text class="note" x="30" y="93">a repeated doc_id raises</text>
+
+<rect class="card" x="212" y="38" width="180" height="62" rx="3"/>
+<text class="mono" x="226" y="58">chunk_documents</text>
+<text class="note" x="226" y="76">~450 tokens, 60 of</text>
+<text class="note" x="226" y="93">them overlapping</text>
+
+<rect class="card" x="408" y="38" width="180" height="62" rx="3"/>
+<text class="mono" x="422" y="58">content_hash</text>
+<text class="note" x="422" y="76">already-indexed chunks</text>
+<text class="note" x="422" y="93">are skipped, not re-paid</text>
+
+<rect class="card" x="604" y="38" width="180" height="62" rx="3"/>
+<text class="mono" x="618" y="58">embed_documents</text>
+<text class="note" x="618" y="76">batches of 64,</text>
+<text class="note" x="618" y="93">L2-normalised</text>
+
+<rect class="card" x="800" y="38" width="184" height="62" rx="3"/>
+<text class="mono" x="814" y="58">index.upsert</text>
+<text class="note" x="814" y="76">rewrites both files</text>
+<text class="note" x="814" y="93">on every call</text>
+
+<path class="edge" d="M196,69 L206,69" marker-end="url(#a)"/>
+<path class="edge" d="M392,69 L402,69" marker-end="url(#a)"/>
+<path class="edge" d="M588,69 L598,69" marker-end="url(#a)"/>
+<path class="edge" d="M784,69 L794,69" marker-end="url(#a)"/>
+<path class="edge" d="M892,100 L892,128 L500,128 L500,152" marker-end="url(#a)"/>
+
+<!-- the index -->
+<rect class="panel" x="230" y="152" width="540" height="136" rx="3"/>
+<text class="lbl" x="246" y="176">The index — and the contract it carries</text>
+<rect class="accent" x="246" y="188" width="248" height="56" rx="3"/>
+<text class="mono" x="260" y="208">&lt;index_path&gt;.npz</text>
+<text class="note" x="260" y="228">float32 vectors, one row per chunk</text>
+<rect class="accent" x="506" y="188" width="248" height="56" rx="3"/>
+<text class="mono" x="520" y="208">&lt;index_path&gt;.json</text>
+<text class="note" x="520" y="228">the chunks, plus model_id and dims</text>
+<text class="note" x="246" y="268">model_id is checked on read and on write: a stale index refuses to answer</text>
+<text class="note" x="246" y="282">rather than quietly scoring today's query against yesterday's encoder.</text>
+
+<path class="edge" d="M380,288 L380,318 L250,318 L250,344" marker-end="url(#a)"/>
+<path class="edge" d="M620,288 L620,318 L740,318 L740,344" marker-end="url(#a)"/>
+
+<!-- consumers -->
+<text class="lbl" x="16" y="338">Read back, two ways</text>
+
+<rect class="card" x="16" y="344" width="468" height="136" rx="3"/>
+<text class="mono" x="32" y="368">uvicorn api.main:app</text>
+<text class="note" x="32" y="390">The server reads the pair into memory at import and queries</text>
+<text class="note" x="32" y="408">it per request. Swap the backend to pgvector and the same</text>
+<text class="note" x="32" y="426">chunks live in Postgres as halfvec with an HNSW index —</text>
+<text class="note" x="32" y="444">the Searcher above it does not change.</text>
+<text class="note" x="32" y="468">Full float32 precision.</text>
+
+<rect class="card" x="516" y="344" width="468" height="136" rx="3"/>
+<text class="mono" x="532" y="368">scripts/build_standalone.py</text>
+<text class="note" x="532" y="390">Quantises each vector to int8 with its own scale, base64s</text>
+<text class="note" x="532" y="408">the block, and splices corpus, vectors and engine into one</text>
+<text class="note" x="532" y="426">HTML file. Refuses outright if the index was built with a</text>
+<text class="note" x="532" y="444">different model from the one the page will load.</text>
+<text class="note" x="532" y="468">~6.96 MB, no server, offline after the first search.</text>
+</svg>

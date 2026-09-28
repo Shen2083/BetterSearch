@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 520" width="1000" height="520"
+     role="img" aria-label="Three source trees: a framework-free library, a FastAPI presentation adapter that calls it, and a browser port that mirrors it in JavaScript. Each produces one of two deployment shapes.">
+<style>
+  .bg    { fill: #ffffff; }
+  .panel { fill: #F4F6F7; stroke: #D8DEE2; stroke-width: 1.5; }
+  .card  { fill: #ffffff; stroke: #D8DEE2; stroke-width: 1.5; }
+  .accent{ fill: #ffffff; stroke: #1B4D3E; stroke-width: 1.8; }
+  .hdr   { font: 600 16px 'Liberation Sans','DejaVu Sans',Helvetica,sans-serif; fill: #1A1F23; }
+  .ttl   { font: 600 14px 'Liberation Sans','DejaVu Sans',Helvetica,sans-serif; fill: #1A1F23; }
+  .mono  { font: 13px 'DejaVu Sans Mono','Liberation Mono',monospace; fill: #1B4D3E; }
+  .monos { font: 12px 'DejaVu Sans Mono','Liberation Mono',monospace; fill: #55636B; }
+  .note  { font: 12.5px 'Liberation Sans','DejaVu Sans',Helvetica,sans-serif; fill: #55636B; }
+  .grn   { font: 12.5px 'Liberation Sans','DejaVu Sans',Helvetica,sans-serif; fill: #1B4D3E; }
+  .edge  { stroke: #55636B; stroke-width: 1.6; fill: none; }
+  .dash  { stroke: #1B4D3E; stroke-width: 1.6; fill: none; stroke-dasharray: 5 4; }
+</style>
+<defs>
+  <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#55636B"/>
+  </marker>
+  <marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#1B4D3E"/>
+  </marker>
+</defs>
+<rect class="bg" x="0" y="0" width="1000" height="520"/>
+
+<!-- ============ data/ ============ -->
+<rect class="panel" x="16" y="128" width="150" height="212" rx="3"/>
+<text class="ttl"   x="30" y="154">data/</text>
+<text class="monos" x="30" y="180">catalogue_real</text>
+<text class="monos" x="30" y="199">events_northfield</text>
+<text class="monos" x="30" y="218">corpus_seed</text>
+<text class="note"  x="30" y="244">4,114 records</text>
+<text class="note"  x="30" y="262">as the demo ships</text>
+<text class="monos" x="30" y="294">eval_real.json</text>
+<text class="note"  x="30" y="312">judged queries</text>
+
+<!-- ============ the library ============ -->
+<rect class="panel" x="200" y="40" width="326" height="440" rx="3"/>
+<text class="hdr"  x="216" y="68">src/bettersearch/</text>
+<text class="note" x="216" y="88">no web framework; numpy its only hard dependency</text>
+
+<rect class="card" x="216" y="102" width="294" height="52" rx="3"/>
+<text class="mono" x="230" y="123">chunking</text>
+<text class="note" x="230" y="142">documents → chunks, each content-hashed</text>
+
+<rect class="card" x="216" y="164" width="294" height="52" rx="3"/>
+<text class="mono" x="230" y="185">embeddings/</text>
+<text class="note" x="230" y="204">one Protocol; local · openai · voyage</text>
+
+<rect class="card" x="216" y="226" width="294" height="52" rx="3"/>
+<text class="mono" x="230" y="247">index/</text>
+<text class="note" x="230" y="266">one Protocol; numpy · pgvector</text>
+
+<rect class="card" x="216" y="288" width="294" height="66" rx="3"/>
+<text class="mono" x="230" y="309">keyword · fusion · exact</text>
+<text class="note" x="230" y="328">BM25F · reciprocal rank fusion ·</text>
+<text class="note" x="230" y="346">title, author and phrase matching</text>
+
+<rect class="accent" x="216" y="364" width="294" height="52" rx="3"/>
+<text class="mono" x="230" y="385">search.Searcher</text>
+<text class="note" x="230" y="404">keyword · semantic · hybrid</text>
+
+<text class="note" x="216" y="448">It ranks chunks, and decides nothing</text>
+<text class="note" x="216" y="466">about what a reader sees.</text>
+
+<!-- ============ api/ ============ -->
+<rect class="panel" x="622" y="40" width="362" height="186" rx="3"/>
+<text class="hdr"  x="638" y="68">api/</text>
+<text class="note" x="638" y="88">presentation — nothing in the library imports it</text>
+<rect class="card" x="638" y="100" width="330" height="50" rx="3"/>
+<text class="mono" x="652" y="121">catalogue.run_search</text>
+<text class="note" x="652" y="140">facets · paging · cards · promotion</text>
+<rect class="card" x="638" y="158" width="330" height="50" rx="3"/>
+<text class="mono" x="652" y="179">main — FastAPI</text>
+<text class="note" x="652" y="198">/catalogue/search · /search · /compare</text>
+
+<!-- ============ web/ ============ -->
+<rect class="panel" x="622" y="268" width="362" height="212" rx="3"/>
+<text class="hdr"  x="638" y="296">web/ + build_standalone.py</text>
+<text class="note" x="638" y="316">the same retrieval path, rewritten in JavaScript</text>
+<rect class="card" x="638" y="328" width="330" height="50" rx="3"/>
+<text class="mono" x="652" y="349">offline-search.js</text>
+<text class="note" x="652" y="368">BM25 · int8 vectors · transformers.js</text>
+<rect class="card" x="638" y="386" width="330" height="50" rx="3"/>
+<text class="mono" x="652" y="407">docs/catalogue-*.html</text>
+<text class="note" x="652" y="426">one ~6.96 MB file, and no server</text>
+<text class="grn"  x="638" y="459">Held equal to the Python by</text>
+<text class="monos" x="638" y="476" fill="#1B4D3E">scripts/check_browser_parity.py</text>
+
+<!-- ============ edges ============ -->
+<path class="edge" d="M166,234 L194,234" marker-end="url(#a)"/>
+<path class="edge" d="M526,133 L616,133" marker-end="url(#a)"/>
+<text class="note" x="571" y="124" text-anchor="middle">calls</text>
+<path class="dash" d="M526,390 L616,390" marker-start="url(#g)" marker-end="url(#g)"/>
+<text class="grn"  x="571" y="381" text-anchor="middle">mirrors</text>
+</svg>

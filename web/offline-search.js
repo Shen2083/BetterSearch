@@ -41,6 +41,12 @@
   // disagree about how long a result list is.
   const TOP_K = window.__SEMANTIC_TOP_K__ || 20;
   const EXPLAIN_HEADINGS = window.__EXPLAIN_HEADINGS__ || 2;
+  // "toggle" keeps the two modes and the button pair; "blended" is one box,
+  // always meaning, with named records promoted into it. Read from the build
+  // rather than decided here, so one page source serves both demos.
+  const INTERACTION = window.__INTERACTION__ || "toggle";
+  const PHRASE_TOKENS = window.__PHRASE_TOKENS__ || 3;
+  const MAX_PROMOTED = window.__MAX_PROMOTED__ || 3;
 
   function fromBase64(text) {
     const binary = atob(text);
@@ -138,8 +144,8 @@
     if (embedderPromise) return embedderPromise;
     embedderPromise = (async () => {
       setStatus("loading");
-      // Imported at first use, not at page load: it is a ~35 MB download and
-      // the keyword lane needs none of it.
+      // Imported at first use, not at page load: it is a large download
+      // (see VECTORS.onnx_mb) and the keyword lane needs none of it.
       const transformers = await import(
         "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.1"
       );
@@ -322,6 +328,102 @@
     };
   }
 
+  // ---- exact matches, mirroring src/bettersearch/exact.py ----------------
+  //
+  // Word order is the one signal neither lane sees: BM25 is a bag of words and
+  // an embedding blurs proper nouns. These three predicates find records a
+  // reader arguably *named* rather than described. Pure string work, so the
+  // parity check should come back exact - anything less is a porting bug and
+  // not quantisation.
+  //
+  // The title and author tokens are cut once here rather than on every search,
+  // beside the BM25 index which already walks every record at load.
+  const EXACT_INDEX = Object.values(RECORDS).map((record) => {
+    const title = tokenize(record.title || "");
+    const author = tokenize(record.author || "");
+    return {
+      doc_id: record.doc_id,
+      title: title.join(" "),
+      author: author.join(" "),
+      authorLength: author.length,
+    };
+  });
+
+  function runs(terms, length) {
+    const out = new Set();
+    for (let i = 0; i + length <= terms.length; i++) {
+      out.add(terms.slice(i, i + length).join(" "));
+    }
+    return out;
+  }
+
+  function findExact(query) {
+    const terms = tokenize(query);
+    if (!terms.length) return [];
+    const asked = terms.join(" ");
+    // Stopwords are already gone, so this counts *content* words - `the secret
+    // life of bees` is the run `secret life bees`, which is why it does not
+    // match The Secret Life of Mermaids.
+    const phrases = terms.length >= PHRASE_TOKENS
+      ? runs(terms, PHRASE_TOKENS) : new Set();
+
+    const titles = [];
+    const authors = [];
+    const contained = [];
+    for (const entry of EXACT_INDEX) {
+      if (entry.title && entry.title === asked) {
+        titles.push({ doc_id: entry.doc_id, reason: "this exact title" });
+        continue;
+      }
+      if (entry.authorLength) {
+        const named = entry.author === asked
+          || runs(terms, entry.authorLength).has(entry.author);
+        if (named) {
+          authors.push({ doc_id: entry.doc_id, reason: "by this author" });
+          continue;
+        }
+      }
+      if (phrases.size && entry.title) {
+        for (const phrase of phrases) {
+          if (entry.title.includes(phrase)) {
+            contained.push({
+              doc_id: entry.doc_id, reason: "contains your exact phrase",
+            });
+            break;
+          }
+        }
+      }
+    }
+    return titles.concat(authors, contained);
+  }
+
+  function promoteExact(ranked, matches) {
+    // Inserting is the point rather than a detail: reordering alone could only
+    // shuffle what meaning-based search already found, and the case worth
+    // fixing is the titled record sitting nowhere on page one. Nothing is
+    // dropped - a result at rank 7 moves to rank 8.
+    if (!matches.length) return [ranked, {}];
+    // Labelling and lifting are different jobs and the cap governs only the
+    // second - see promote() in src/bettersearch/exact.py for why that
+    // distinction is worth keeping apart.
+    const reasons = {};
+    for (const match of matches) {
+      if (RECORDS[match.doc_id] && !(match.doc_id in reasons)) {
+        reasons[match.doc_id] = match.reason;
+      }
+    }
+    const moving = Object.keys(reasons).slice(0, MAX_PROMOTED);
+    if (!moving.length) return [ranked, {}];
+
+    const existing = new Map(ranked.map((row) => [row[0].doc_id, row]));
+    // Inserted rows score 0: the page never shows a score, and inventing a
+    // similarity for a record matched by its title would be making one up.
+    const lifted = moving.map((id) => existing.get(id) || [RECORDS[id], 0]);
+    const moved = new Set(moving);
+    const rest = ranked.filter((row) => !moved.has(row[0].doc_id));
+    return [lifted.concat(rest), reasons];
+  }
+
   function collapse(hits) {
     // One card per record, then one card per event series: a drop-in that runs
     // every Tuesday is one thing to show, not seven, and `repeats` carries the
@@ -349,7 +451,12 @@
   }
 
   // ---- the same shape /catalogue/search returns ---------------------------
-  async function search(query, mode, filters, page, perPage) {
+  async function search(query, mode, filters, page, perPage, blend) {
+    // The blended build has no toggle: every search is meaning plus promotion.
+    if (INTERACTION === "blended") {
+      mode = "semantic";
+      blend = true;
+    }
     let hits;
     let queryVector = null;
     if (mode === "keyword") {
@@ -357,7 +464,14 @@
     } else {
       ({ hits, vector: queryVector } = await semanticRank(query));
     }
-    const ranked = collapse(hits);
+    let ranked = collapse(hits);
+
+    // Blended mode lifts named records above the meaning ranking, before the
+    // facets are counted so the sidebar describes the list actually shown.
+    let promoted = {};
+    if (blend) {
+      [ranked, promoted] = promoteExact(ranked, findExact(query));
+    }
 
     // Facets are counted before filtering, so the sidebar shows what you could
     // narrow to rather than only what is already selected.
@@ -381,6 +495,10 @@
       cards.forEach((card, i) => { card.closest_headings = headings[i]; });
     }
 
+    cards.forEach((card) => {
+      if (card.doc_id in promoted) card.promoted = promoted[card.doc_id];
+    });
+
     return {
       query,
       mode,
@@ -398,13 +516,23 @@
   }
 
   function modelInfo() {
+    // `mb` is the size of the ONNX build the page will actually fetch, baked in
+    // by scripts/build_standalone.py. It is reported rather than written into
+    // the copy: the page once told every reader "about 35 MB" while fetching
+    // something else entirely, because the number lived in prose.
     return VECTORS
-      ? { model: VECTORS.model, dims: VECTORS.dims, records: Object.keys(RECORDS).length }
+      ? {
+          model: VECTORS.model,
+          dims: VECTORS.dims,
+          mb: VECTORS.onnx_mb || null,
+          records: Object.keys(RECORDS).length,
+        }
       : null;
   }
 
   window.OFFLINE = {
     search,
+    interaction: () => INTERACTION,
     meta,
     modelInfo,
     onStatus: (cb) => { onStatus = cb; },
@@ -416,9 +544,10 @@
   const NOTE = VECTORS
     ? "This is a self-contained copy: the catalogue, its embeddings and the" +
       " search all run in this page, with no server. Searching by meaning" +
-      " downloads the " + VECTORS.model + " model once (about 35 MB) and then" +
-      " works offline. The server uses a larger model, so its ranking can" +
-      " differ slightly."
+      " downloads the " + VECTORS.model + " model once" +
+      (VECTORS.onnx_mb ? " (about " + VECTORS.onnx_mb + " MB)" : "") +
+      " and then works offline. It is the same model the server runs, so the" +
+      " ranking here is the ranking there."
     : "This is a self-contained copy, but it was built without corpus vectors," +
       " so only keyword search works.";
   const footnote = document.querySelector(".footnote");
