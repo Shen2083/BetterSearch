@@ -325,6 +325,14 @@ MiniLM cross-encoder — which gets +0.070 of the +0.076 for an eighth of the
 time. Rerank depth is the lever you will actually tune, and ours is 20 because
 beyond that the eval cannot see.
 
+**Depth is the parameter, and we know its shape.** The pool holds 95% of the
+judged-relevant records at depth 200 against 67% at depth 20, so reranking deep
+is the natural move — and measured with coverage held at 100%, a cross-encoder
+keeps its gain all the way down: +0.079 at depth 20, +0.091 at 100, +0.087 at
+200. Set `rerank-count` by latency, not by a fear that quality falls off; it
+does not. On CPU here the cost does: 2.5 s/query at 20 and 19 s at 200, which
+is exactly the argument for ONNX or a GPU in the global phase.
+
 **Still unexplained:** the best arm captures 29% of the available headroom. The
 remaining 0.19 is real, measured, and nobody here knows what reaches it. That is
 the most interesting open question in this handover, and the first one worth
