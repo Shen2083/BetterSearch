@@ -269,7 +269,16 @@ python scripts/check_browser_parity.py
 | nDCG@10, keyword | 0.439 | 0.439 | **0.000** |
 | ordering, keyword | — | — | **identical on 41/41** |
 | promotion labels (`--blend`) | — | — | **50/50 records agree** |
-| explanations | — | — | 85.1% of shared records |
+| explanations | — | — | 85.3% of shared records |
+| top-20 overlap, `--filter` | — | — | **94.9%** mean, 85% worst |
+| ordering, keyword + `--filter` | — | — | **identical on 41/41** |
+
+Run it with `--filter "format=Large print"` as well. Filtering now happens
+*before* the cut on both sides, and the order is the kind of thing that is easy
+to get right in one implementation and wrong in the other; an unfiltered run
+cannot see that. The keyword lane with a filter is the sharpest check of all —
+it is model-free, so anything short of 41/41 identical ordering is a porting
+bug rather than quantisation.
 
 Run the keyword and blended lanes too — `--mode keyword` and `--blend` — because
 they are the model-free parts and **exact is the bar**: BM25 and exact matching

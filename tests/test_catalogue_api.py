@@ -22,6 +22,7 @@ import pytest
 
 from api.catalogue import (
     EXPLAIN_HEADINGS,
+    SEMANTIC_POOL,
     SEMANTIC_TOP_K,
     build_facets,
     matches_filters,
@@ -151,21 +152,47 @@ def searcher(catalogue: dict[str, dict]) -> StubSearcher:
 
 
 def test_semantic_returns_at_most_top_k(searcher, catalogue):
-    """The whole point of the fix: a 200-record catalogue does not return 200."""
+    """The whole point of the fix: a 200-record catalogue does not return 200.
+
+    The displayed cut is what scripts/tune_cutoff.py measured, and it has not
+    moved. What moved is where it is applied: retrieval now fetches a pool and
+    the cut comes after filtering, so this asserts both halves.
+    """
     data = run_search(searcher, catalogue, query="anything", mode="semantic",
                       per_page=SEMANTIC_TOP_K * 2)
 
     assert data["total"] == SEMANTIC_TOP_K
-    assert searcher.semantic_top_k == SEMANTIC_TOP_K
     assert len(data["results"]) == SEMANTIC_TOP_K
+    assert searcher.semantic_top_k == SEMANTIC_POOL
 
 
-def test_semantic_asks_the_index_for_top_k_not_the_whole_corpus(searcher, catalogue):
-    """Retrieving everything and then discarding it is the old shape; this is not."""
-    run_search(searcher, catalogue, query="anything", mode="semantic")
+def test_semantic_asks_the_index_for_the_pool_not_the_whole_corpus():
+    """Retrieving everything and then discarding it is the old shape; this is not.
 
-    assert searcher.semantic_top_k == SEMANTIC_TOP_K
-    assert searcher.semantic_top_k < len(catalogue)
+    A pool is bounded. The catalogue here is deliberately larger than it, so
+    this cannot pass by the two happening to be equal.
+    """
+    big = make_catalogue(SEMANTIC_POOL * 2)
+    stub = StubSearcher(list(big))
+    run_search(stub, big, query="anything", mode="semantic")
+
+    assert stub.semantic_top_k == SEMANTIC_POOL
+    assert stub.semantic_top_k < len(big)
+
+
+def test_narrowing_searches_within_the_filter_rather_than_after_it(searcher, catalogue):
+    """The defect this replaced, pinned.
+
+    Filtering after the cut kept whichever of twenty already-chosen records
+    happened to match - a mean of 4.0 results, and fewer than three on 31% of
+    filtered searches over the real corpus. A facet covering a third of the
+    catalogue must now still fill a page.
+    """
+    data = run_search(searcher, catalogue, query="anything", mode="semantic",
+                      filters={"format": ["Large print"]}, per_page=SEMANTIC_TOP_K)
+
+    assert data["total"] == SEMANTIC_TOP_K
+    assert all(card["format"] == "Large print" for card in data["results"])
 
 
 def test_keyword_keeps_full_depth(searcher, catalogue):
@@ -204,13 +231,22 @@ def test_duplicate_doc_ids_collapse_to_one_card(catalogue):
 # --- facets describe the results ------------------------------------------
 
 
-def test_facet_counts_describe_the_returned_results(searcher, catalogue):
-    """Under the old floor these counted a set the reader could never page to."""
+def test_facet_counts_describe_what_a_filter_can_reach(searcher, catalogue):
+    """Counts cover the pool, which is larger than one page - deliberately.
+
+    This is the visible cost of filtering before the cut: a facet can read a
+    bigger number than the list it opens. The number is still honest, because
+    every record it counts is reachable by clicking it. That was *not* true of
+    the 763-record shadow set the absolute cosine floor produced, which is the
+    thing this must not drift back into.
+    """
     data = run_search(searcher, catalogue, query="anything", mode="semantic",
                       per_page=SEMANTIC_TOP_K)
 
     fiction = next(f for f in data["facets"] if f["key"] == "fiction")
-    assert sum(v["count"] for v in fiction["values"]) == data["total"]
+    counted = sum(v["count"] for v in fiction["values"])
+    assert counted == min(SEMANTIC_POOL, len(catalogue))
+    assert counted >= data["total"]
 
 
 def test_facets_are_counted_before_filters_are_applied(searcher, catalogue):
@@ -219,8 +255,10 @@ def test_facets_are_counted_before_filters_are_applied(searcher, catalogue):
     filtered = run_search(searcher, catalogue, query="anything", mode="semantic",
                           filters={"fiction": ["Fiction"]})
 
-    assert filtered["total"] < unfiltered["total"]
+    # Narrowing no longer shrinks the list - that was the defect. What it must
+    # still do is leave the sidebar alone, so another facet can be reached.
     assert filtered["facets"] == unfiltered["facets"]
+    assert all(catalogue[card["doc_id"]]["fiction"] for card in filtered["results"])
 
 
 def test_filters_keep_only_matching_records(searcher, catalogue):

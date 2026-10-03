@@ -123,6 +123,39 @@ only, so re-ingesting a corpus where only availability changed embeds nothing.
 That property is worth preserving explicitly in the schema rather than
 rediscovering.
 
+### 3.5 Filter before the cut, never after
+
+Vespa's filtered ANN does the right thing here, so this is a trap only if you
+reimplement the obvious order — which is what we did, and it was wrong.
+
+Retrieving the top *k* by vector and *then* applying a facet does not search the
+filtered records. It keeps whichever of *k* already-chosen records happen to
+match. Measured over 41 queries × 10 facet values on 4,000 records:
+
+| | filter after the cut | filter before it |
+|---|---|---|
+| results returned | **4.00** | 19.96 |
+| returned fewer than 3 | **31.2%** | 0.0% |
+
+Each of those facets covers 14–18% of the corpus. **Yours will be far narrower**
+— "available now, large print, at Ashcombe" is a fraction of a percent of a
+million holdings — and post-filtering would return an empty page nearly every
+time. The symptom is not bad ranking; it is a facet panel that appears broken.
+
+Two consequences for the schema and the rank profile:
+
+- Make the filter part of the query, not a step after it. In Vespa that is
+  ordinary — attribute filters combine with `nearestNeighbor` and the engine
+  handles the recall properly, including choosing between pre- and
+  post-filtering strategies. The thing to avoid is doing it in application code
+  on a returned page.
+- **Facet counts then have to come from somewhere wider than the page.** If they
+  are counted over a filtered retrieval the sidebar collapses to the value
+  already selected. Vespa grouping computes over the matched set, which is the
+  right answer; just be deliberate about whether a count means "results you
+  would get" or "matches in the corpus", because with a vector query those are
+  very different numbers and only one of them is bounded.
+
 ### 3.4 Make the index carry its encoder's identity
 
 Every index here stores the `model_id` it was built with and checks it on read

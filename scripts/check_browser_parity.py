@@ -59,7 +59,8 @@ CHROMIUM = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
 
 def server_rankings(queries: list[str], catalogue_paths: str, index: str,
                     model: str, top_k: int, mode: str, explained: dict,
-                    promoted: dict, blend: bool) -> dict[str, list[str]]:
+                    promoted: dict, blend: bool,
+                    filters: dict | None = None) -> dict[str, list[str]]:
     os.environ["BETTERSEARCH_CATALOGUE"] = catalogue_paths
     os.environ["BETTERSEARCH_INDEX_PATH"] = index
     os.environ["BETTERSEARCH_LOCAL_MODEL"] = model
@@ -71,7 +72,8 @@ def server_rankings(queries: list[str], catalogue_paths: str, index: str,
     out = {}
     for query in queries:
         data = run_search(searcher, catalogue, query=query, mode=mode,
-                          page=1, per_page=top_k, blend=blend)
+                          filters=filters or {}, page=1, per_page=top_k,
+                          blend=blend)
         out[query] = [r["doc_id"] for r in data["results"]]
         explained[query] = {r["doc_id"]: r.get("closest_headings")
                             or r.get("missing_terms") or []
@@ -83,7 +85,8 @@ def server_rankings(queries: list[str], catalogue_paths: str, index: str,
 
 async def browser_rankings(page_path: Path, queries: list[str], top_k: int,
                            mode: str, explained: dict, promoted: dict,
-                           blend: bool) -> dict[str, list[str]]:
+                           blend: bool,
+                           filters: dict | None = None) -> dict[str, list[str]]:
     from playwright.async_api import async_playwright
 
     proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy")
@@ -106,13 +109,13 @@ async def browser_rankings(page_path: Path, queries: list[str], top_k: int,
         # First call downloads the model; give it room, then the rest are fast.
         for i, query in enumerate(queries):
             rows = await page.evaluate(
-                """async ([q, k, mode, blend]) => {
-                    const d = await window.OFFLINE.search(q, mode, {}, 1, k, blend);
+                """async ([q, k, mode, blend, filters]) => {
+                    const d = await window.OFFLINE.search(q, mode, filters, 1, k, blend);
                     return d.results.map(r => [r.doc_id,
                         r.closest_headings || r.missing_terms || [],
                         r.promoted || null]);
                 }""",
-                [query, top_k, mode, blend],
+                [query, top_k, mode, blend, filters or {}],
             )
             ids = [r[0] for r in rows]
             explained[query] = {r[0]: r[1] for r in rows}
@@ -140,11 +143,25 @@ def main() -> int:
     ap.add_argument("--mode", default="semantic", choices=("semantic", "keyword"))
     ap.add_argument("--blend", action="store_true",
                     help="check the blended build's promotions too")
+    # Filtering is where the two implementations are most likely to drift,
+    # because the filter now runs *before* the cut on both sides and the
+    # order is easy to get wrong in one of them. Unfiltered parity would not
+    # catch that.
+    ap.add_argument("--filter", dest="filter_", metavar="KEY=VALUE",
+                    help="apply one facet filter to both sides, e.g. 'format=Large print'")
     args = ap.parse_args()
+
+    filters = {}
+    if args.filter_:
+        key, _, value = args.filter_.partition("=")
+        if not value:
+            raise SystemExit(f"--filter wants KEY=VALUE, got {args.filter_!r}")
+        filters = {key: [value]}
 
     raw = json.loads(args.queries.read_text(encoding="utf-8"))
     queries = [q["query"] for q in (raw["queries"] if isinstance(raw, dict) else raw)]
-    print(f"\n{len(queries)} queries · top-{args.top_k} · {args.page.name}\n")
+    shown = f" · filter {args.filter_}" if args.filter_ else ""
+    print(f"\n{len(queries)} queries · top-{args.top_k} · {args.page.name}{shown}\n")
 
     browser_why: dict[str, dict] = {}
     server_why: dict[str, dict] = {}
@@ -153,11 +170,12 @@ def main() -> int:
     print("browser:")
     browser = asyncio.run(browser_rankings(args.page, queries, args.top_k,
                                            args.mode, browser_why,
-                                           browser_promoted, args.blend))
+                                           browser_promoted, args.blend,
+                                           filters))
     print("server:")
     server = server_rankings(queries, args.catalogue, args.index, args.model,
                              args.top_k, args.mode, server_why,
-                             server_promoted, args.blend)
+                             server_promoted, args.blend, filters)
     print(f"  {len(server)} rankings computed\n")
 
     overlaps, identical, first_same = [], 0, 0
