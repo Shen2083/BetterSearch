@@ -323,6 +323,11 @@ travels through them, and the interfaces to extend — see
 **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**, also available as
 [a PDF](docs/ARCHITECTURE.pdf).
 
+Want the results without the full read? **[docs/FINDINGS.md](docs/FINDINGS.md)**
+is a short summary of what this proof of concept has established: the baseline,
+the encoder and enrichment gains, the reranking ceiling, where Vespa fits, and
+what is still open.
+
 Rebuilding this on another engine? **[docs/VESPA-HANDOVER.md](docs/VESPA-HANDOVER.md)**
 ([PDF](docs/VESPA-HANDOVER.pdf)) is written for a team doing exactly that: what
 transfers, what to re-measure, and the traps. `scripts/score_rankings.py` scores
