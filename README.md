@@ -323,6 +323,12 @@ travels through them, and the interfaces to extend — see
 **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**, also available as
 [a PDF](docs/ARCHITECTURE.pdf).
 
+Rebuilding this on another engine? **[docs/VESPA-HANDOVER.md](docs/VESPA-HANDOVER.md)**
+([PDF](docs/VESPA-HANDOVER.pdf)) is written for a team doing exactly that: what
+transfers, what to re-measure, and the traps. `scripts/score_rankings.py` scores
+any engine's output against the same 1,979 judgements, so a rebuild can be held
+to this one's bar rather than to a new one.
+
 `web/index.html` is the view for working on retrieval rather than for showing
 anyone — all three modes on one screen, scored, so a change in chunking or model
 is visible immediately:
