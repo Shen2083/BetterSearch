@@ -323,6 +323,12 @@ travels through them, and the interfaces to extend — see
 **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**, also available as
 [a PDF](docs/ARCHITECTURE.pdf).
 
+Rebuilding this on another engine? **[docs/VESPA-HANDOVER.md](docs/VESPA-HANDOVER.md)**
+([PDF](docs/VESPA-HANDOVER.pdf)) is written for a team doing exactly that: what
+transfers, what to re-measure, and the traps. `scripts/score_rankings.py` scores
+any engine's output against the same 1,979 judgements, so a rebuild can be held
+to this one's bar rather than to a new one.
+
 `web/index.html` is the view for working on retrieval rather than for showing
 anyone — all three modes on one screen, scored, so a change in chunking or model
 is visible immediately:
@@ -903,6 +909,79 @@ so the quality figures above can be checked.
 - **Two queries score 0.000 on both arms** — `learning to grow vegetables in
   pots` and `the one about a boy wizard at school`. Reported rather than
   quietly dropped.
+
+---
+
+## Reranking: the ordering is the problem, not the retrieval
+
+Asked because the engineering team is moving to Vespa, whose contribution to
+*quality* — as opposed to serving — is its reranking phase. The ceiling was
+measured before anything was built. Reordering only the candidates already
+retrieved, with every relevant one moved to the top:
+
+| depth | ours | oracle | headroom | judged coverage |
+|---|---|---|---|---|
+| 10 | 0.6582 | 0.7347 | +0.077 | 100% |
+| **20** | **0.6582** | **0.9207** | **+0.263** | **100%** |
+| 50 | 0.6582 | 0.9710 | +0.313 | 57% — not measurable |
+
+**The retrieval is fine; the ordering is the problem.** 161 records across the
+41 queries are judged relevant, retrieved, and sitting at ranks 11–20 — on page
+two. Per-query headroom has a median of 0.274, so it is broad rather than a few
+outliers; the ten queries with nothing to gain are the exact-name controls,
+already at 1.000.
+
+This is also **the only change this eval set can measure without re-pooling**.
+Every other idea here fought the pooling bias, because a new retriever finds
+records no judge saw. Reranking does not change the candidate set, so coverage
+stays at 100% by construction — `scripts/tune_reranking.py` asserts it rather
+than trusting it.
+
+| arm | nDCG@10 | vs base | controls | ms/query |
+|---|---|---|---|---|
+| baseline (bge-base, as shipped) | 0.6582 | — | 1.000 | 0 |
+| + BM25 as a weighted second phase | 0.6782 | +0.020 | 1.000 | 0 |
+| + `ms-marco-MiniLM-L-6-v2` over **thin** records | 0.6632 | +0.005 | 1.000 | 314 |
+| + `ms-marco-MiniLM-L-6-v2` over **enriched** records | 0.7149 | +0.057 | **0.877** | 314 |
+| &nbsp;&nbsp;… + exact-match promotion | 0.7280 | +0.070 | 1.000 | 314 |
+| + `bge-reranker-base` over **thin** records | 0.6573 | −0.001 | 1.000 | 2,391 |
+| + `bge-reranker-base` over **enriched** records | 0.7289 | +0.071 | **0.926** | 2,391 |
+| &nbsp;&nbsp;**… + exact-match promotion** | **0.7340** | **+0.076** | **1.000** | 2,391 |
+| oracle (the ceiling) | 0.9207 | +0.263 | 1.000 | — |
+
+**A cross-encoder is worth nothing on a catalogue record.** Both rerankers are
+flat on the records as they ship — +0.005 and −0.001. That is not a weak model:
+on a written sentence `bge-reranker-base` separates cleanly (0.643 for a
+beekeeping passage against 0.000 for a calculus textbook). It is that the record
+is a 24-word metadata stub — a title, an author, a publisher, a semicolon list
+of subject headings — and a model trained to read passages has nothing to read.
+Give it the enriched text instead, at 95 words median, and the same model is
+worth **+0.071**.
+
+So reranking does not replace enrichment; it is **unlocked** by it. The two are
+the same bet — that these records are too thin — arriving from different ends.
+
+**And it broke the thing libraries care most about.** Both enriched arms
+regressed the known-item controls, `Sue Monk Kidd` worst at −0.369. That is the
+*same* failure enrichment itself has, recorded above: it helps queries about
+aboutness and hurts queries about identity. The reranker inherits it, because it
+is reasoning over the same prose.
+
+The fix was already in the repository. `src/bettersearch/exact.py` lifts records
+the reader arguably *named* by rule rather than by score, and its docstring
+calls it "a guarantee rather than an improvement", worth 0.658 → 0.658. Against
+a reranker it starts earning its keep: controls back to **1.000**, and the mean
+goes *up* rather than down, because the queries it rescues were the ones being
+broken. A component measured as worthless becomes valuable the moment something
+upstream is strong enough to be unpredictable.
+
+**What is not claimed.** The best arm captures 29% of the headroom; 0.19 of
+nDCG is still on the table and unexplained. `bge-reranker-base` costs 2.4
+seconds per query on CPU for 20 candidates — unusable without ONNX or a GPU,
+and the MiniLM cross-encoder gets most of the gain for an eighth of that. The
+BM25 second phase at +0.020 is reported, not shipped: `w` was swept on the same
+41 queries it is scored on, so that number is an upper bound on the idea rather
+than an estimate of it. Forty-one queries remains few.
 
 ---
 

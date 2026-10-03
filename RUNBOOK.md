@@ -194,7 +194,7 @@ To re-check that events are findable and not intrusive:
 python scripts/check_events.py
 ```
 
-**Expected**: 11 of 12 event-shaped queries reach an event, 0 of 5 known-item
+**Expected**: 12 of 12 event-shaped queries reach an event, 0 of 5 known-item
 lookups show one, and the script concludes that one index is enough. If reach
 drops below 60% it says so and exits non-zero — that is the signal to retrieve
 each collection separately and fuse by rank with
@@ -373,12 +373,13 @@ python scripts/render_pdf.py docs/approach-technical.html
 python scripts/render_pdf.py docs/approach-client.html
 python scripts/render_pdf.py README.md --out docs/README.pdf
 python scripts/render_pdf.py docs/ARCHITECTURE.md --out docs/ARCHITECTURE.pdf
+python scripts/render_pdf.py docs/VESPA-HANDOVER.md --out docs/VESPA-HANDOVER.pdf
 python scripts/build_standalone.py          # docs/catalogue-standalone.html
 ```
 
 The two approach documents are written as HTML and rendered directly.
-`docs/README.pdf` and `docs/ARCHITECTURE.pdf` are converted from their markdown
-— **rebuild them after any substantive edit**, because nothing forces it and a
+`docs/README.pdf`, `docs/ARCHITECTURE.pdf` and `docs/VESPA-HANDOVER.pdf` are
+converted from their markdown — **rebuild them after any substantive edit**, because nothing forces it and a
 stale PDF is not visible in a diff.
 
 `docs/ARCHITECTURE.md` draws its diagrams from `docs/architecture/*.svg` rather
