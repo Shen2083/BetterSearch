@@ -912,6 +912,62 @@ so the quality figures above can be checked.
 
 ---
 
+## Narrowing: the filter has to come before the cut
+
+Found while asking what else Vespa could offer. It is not a missing feature —
+it was a defect here.
+
+`run_search` retrieved the semantic top 20 and *then* applied facet filters, so
+ticking "Large print" did not search the large-print records. It kept whichever
+of twenty already-chosen records happened to be large print. Measured over 41
+queries × 10 facet values on the 4,000-record corpus, through the real pipeline:
+
+| | filter after the cut | filter before it |
+|---|---|---|
+| results returned | **4.00** | 19.96 |
+| returned fewer than 3 | **31.2%** | 0.0% |
+| returned zero | 2.9% | 0.0% |
+
+Those facets each cover 14–18% of the corpus. At a real library "available now
+at my branch" is a far smaller slice, and the facet panel would have returned
+almost nothing almost always.
+
+The fix is a **candidate pool**: retrieval fetches `SEMANTIC_POOL` (200), the
+filter selects within it, and the cut to `SEMANTIC_TOP_K` comes afterwards. The
+measured decision does not move — `scripts/tune_cutoff.py` chose 20 as *what a
+reader sees*, and a reader still sees 20. The pool is never displayed in full,
+so this is not the absolute floor that admitted 3,665 of 4,000 records.
+
+**The regression gate, checked before anything else.** An unfiltered search must
+be untouched: nDCG@10 stayed at exactly **0.6582**, with **41/41 identical
+result lists**. On the books-and-events corpus it is 39/41 — the two that differ
+had been returning 18 results because a weekly event series collapsed inside the
+old top 20, and now return a full 20. The additions land at ranks 19–20, so
+nDCG@10 is unchanged at 0.6511 there too. A strict improvement, observed rather
+than discovered later.
+
+**What moved, and is a real cost.** Facet counts are now computed over the pool
+rather than the page, which is forced: counting over a filtered retrieval would
+collapse the sidebar to the value already selected and make cross-narrowing
+impossible. So a facet can read a larger number than the list it opens —
+"Large print 28" above a list of 20. The count is still honest, because every
+record it counts is reachable by clicking it. That was *not* true of the
+763-record shadow set the old floor produced, which is the thing this must not
+drift back into.
+
+**Not claimed:** nDCG over the filtered searches rises 0.2759 → 0.3186, and that
+number should not be quoted. Filter-aware retrieval surfaces records the four
+pooled lanes never saw, so judged coverage falls and the comparison is subject
+to exactly the bias described above. The collapse in result *count* is
+arithmetic and needs no judgements at all.
+
+`200` is judgement, not measurement, and the constant says so. It is set so a
+facet covering a seventh of the corpus still offers comfortably more candidates
+than the twenty displayed, and `BETTERSEARCH_POOL` overrides it. Raising it
+cannot change an unfiltered search.
+
+---
+
 ## Reranking: the ordering is the problem, not the retrieval
 
 Asked because the engineering team is moving to Vespa, whose contribution to

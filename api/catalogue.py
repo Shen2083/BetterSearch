@@ -59,6 +59,30 @@ CATALOGUE_PATH = CATALOGUE_PATHS[0]
 #: against judgements for the corpus being served.
 SEMANTIC_TOP_K = int(os.environ.get("BETTERSEARCH_TOP_K", "20"))
 
+#: The candidate pool a facet filter selects *within*, and what the sidebar
+#: counts are computed over. Never shown in full.
+#:
+#: This exists because the obvious order is wrong. Retrieving the top 20 and
+#: then applying a filter does not search the large-print records - it keeps
+#: whichever of twenty already-chosen records happen to be large print.
+#: Measured over 41 queries x 10 facet values on the 4,000-record corpus, that
+#: returned a mean of **4.0** results and fewer than three on **31%** of
+#: filtered searches. Those facets each cover 14-18% of the corpus; at a real
+#: library "available now at my branch" is a far smaller slice and the facet
+#: panel would return nothing almost always.
+#:
+#: So the filter is applied to the pool and the cut comes after it. The cut
+#: itself does not move: SEMANTIC_TOP_K is what a reader sees, and
+#: scripts/tune_cutoff.py measured it as what a reader sees. A pool is not the
+#: absolute floor that admitted 3,665 of 4,000 records - nothing here is
+#: displayed because it cleared a threshold, only because it is in the best N.
+#:
+#: **200 is judgement, not measurement, and nothing measures it.** It is set so
+#: that a facet covering a seventh of the corpus still yields comfortably more
+#: candidates than the twenty displayed. Raising it cannot change an unfiltered
+#: search; it only widens what a filter has to choose from.
+SEMANTIC_POOL = int(os.environ.get("BETTERSEARCH_POOL", "200"))
+
 
 @dataclass(frozen=True, slots=True)
 class FacetValue:
@@ -353,7 +377,9 @@ def run_search(
         # of the list.
         hits = searcher.keyword(query, top_k=depth)
     else:
-        hits = searcher.semantic(query, top_k=SEMANTIC_TOP_K)
+        # The pool, not the displayed cut: a filter has to have something to
+        # choose from. See SEMANTIC_POOL.
+        hits = searcher.semantic(query, top_k=SEMANTIC_POOL)
 
     # Retrieval works on chunks; a catalogue shows records. One chunk per record
     # here, but de-duplicate by doc_id so this stays correct if that changes.
@@ -400,14 +426,26 @@ def run_search(
         ranked, promoted = promote(
             ranked, find(query, catalogue.values()), catalogue)
 
-    # Facets are counted before filtering, so the sidebar shows what you could
-    # narrow to rather than only what is already selected. Under the old floor
-    # this counted over a 763-record shadow set the reader could never page to;
-    # it now describes the results actually returned, which is what a reader
-    # takes the numbers to mean.
+    # Facets are counted over the pool, before filtering. That is forced rather
+    # than chosen: counting over a filtered retrieval would collapse the sidebar
+    # to the value already selected, and cross-narrowing would be impossible.
+    #
+    # It also means a facet can read a larger number than the list it opens -
+    # "Large print 28" above a list of 20. The count is an honest statement
+    # about how many of the best matches carry that value; the 20 is the cut.
+    # They agreed before this change only because filtering could never add
+    # anything to a list it was applied to afterwards.
     facets = build_facets([r for r, _ in ranked])
 
+    # Filter first, then cut. This is the whole point: the reader who narrows
+    # to one branch gets the best twenty records *in that branch*, not the
+    # remnant of twenty chosen without reference to it.
     kept = [(r, s) for r, s in ranked if matches_filters(r, filters)]
+    if mode != "keyword":
+        # Keyword needs no cut of its own - BM25 scores nothing that shares no
+        # term with the query, so its result count is already a statement about
+        # the query rather than an arbitrary stop.
+        kept = kept[:SEMANTIC_TOP_K]
     total = len(kept)
     start = (page - 1) * per_page
     window = kept[start : start + per_page]
