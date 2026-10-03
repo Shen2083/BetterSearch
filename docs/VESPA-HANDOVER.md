@@ -239,6 +239,68 @@ that.
 
 ---
 
+## 5a. Where the quality actually is — measured since this note was written
+
+You asked whether Vespa could make meaning search better. It can, and the lever
+is the reranking phase. Here is the measurement, so the rank profile can be
+designed against numbers rather than hope.
+
+**The ceiling first.** Reordering only the candidates we already retrieve, at
+depth 20 where judged coverage is 100%:
+
+| | nDCG@10 |
+|---|---|
+| what we ship | 0.6582 |
+| perfect reordering of the same 20 candidates | **0.9207** |
+
+The retrieval is fine. 161 judged-relevant records across 41 queries are
+retrieved and sitting at ranks 11–20. **This is also the only change we can
+measure without re-pooling**, because reranking never changes the candidate set
+— §5's trap does not apply to it.
+
+**What reached the ceiling, and what did not:**
+
+| arm | nDCG@10 | controls | ms/query |
+|---|---|---|---|
+| baseline | 0.6582 | 1.000 | 0 |
+| BM25 as a weighted second phase | 0.6782 | 1.000 | 0 |
+| cross-encoder over the records **as they are** | 0.6573–0.6632 | 1.000 | 100–734 |
+| cross-encoder over **enriched** records | 0.7149–0.7289 | 0.877–0.926 | 314–2,391 |
+| **the same, plus exact-match promotion** | **0.7340** | **1.000** | 2,391 |
+| oracle | 0.9207 | 1.000 | — |
+
+Three things follow, and all three are rank-profile decisions:
+
+1. **A cross-encoder is worth nothing on a bare catalogue record.** +0.005 and
+   −0.001. The record is a 24-word metadata stub and a passage-reading model has
+   nothing to read. The same model separates cleanly on a written sentence, so
+   this is the data, not the model. **If you put a reranker in the global phase
+   without giving it prose, you will pay the latency and get nothing.**
+2. **Enrichment unlocks it.** At 95 words median the same reranker is worth
+   +0.071. Reranking and enrichment are not alternatives; they are the same bet
+   that these records are too thin, and they compound.
+3. **It breaks exact-name lookup, and that must be caught.** Both enriched arms
+   regressed the known-item controls — `Sue Monk Kidd` −0.369 — because a model
+   reasoning over prose optimises aboutness at the cost of identity. A rule that
+   lifts named records regardless of score restores them to 1.000 *and* raises
+   the mean. Whatever you build, make the controls a gate in CI, not a thing
+   somebody notices later.
+
+**The cost is the catch.** `bge-reranker-base` is 2.4 s/query on CPU for 20
+candidates. Vespa pays that on every search, so it needs ONNX, a GPU, or the
+MiniLM cross-encoder — which gets +0.070 of the +0.076 for an eighth of the
+time. Rerank depth is the lever you will actually tune, and ours is 20 because
+beyond that the eval cannot see.
+
+**Still unexplained:** the best arm captures 29% of the available headroom. The
+remaining 0.19 is real, measured, and nobody here knows what reaches it. That is
+the most interesting open question in this handover, and the first one worth
+spending a week on.
+
+Reproduce with `python scripts/tune_reranking.py`.
+
+---
+
 ## 6. Things worth not rebuilding
 
 Two small pieces earned their place for reasons that are not about ranking, and

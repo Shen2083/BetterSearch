@@ -123,3 +123,49 @@ def test_the_shipped_eval_set_loads_and_has_its_controls():
     assert len(controls) == 5
     assert {x["query"] for x in controls} == set(sr.KNOWN_ITEM)
     assert meta["judge_model"] and meta["lanes_pooled"]
+
+
+# ---------------------------------------------------------------- reranking
+# tune_reranking.py's whole claim rests on one property: an arm may reorder the
+# candidates but never substitute them. If that breaks, judged coverage moves
+# and the arms stop being comparable to each other - which is the failure the
+# rest of this project keeps running into from other directions.
+
+_rr_spec = importlib.util.spec_from_file_location(
+    "tune_reranking", SCRIPT.parent / "tune_reranking.py")
+rr = importlib.util.module_from_spec(_rr_spec)
+_rr_spec.loader.exec_module(rr)
+
+
+def test_promotion_returns_a_permutation_not_a_new_list():
+    catalogue = {
+        "a": {"doc_id": "a", "title": "The Secret Life of Bees", "author": "Sue Monk Kidd"},
+        "b": {"doc_id": "b", "title": "Something Else", "author": "Someone"},
+        "c": {"doc_id": "c", "title": "Third Book", "author": "Another"},
+    }
+    c = {"query": "Sue Monk Kidd", "doc_ids": ["a", "b", "c"]}
+    out = rr.promote_named(c, ["c", "b", "a"], catalogue)
+    assert sorted(out) == ["a", "b", "c"], "promotion must not add or drop records"
+    assert out[0] == "a", "the named author's record should be lifted"
+
+
+def test_promotion_keeps_records_absent_from_the_catalogue():
+    """Events and anything else outside the catalogue file must survive."""
+    catalogue = {"a": {"doc_id": "a", "title": "T", "author": "A"}}
+    c = {"query": "nothing matches this", "doc_ids": ["a", "ev-1"]}
+    out = rr.promote_named(c, ["a", "ev-1"], catalogue)
+    assert sorted(out) == ["a", "ev-1"]
+
+
+def test_minmax_survives_a_flat_signal():
+    """BM25 returns zero for every candidate when no term matches."""
+    import numpy as np
+    flat = rr.minmax(np.zeros(5, dtype=np.float32))
+    assert flat.tolist() == [0.0] * 5
+
+
+def test_measure_rejects_an_arm_that_changes_the_candidate_set():
+    cands = [{"query": "q", "note": "", "relevant": ["a"], "graded": {"a", "b"},
+              "doc_ids": ["a", "b"], "idx": [0, 1]}]
+    with pytest.raises(SystemExit, match="changed the candidate set"):
+        rr.measure(cands, lambda c: ["a", "substituted"], name="bad arm")

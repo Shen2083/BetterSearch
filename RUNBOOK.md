@@ -194,7 +194,7 @@ To re-check that events are findable and not intrusive:
 python scripts/check_events.py
 ```
 
-**Expected**: 11 of 12 event-shaped queries reach an event, 0 of 5 known-item
+**Expected**: 12 of 12 event-shaped queries reach an event, 0 of 5 known-item
 lookups show one, and the script concludes that one index is enough. If reach
 drops below 60% it says so and exits non-zero — that is the signal to retrieve
 each collection separately and fuse by rank with
