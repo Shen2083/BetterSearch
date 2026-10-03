@@ -990,6 +990,134 @@ than an estimate of it. Forty-one queries remains few.
 
 ---
 
+## Pushing reranking closer to the ceiling
+
+The section above captured 29% of the headroom and left 0.19 of nDCG
+unexplained, with three guesses about where it was.
+`scripts/tune_reranking_v2.py` tests them on the same candidates, the same
+depth, the same reorder-never-substitute guard and the same control tripwire,
+so every number here is comparable to every number above. Fifty-eight arms; the
+ones that answer something:
+
+| arm | nDCG@10 | vs base | controls | ms/query |
+|---|---|---|---|---|
+| baseline (bge-base, as shipped) | 0.6582 | — | 1.000 | 0 |
+| best arm from the section above | 0.7340 | +0.076 | 1.000 | 1,944 |
+| + `ms-marco-MiniLM-L-12-v2` over **enriched** records | 0.7127 | +0.055 | **0.871** | 516 |
+| + `bge-reranker-base` over **both** records | 0.7352 | +0.077 | 1.000 | 2,530 |
+| + `bge-reranker-base` over **asked** records | 0.7275 | +0.069 | 1.000 | 1,558 |
+| + `bge-reranker-large` over **thin** records | 0.6882 | +0.030 | 1.000 | 2,301 |
+| + `bge-reranker-large` over **asked** records | 0.7626 | +0.104 | 1.000 | 5,330 |
+| + `bge-reranker-large` over **enriched** records | 0.7610 | +0.103 | 1.000 | 6,455 |
+| **+ `bge-reranker-large` over both records** | **0.7761** | **+0.118** | **1.000** | **8,512** |
+| &nbsp;&nbsp;… ensembled with `bge-reranker-base` | 0.7822 | +0.124 | 1.000 | 11,042 (both models) |
+| oracle (the ceiling) | 0.9207 | +0.263 | 1.000 | — |
+
+**thin** is the record as it ships, 24 words. **enriched** is the LLM prose the
+section above used, 95 words. **asked** is the thin record plus the
+enrichment's *questions* and topics but no synopsis, 77 words. **both** is the
+thin record plus the full enriched text, 120 words.
+
+### Capacity was the answer — but model size is not what capacity means
+
+`bge-reranker-large` over the **both** view is worth **+0.118** against the
+shipped baseline and **+0.042** against the best arm above, taking 45% of the
+headroom where the previous best took 29%. On a paired bootstrap over the 41
+queries that gain is distinguishable from noise: p = 0.009, 95% CI
+[+0.006, +0.083]. None of the cheaper ideas below manage that.
+
+But going from `ms-marco-MiniLM-L-6-v2` to `-L-12-v2` is worth **−0.002**:
+0.7149 to 0.7127. Twice the layers, nothing — and on thin records it is
+*worse* than the small one, 0.6496 against 0.6632. So "use a bigger reranker"
+is not the finding. `bge-reranker-large` is a better model than either MiniLM
+for reasons other than its layer count, and a parameter count is a bad proxy
+for which reranker to pick.
+
+### The identity regression does not need a rule
+
+Every enriched arm above regressed the known-item controls, `Sue Monk Kidd`
+worst at −0.369: the reranker reads LLM prose instead of the title someone
+typed. `exact.py` repaired that by rule, and that is how 0.7289 became 0.7340.
+
+It is repairable by input instead. Concatenate the thin record and the enriched
+text — the **both** view — and the controls hold at **1.000 by construction**,
+because the title the reader typed is in what the model reads. It also scores
+higher than the rule did, on every model tried:
+
+| model | enriched + `exact.py` | both, no rule |
+|---|---|---|
+| `ms-marco-MiniLM-L-6-v2` | 0.7280 | 0.7202 |
+| `ms-marco-MiniLM-L-12-v2` | 0.7262 | 0.7244 |
+| `bge-reranker-base` | 0.7340 | 0.7352 |
+| `bge-reranker-large` | — (controls never regressed) | **0.7761** |
+
+A guarantee that comes from showing the model the right input is worth more
+than one bolted on afterwards, because no query can route around it.
+`exact.py` keeps its place for **labelling** — a card saying "by this author"
+is legible in a way a score is not — and becomes insurance rather than a patch.
+
+`bge-reranker-large` never regressed the controls at all, on any view. The
+failure the section above found was partly the model, not only the prose.
+
+### It is the questions that do the work, not the synopsis
+
+The enrichment writes a synopsis, topics, entities and the *questions someone
+might ask to find this record*. Scoring the **asked** view — questions and
+topics, no synopsis — gets 0.7626 against 0.7610 for the full enriched text.
+The synopsis is worth nothing on its own, and **+0.0135** when added on top of
+the questions (0.7626 → 0.7761 for the **both** view).
+
+That is a cost finding as much as a quality one. Synopsis length was already
+identified as the primary lever on the enrichment bill, because output tokens
+dominate it. Here the field that earns the reranking gain is the cheap one.
+
+### What did not work
+
+| idea | result |
+|---|---|
+| Keeping the retriever's cosine in a weighted blend | best weight is 1.0 on every strong arm — the cross-encoder alone. Cosine adds nothing once a cross-encoder has read the record. |
+| Reciprocal rank fusion instead of score fusion | worse everywhere: 0.7223 against 0.7610 for the same two signals. Discarding the margins loses what min-max keeps. |
+| Adding BM25 as a third fused lane | worse again, 0.7197. |
+| `max(thin, enriched)` instead of concatenating | 0.7409 against 0.7761 on the large model. Concatenation is both simpler and better. |
+| Ensembling two cross-encoders | +0.006 at best, inside the noise, for the cost of running both models. |
+
+Every weighted arm is reported twice — fitted on all 41 queries, and
+leave-one-query-out, where the weight is chosen on the other 40 and scored on
+the held-out one. Where the two differ, the gain was the sweep rather than the
+idea; the `bge-reranker-large`/**both** arm needs no weight at all, which is
+part of why it is believable.
+
+### What is still not reached
+
+0.1445 of nDCG, over 27 of the 41 queries. Not a handful of outliers, but
+concentrated: the ten worst account for 70% of it.
+
+Reading those queries says what kind of problem is left, and it is not an
+ordering problem.
+
+- `something short I can finish in one sitting` — 0.518 against an oracle
+  1.000. The catalogue has no page count. No reranker recovers a fact the
+  record does not carry.
+- `gripping but not too violent`, `an uplifting story after a hard year`,
+  `cosy mystery, nothing gruesome`, `getting fit again after illness` — these
+  are **constraints to satisfy**, not topics to match. A cross-encoder trained
+  on passage relevance scores topical similarity, and topical similarity is
+  what makes a gruesome thriller look like a good answer to someone asking for
+  a cosy one.
+
+Both failures sit upstream of ranking: one is a missing field, the other wants
+a model that can hold a condition rather than a resemblance. That is the next
+thing to measure, and it was not measured here — this container has no LLM
+credentials, so a listwise LLM reranker over the same 20 candidates is the
+obvious untested arm.
+
+**Cost.** `bge-reranker-large` is 8.5 seconds per query on CPU for 20
+candidates, four times the base model and unservable as it stands. Nothing
+here is a shipping recommendation. It is a measurement of what the ordering is
+worth, now 45% of the ceiling rather than 29%.
+
+---
+
 ## Enrichment for thin catalogue records
 
 The production target is a library catalogue of 100k–1M items holding **thin
