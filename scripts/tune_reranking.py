@@ -66,6 +66,23 @@ exact-match-promoted; both were pooled and the 399 records they surfaced that no
 judge had seen were graded for $0.06. 81 came back relevant, coverage at depth
 200 went 59.5% -> 100%, and the number stopped moving.
 
+**And that was tested, not asserted.** If `--judged-only` is biased by exactly
+the coverage it discards, it has to agree with the judged truth wherever
+coverage is already 100% and over-read everywhere else:
+
+              bge + promotion            ms-marco-MiniLM + promotion
+              (the lane we pooled)       (never pooled)
+    depth   truth  judged-only    gap  truth  judged-only    gap
+       20  +0.0657     +0.0657  0.0000 +0.0584    +0.0584  0.0000
+       50  +0.0465     +0.0596 +0.0131 +0.0308    +0.0680 +0.0372
+      100  +0.0349     +0.0384 +0.0035 +0.0292    +0.0458 +0.0166
+      200  +0.0097     +0.0097  0.0000 +0.0249    +0.0419 +0.0170
+
+It agrees to four decimals at exactly the two places it should and nowhere else:
+depth 20, where every candidate was judged anyway, and depth 200 for bge -
+because that is the lane whose candidates were pooled and judged. MiniLM, same
+corpus and depth but never pooled, still over-reads there by +0.017.
+
 So: a coverage *correction* is not the same as having the judgements. If you
 reach for `--judged-only` to compare arms, read it as an upper bound on the arm
 that surfaced the unjudged records, never as the answer.
