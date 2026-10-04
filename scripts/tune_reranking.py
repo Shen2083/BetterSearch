@@ -27,7 +27,34 @@ to the top:
 two. For scale, +0.26 is three times what the bge-base upgrade bought (+0.079)
 and three times what LLM enrichment bought (+0.092).
 
-WHY THIS ONE NEEDS NO RE-POOLING
+WHAT THE DEPTH SWEEP SAID, AND THE TRAP IN IT
+---------------------------------------------
+The shape "retrieve wide, rank deep" is what Vespa's phased ranking exists for,
+so it was swept. Read naively, the result kills it:
+
+    rerank depth      20       50      100      200
+    recall@10     +0.079   +0.029   -0.007   -0.062
+    coverage        100%    76.3%    65.6%    59.5%
+    ms/query       2,560    5,433   10,405   19,166
+
+But coverage falls with depth, and that is the whole explanation. Re-run with
+`--judged-only`, which keeps only candidates a judge actually saw and so pins
+coverage at 100% at every depth:
+
+    rerank depth      20       50      100      200
+    recall@10     +0.079   +0.072   +0.091   +0.087
+
+**The reranker does not degrade with depth at all.** It holds +0.07 to +0.09
+throughout and is strongest at 100. The collapse above is the pooling penalty:
+reranking 200 promotes records no judge ever saw, and every one of them scores
+zero however good it is.
+
+So the shape is right and this eval cannot see it. The blocker is the
+judgements, not the engineering - the third time that has been true here. Until
+the pool is rebuilt with a reranked lane in it, the only honestly measurable
+setting is depth 20, where every candidate is judged.
+
+WHY DEPTH 20 NEEDS NO RE-POOLING
 --------------------------------
 Every other idea measured in this project had to fight the pooling bias: a new
 retriever finds records no judge ever saw, unjudged counts as irrelevant, and a
@@ -112,12 +139,23 @@ def load_index(path: Path):
     return chunks, vectors, meta.get("model_id")
 
 
-def candidates(chunks, vectors, queries, provider, depth):
-    """The top `depth` per query, once. Every arm reorders exactly this."""
+def candidates(chunks, vectors, queries, provider, depth, judged_only=False):
+    """The top `depth` per query, once. Every arm reorders exactly this.
+
+    `judged_only` drops candidates no judge ever saw. That makes the pool
+    unrepresentative of what a real system returns - but it pins judged coverage
+    at 100% at every depth, which is the only way to ask whether a reranker gets
+    worse with more candidates *separately* from whether it is being punished
+    for finding records the pool missed. Those two are otherwise confounded, and
+    they point opposite ways.
+    """
     out = []
     for item in queries:
         scores = vectors @ provider.embed_query(item["query"]).astype(np.float32)
         top = list(np.argsort(-scores)[:depth])
+        if judged_only:
+            graded = set(item.get("grades") or {})
+            top = [i for i in top if chunks[i].doc_id in graded]
         out.append({
             "query": item["query"],
             "note": item.get("note", ""),
@@ -155,6 +193,14 @@ def measure(cands, order_fn, *, name: str) -> dict:
             "note": c["note"],
             "ndcg@10": ndcg_at_k(ranked, c["relevant"], 10),
             "recall@5": recall_at_k(ranked, c["relevant"], 5),
+            # The headline when comparing depths, and **only trustworthy while
+            # judged coverage is 100%**. The denominator is fixed - the records
+            # a judge saw - but the numerator is not safe: an unjudged record
+            # promoted into the top 10 displaces a judged-relevant one and
+            # recall falls, however good the newcomer was. I claimed this metric
+            # was pooling-safe when proposing the sweep. It is not, and
+            # --judged-only is what proved it.
+            "recall@10": recall_at_k(ranked, c["relevant"], 10),
             "mrr@10": reciprocal_rank(ranked, c["relevant"], 10),
             "coverage": sum(1 for d in ranked[:10] if d in c["graded"]) / 10,
             "ranking": ranked,
@@ -165,6 +211,7 @@ def measure(cands, order_fn, *, name: str) -> dict:
         "name": name,
         "ndcg@10": mean("ndcg@10"),
         "recall@5": mean("recall@5"),
+        "recall@10": mean("recall@10"),
         "mrr@10": mean("mrr@10"),
         "coverage": mean("coverage"),
         "controls": float(np.mean([r["ndcg@10"] for r in controls])) if controls else 0.0,
@@ -201,13 +248,17 @@ def main() -> int:
     ap.add_argument("--index", default=".bettersearch/real-books-base")
     ap.add_argument("--queries", default="data/eval_real.json")
     ap.add_argument("--model", default="BAAI/bge-base-en-v1.5")
-    ap.add_argument("--depth", type=int, default=DEPTH)
+    ap.add_argument("--depths", default="20,50,100,200",
+                    help="rerank depths to sweep; Vespa's rerank-count")
     ap.add_argument("--rerankers", default="minilm,bge",
                     help="comma-separated keys from RERANKERS, or 'none'")
     ap.add_argument("--catalogue", default="data/catalogue_real.json",
                     help="records with title/author, for exact-match promotion")
     ap.add_argument("--enrichment", default="data/enrichment_real_haiku.jsonl",
                     help="records as prose; reranking reads it, so no re-ingest")
+    ap.add_argument("--judged-only", action="store_true",
+                    help="keep only judged candidates, pinning coverage at "
+                         "100% so depth and pooling bias separate")
     ap.add_argument("--show", type=int, default=8)
     ap.add_argument("--dump", help="write each arm's rankings here, for score_rankings.py")
     args = ap.parse_args()
@@ -217,11 +268,9 @@ def main() -> int:
 
     chunks, vectors, model_id = load_index(Path(args.index))
     queries = json.loads(Path(args.queries).read_text(encoding="utf-8"))["queries"]
-    print(f"{len(chunks)} records · {model_id} · {len(queries)} judged queries · "
-          f"reranking the top {args.depth}\n")
+    print(f"{len(chunks)} records · {model_id} · {len(queries)} judged queries")
 
     provider = get_provider()
-    cands = candidates(chunks, vectors, queries, provider, args.depth)
     catalogue = {}
     if args.catalogue and Path(args.catalogue).exists():
         catalogue = {r["doc_id"]: r
@@ -233,106 +282,137 @@ def main() -> int:
         corpora["enriched"] = {d: rich.get(d, corpora["thin"][d]) for d in titles}
         words = lambda c: int(np.median([len(t.split()) for t in c.values()]))
         print(f"  record text: thin {words(corpora['thin'])} words median, "
-              f"enriched {words(corpora['enriched'])}\n")
+              f"enriched {words(corpora['enriched'])}")
 
-    arms = [measure(cands, lambda c: list(c["doc_ids"]), name="baseline (as shipped)")]
-
-    # A weighted second phase: the same two signals RRF fused and lost with.
+    depths = [int(d) for d in args.depths.split(",")]
     bm25 = BM25Index(chunks)
-    for c in cands:
-        hits = {h.chunk.doc_id: h.score for h in bm25.search(c["query"], top_k=len(chunks))}
-        c["bm25"] = np.array([hits.get(d, 0.0) for d in c["doc_ids"]], dtype=np.float32)
 
-    best_w, best_arm = None, None
-    for w in (0.1, 0.2, 0.3, 0.4, 0.5):
-        arm = measure(
-            cands,
-            lambda c, w=w: [c["doc_ids"][i] for i in
-                            np.argsort(-((1 - w) * minmax(c["cosine"]) + w * minmax(c["bm25"])))],
-            name=f"+ BM25 second phase (w={w})")
-        if best_arm is None or arm["ndcg@10"] > best_arm["ndcg@10"]:
-            best_w, best_arm = w, arm
-    # Only the best w is reported, and it is reported as fitted: w was chosen on
-    # the same 41 queries it is scored on, so this number is an upper bound on
-    # what the idea is worth, not an estimate of it.
-    best_arm["name"] = f"+ BM25 second phase (w={best_w}, fitted on these queries)"
-    arms.append(best_arm)
-
+    # Loaded once for the whole sweep. Reloading per depth would put model
+    # construction into the latency column and make deep reranking look worse
+    # than it is.
+    models = {}
     if args.rerankers != "none":
         from sentence_transformers import CrossEncoder
         for key in args.rerankers.split(","):
             repo = RERANKERS[key.strip()]
             print(f"  loading {repo} …", flush=True)
-            model = CrossEncoder(repo, max_length=512)
+            models[repo] = CrossEncoder(repo, max_length=512)
 
+    everything = {}
+    for depth in depths:
+        print(f"\n{'=' * 96}\nrerank depth {depth}\n{'=' * 96}", flush=True)
+        cands = candidates(chunks, vectors, queries, provider, depth,
+                           judged_only=args.judged_only)
+        for c in cands:
+            hits = {h.chunk.doc_id: h.score
+                    for h in bm25.search(c["query"], top_k=len(chunks))}
+            c["bm25"] = np.array([hits.get(d, 0.0) for d in c["doc_ids"]],
+                                 dtype=np.float32)
+
+        arms = [measure(cands, lambda c: list(c["doc_ids"]),
+                        name="baseline (no reranking)")]
+
+        best_w, best_arm = None, None
+        for w in (0.1, 0.2, 0.3, 0.4, 0.5):
+            arm = measure(
+                cands,
+                lambda c, w=w: [c["doc_ids"][i] for i in
+                                np.argsort(-((1 - w) * minmax(c["cosine"])
+                                             + w * minmax(c["bm25"])))],
+                name=f"+ BM25 second phase (w={w})")
+            if best_arm is None or arm["recall@10"] > best_arm["recall@10"]:
+                best_w, best_arm = w, arm
+        # Reported as fitted: w was chosen on the same 41 queries it is scored
+        # on, so this is an upper bound on the idea, not an estimate of it.
+        best_arm["name"] = f"+ BM25 second phase (w={best_w}, fitted)"
+        arms.append(best_arm)
+
+        for repo, model in models.items():
             def order(c, model=model, corpus=None):
-                # Scored inside the timed call on purpose: the model is the
-                # cost, and a latency column that excluded it would make
-                # reranking look free. Vespa pays this on every search.
+                # Timed with the model call inside, because the model is the
+                # cost. Vespa pays it on every search, at this depth.
                 pairs = [(c["query"], corpus[d]) for d in c["doc_ids"]]
                 scores = np.asarray(model.predict(pairs, show_progress_bar=False))
                 return [c["doc_ids"][i] for i in np.argsort(-scores)]
 
             short = repo.split("/")[-1]
             for label, corpus in corpora.items():
+                # Thin records were already measured at nothing (+0.005 and
+                # -0.001 at depth 20). Carried at the shallowest depth only, to
+                # tie this sweep to that result, and not re-paid at every depth.
+                if label == "thin" and depth != depths[0]:
+                    continue
                 arm = measure(cands, lambda c, k=corpus: order(c, corpus=k),
                               name=f"+ {short} over {label} records")
                 arms.append(arm)
-                # A stronger ranker can reorder a named record off page one,
-                # which the controls catch. exact.py exists for exactly that:
-                # its docstring calls it "a guarantee rather than an
-                # improvement" and records it as worth 0.658 -> 0.658. Against
-                # a reranker it starts earning its keep, because now there is
-                # something to insure against.
                 if catalogue and arm["controls"] < 0.999:
                     arms.append(measure(
                         cands,
-                        lambda c, a=arm: promote_named(c, _ranking(a, c["query"]), catalogue),
+                        lambda c, a=arm: promote_named(c, _ranking(a, c["query"]),
+                                                       catalogue),
                         name=f"  … {short}/{label} + exact-match promotion"))
-            del model
 
-    arms.append(measure(cands, oracle_order, name="oracle (the ceiling)"))
+        arms.append(measure(cands, oracle_order, name="oracle (the ceiling)"))
+        everything[depth] = arms
 
-    base = arms[0]["ndcg@10"]
-    print(f"\n  {'arm':<52} {'nDCG@10':>8} {'vs base':>8} {'R@5':>6} "
-          f"{'MRR':>6} {'ctrl':>6} {'cover':>6} {'ms/q':>7}")
-    for a in arms:
-        flag = "" if a["controls"] >= 0.999 else "  ← CONTROLS REGRESSED"
-        print(f"  {a['name'][:52]:<52} {a['ndcg@10']:>8.4f} "
-              f"{a['ndcg@10'] - base:>+8.4f} {a['recall@5']:>6.3f} {a['mrr@10']:>6.3f} "
-              f"{a['controls']:>6.3f} {a['coverage']:>6.1%} {a['ms_per_query']:>7.1f}{flag}")
+        base = arms[0]
+        print(f"\n  {'arm':<48} {'R@10':>7} {'vs base':>8} {'nDCG@10':>8} "
+              f"{'ctrl':>6} {'cover':>6} {'ms/q':>8}")
+        for a in arms:
+            flag = "" if a["controls"] >= 0.999 else "  ← CONTROLS REGRESSED"
+            print(f"  {a['name'][:48]:<48} {a['recall@10']:>7.4f} "
+                  f"{a['recall@10'] - base['recall@10']:>+8.4f} {a['ndcg@10']:>8.4f} "
+                  f"{a['controls']:>6.3f} {a['coverage']:>6.1%} "
+                  f"{a['ms_per_query']:>8.1f}{flag}")
+        # Coverage is reported, not asserted. At depth 20 every candidate was
+        # judged, so it stays at 100% and nDCG is comparable. Deeper, a
+        # reranker pulls records the four pooled lanes never surfaced into the
+        # top 10, coverage falls, and **nDCG stops being comparable** - the
+        # unjudged ones score zero however good they are. That is the whole
+        # reason recall@10 of judged-relevant is the headline instead.
+        #
+        # The invariant that *is* enforced lives in measure(): an arm may
+        # reorder the candidates, never substitute them.
+        worst = min(a["coverage"] for a in arms)
+        if worst < 0.999:
+            print(f"\n  judged coverage falls to {worst:.1%} at this depth - "
+                  f"the nDCG column is NOT comparable across depths.\n"
+                  f"  Read recall@10, whose denominator is fixed.")
+        else:
+            print("\n  judged coverage 100% on every arm - nDCG is comparable here.")
 
-    for a in arms:
-        if abs(a["coverage"] - 1.0) > 1e-9:
-            raise SystemExit(
-                f"{a['name']}: judged coverage is {a['coverage']:.1%}, not 100%. "
-                f"Reranking cannot change coverage, so this is a bug in the arm.")
-    print("\n  judged coverage is 100% on every arm, as reranking requires - no "
-          "pooling bias here.")
-
-    winner = max(arms[1:-1], key=lambda a: a["ndcg@10"], default=None)
-    if winner:
-        deltas = sorted(
-            ((a["ndcg@10"] - b["ndcg@10"], a["query"])
-             for a, b in zip(winner["rows"], arms[0]["rows"])),
-            reverse=True)
-        print(f"\n  best non-oracle arm: {winner['name']}")
-        print(f"  biggest gains:")
-        for d, q in deltas[:args.show]:
-            if d > 0: print(f"    {d:>+7.3f}  {q[:58]}")
-        losses = [x for x in deltas if x[0] < 0]
-        print(f"  biggest losses ({len(losses)} queries got worse):")
-        for d, q in losses[-args.show:]:
-            print(f"    {d:>+7.3f}  {q[:58]}")
+    # ---------------------------------------------------------------- summary
+    print(f"\n{'=' * 96}\nrecall@10 of judged-relevant records, by rerank depth")
+    print("Comparable ONLY between arms whose judged coverage is 100%. The")
+    print("denominator is fixed, but an unjudged record promoted into the top 10")
+    print("displaces a judged-relevant one, so a system that finds something the")
+    print("pool missed is penalised for it. Use --judged-only to remove that.")
+    print(f"{'=' * 96}\n")
+    names = []
+    for arms in everything.values():
+        for a in arms:
+            if a["name"] not in names:
+                names.append(a["name"])
+    print(f"  {'arm':<48} " + " ".join(f"{d:>9}" for d in depths))
+    for n in names:
+        cells = []
+        for d in depths:
+            a = next((x for x in everything[d] if x["name"] == n), None)
+            cells.append(f"{a['recall@10']:>9.4f}" if a else f"{'-':>9}")
+        print(f"  {n[:48]:<48} " + " ".join(cells))
+    print(f"\n  {'latency, ms/query':<48} " +
+          " ".join(f"{max(x['ms_per_query'] for x in everything[d]):>9.0f}"
+                   for d in depths))
 
     if args.dump:
         out = Path(args.dump)
         out.mkdir(parents=True, exist_ok=True)
-        for a in arms:
-            slug = "".join(ch if ch.isalnum() else "-" for ch in a["name"])[:60]
-            (out / f"{slug}.json").write_text(json.dumps(
-                {r["query"]: r["ranking"] for r in a["rows"]}, indent=1))
-        print(f"\n  rankings written to {out}/ - check them with scripts/score_rankings.py")
+        for depth, arms in everything.items():
+            for a in arms:
+                slug = "".join(ch if ch.isalnum() else "-" for ch in a["name"])[:50]
+                (out / f"d{depth}-{slug}.json").write_text(json.dumps(
+                    {r["query"]: r["ranking"] for r in a["rows"]}, indent=1))
+        print(f"\n  rankings written to {out}/")
     return 0
 
 

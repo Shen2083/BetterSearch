@@ -92,7 +92,7 @@ def load_queries(path: Path) -> list[dict]:
     return raw["queries"] if isinstance(raw, dict) else raw
 
 
-def build_pools(lanes: list[tuple[str, str, str]], queries: list[dict],
+def build_pools(lanes: list[dict], queries: list[dict],
                 *, per_lane: int) -> dict:
     """top-K from every lane that will later be measured, unioned and shuffled.
 
@@ -102,40 +102,75 @@ def build_pools(lanes: list[tuple[str, str, str]], queries: list[dict],
     scores as irrelevant - penalising enrichment exactly where it works. The
     number would look defensible and be wrong.
 
-    `lanes` is (label, index_path, mode, model). The label is used for reporting
-    only; it is discarded before judging so the judge cannot tell lanes apart.
-    `model` may be None to use the configured default - it exists because an
-    index built with a different encoder has to be queried with that same
-    encoder, and a lane using a larger model is exactly the case this pool has
-    to cover.
+    A lane is a dict: either `{kind: "index", label, path, mode, model}` or
+    `{kind: "file", label, path}`. The label is used for reporting only; it is
+    discarded before judging so the judge cannot tell lanes apart. `model` may
+    be None to use the configured default - it exists because an index built
+    with a different encoder has to be queried with that same encoder, and a
+    lane using a larger model is exactly the case this pool has to cover.
+
+    A **file** lane reads `{query: [doc_id, ...]}` - the shape
+    `scripts/tune_reranking.py --dump` writes and `scripts/score_rankings.py`
+    reads. It exists because the arms worth pooling are no longer all
+    expressible as an index and a mode: a reranked lane is a retrieval plus a
+    cross-encoder plus a depth, and the pool has to be able to contain it or
+    everything that lane alone surfaces goes unjudged and scores as irrelevant.
     """
-    from dataclasses import replace
-
-    from bettersearch.config import load_settings
-    from bettersearch.index.numpy_index import NumpyVectorIndex
-    from bettersearch.search import Searcher
-
-    base = load_settings()
+    # Imported inside, and only when an index lane exists: a pool made entirely
+    # of file lanes is just a union of rankings, and should not need an encoder,
+    # an index on disk, or a loadable config to compute.
     searchers = {}
-    for _, path, _, model in lanes:
-        key = (path, model)
-        if key not in searchers:
-            settings = replace(base, local_model_name=model) if model else base
-            searchers[key] = Searcher(index=NumpyVectorIndex(path), settings=settings)
+    if any(l["kind"] == "index" for l in lanes):
+        from dataclasses import replace
+
+        from bettersearch.config import load_settings
+        from bettersearch.index.numpy_index import NumpyVectorIndex
+        from bettersearch.search import Searcher
+
+        base = load_settings()
+        for lane in lanes:
+            if lane["kind"] != "index":
+                continue
+            key = (lane["path"], lane["model"])
+            if key not in searchers:
+                settings = (replace(base, local_model_name=lane["model"])
+                            if lane["model"] else base)
+                searchers[key] = Searcher(index=NumpyVectorIndex(lane["path"]),
+                                          settings=settings)
+
+    files = {}
+    for lane in lanes:
+        if lane["kind"] == "file":
+            files[lane["label"]] = json.loads(
+                Path(lane["path"]).read_text(encoding="utf-8"))
     rng = random.Random(20260919)
 
     pools: dict[str, list[str]] = {}
-    contributed: dict[str, int] = {label: 0 for label, *_ in lanes}
-    unique_to: dict[str, int] = {label: 0 for label, *_ in lanes}
+    contributed: dict[str, int] = {l["label"]: 0 for l in lanes}
+    unique_to: dict[str, int] = {l["label"]: 0 for l in lanes}
+    missing_from_file: dict[str, int] = {l["label"]: 0 for l in lanes
+                                         if l["kind"] == "file"}
+    retrieved: dict[str, set[tuple[str, str]]] = {}
     sizes: list[int] = []
 
     for item in queries:
         q = item["query"]
         per_lane_ids: dict[str, list[str]] = {}
-        for label, path, mode, model in lanes:
-            got = [r.chunk.doc_id
-                   for r in searchers[(path, model)].search(
-                       q, mode=mode, top_k=per_lane).results]
+        for lane in lanes:
+            label = lane["label"]
+            if lane["kind"] == "file":
+                ranked = files[label].get(q)
+                if ranked is None:
+                    # A lane that cannot answer a query would silently shrink
+                    # the pool for it. Counted and reported rather than skipped.
+                    missing_from_file[label] += 1
+                    got = []
+                else:
+                    got = list(dict.fromkeys(ranked))[:per_lane]
+            else:
+                got = [r.chunk.doc_id
+                       for r in searchers[(lane["path"], lane["model"])].search(
+                           q, mode=lane["mode"], top_k=per_lane).results]
             per_lane_ids[label] = got
             contributed[label] += len(got)
 
@@ -146,15 +181,119 @@ def build_pools(lanes: list[tuple[str, str, str]], queries: list[dict],
                      if len(per_lane_ids) > 1 else set()
             unique_to[label] += len(set(per_lane_ids[label]) - others)
 
-        ids = [i for label, *_ in lanes for i in per_lane_ids[label]]
+        for label, got in per_lane_ids.items():
+            retrieved.setdefault(label, set()).update((q, d) for d in got)
+
+        ids = [i for lane in lanes for i in per_lane_ids[lane["label"]]]
         seen: set[str] = set()
         pool = [i for i in ids if not (i in seen or seen.add(i))]
         rng.shuffle(pool)  # pool position must not encode which lane found it
         pools[q] = pool
         sizes.append(len(pool))
 
-    return {"pools": pools, "sizes": sizes,
-            "contributed": contributed, "unique_to": unique_to}
+    return {"pools": pools, "sizes": sizes, "contributed": contributed,
+            "unique_to": unique_to, "missing_from_file": missing_from_file,
+            "retrieved": retrieved}
+
+
+def load_reuse(eval_path: Path, judgements_path: Path) -> dict:
+    """Grades already paid for, keyed on (query text, doc_id).
+
+    Read from the eval file's per-query `grades`, **not** from the judgements
+    file's `q{i}--{doc_id}` keys. Those carry the query's *index*: reorder or
+    insert a query and every key downstream silently attaches to the wrong one,
+    which would corrupt the ground truth invisibly. The `grades` dict sits
+    beside its own query text and cannot drift that way. The judgements file is
+    consulted only to carry the judge's reason across, positionally, from the
+    ordering that produced it.
+    """
+    raw = eval_path.read_text(encoding="utf-8") if eval_path.exists() else ""
+    if not raw.strip():
+        # Covers both a first run and `--reuse /dev/null`, the documented way
+        # to re-judge everything from scratch.
+        return {}
+    data = json.loads(raw)
+    whys = {}
+    if judgements_path.exists():
+        whys = json.loads(judgements_path.read_text(encoding="utf-8")).get("judgements", {})
+    out = {}
+    for i, item in enumerate(data.get("queries", [])):
+        for doc_id, grade in (item.get("grades") or {}).items():
+            prior = whys.get(f"q{i}--{doc_id}", {})
+            out[(item["query"], doc_id)] = {
+                "grade": int(grade),
+                "why": prior.get("why", ""),
+            }
+    return out
+
+
+def keep_judged(pools: dict, queries: list[dict], reuse: dict,
+                seed: int = 20260919) -> int:
+    """Union every already-judged record back into the pool it belongs to.
+
+    Re-pooling adds a lane, and the danger is subtler than it looks: the new
+    pool is built from whatever lanes *this* run has, so a record the old lanes
+    found and the new ones do not would silently drop out. Its grade would still
+    be carried forward by `split_pairs`, but it would vanish from
+    `relevant_doc_ids`, shrinking the denominator every published figure was
+    measured against. Arms would appear to improve because the bar moved.
+
+    So the pool only ever grows. A judgement is paid for and permanent; keeping
+    it costs nothing and discarding it quietly rewrites history. This also means
+    the lanes that built the previous pool do not have to still exist on disk to
+    keep contributing to it - which is just as well, since three of them did not
+    survive a container restart.
+
+    Returns how many (query, record) pairs were restored.
+    """
+    by_query: dict[str, list[str]] = {}
+    for (query, doc_id) in reuse:
+        by_query.setdefault(query, []).append(doc_id)
+
+    rng = random.Random(seed)
+    restored = 0
+    for item in queries:
+        q = item["query"]
+        pool = pools.setdefault(q, [])
+        have = set(pool)
+        extra = [d for d in by_query.get(q, []) if d not in have]
+        restored += len(extra)
+        pool.extend(extra)
+        # Re-shuffled so a record's position still cannot tell the judge which
+        # lane found it - or, now, whether it is new this run at all.
+        rng.shuffle(pool)
+    return restored
+
+
+def split_pairs(queries: list[dict], pools: dict, corpus: dict,
+                reuse: dict) -> tuple[list[tuple[str, str, str]], dict]:
+    """Divide the pool into grades already paid for and pairs still to judge.
+
+    This is the function that decides what the run spends, so it errs towards
+    judging: a pair is carried forward only on an exact (query text, doc_id)
+    hit in `reuse`. Anything else - a record the pool has newly surfaced, a
+    query whose wording changed by a character - is new, and gets looked at.
+    The opposite default would silently record an unjudged record as whatever
+    `reuse` happened to return.
+
+    Keys stay `q{index}--{doc_id}` because that is what the Batch API round
+    trip carries and what the judgements file has always used. They are built
+    here from this run's query order and consumed in it, so the index never
+    outlives the ordering that produced it - which is exactly why `reuse` is
+    keyed on the query's text instead.
+    """
+    pairs: list[tuple[str, str, str]] = []
+    grades: dict[str, dict] = {}
+    for qi, item in enumerate(queries):
+        for doc_id in pools[item["query"]]:
+            key = f"q{qi}--{doc_id}"
+            if (prior := reuse.get((item["query"], doc_id))) is not None:
+                grades[key] = prior
+                continue
+            record = corpus[doc_id]
+            pairs.append((key, item["query"],
+                          f"{record['title']}\n{record['text']}"))
+    return pairs, grades
 
 
 def judge_pairs(pairs: list[tuple[str, str, str]], *, model: str, wait: int = 30) -> dict:
@@ -221,6 +360,24 @@ def main() -> int:
                     default=ROOT / "data/eval_real_spotcheck.md")
     ap.add_argument("--out", type=Path, default=ROOT / "data/eval_real.json")
     ap.add_argument("--judgements-out", type=Path, default=ROOT / "data/eval_real_judgements.json")
+    ap.add_argument(
+        "--lane-file", action="append", default=None, metavar="LABEL=PATH.json",
+        help="a lane supplied as precomputed rankings, {query: [doc_id, ...]} - "
+             "the shape tune_reranking.py --dump writes. Use this for arms that "
+             "are not just an index and a mode, such as a reranked lane.")
+    ap.add_argument(
+        "--reuse", type=Path, default=ROOT / "data/eval_real.json",
+        help="carry grades forward from this eval file and judge only unseen "
+             "pairs. Keeps published figures comparable and is far cheaper; "
+             "pass /dev/null to re-judge everything.")
+    ap.add_argument("--no-keep-judged", dest="keep_judged", action="store_false",
+                    help="let records drop out of the pool when no current lane "
+                         "retrieves them. Shrinks the denominator every "
+                         "published figure was measured against - only pass it "
+                         "to build a pool from scratch.")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="pool, report what is new and what it would cost, and "
+                         "stop before spending anything")
     ap.add_argument("--per-lane", type=int, default=POOL_PER_LANE)
     ap.add_argument("--model", default=JUDGE_MODEL)
     args = ap.parse_args()
@@ -230,42 +387,95 @@ def main() -> int:
         args.corpus.read_text(encoding="utf-8"))["documents"]}
     print(f"{len(queries)} queries · {len(corpus)} records · pooling top-{args.per_lane} per lane\n")
 
-    if args.lane:
-        lanes = []
-        for spec in args.lane:
-            label, rest = spec.split("=", 1)
-            rest, model = rest.rsplit("@", 1) if "@" in rest else (rest, None)
-            path, mode = rest.rsplit(":", 1)
-            lanes.append((label, path, mode, model))
-    else:
+    lanes = []
+    for spec in args.lane or []:
+        label, rest = spec.split("=", 1)
+        rest, model = rest.rsplit("@", 1) if "@" in rest else (rest, None)
+        path, mode = rest.rsplit(":", 1)
+        lanes.append({"kind": "index", "label": label, "path": path,
+                      "mode": mode, "model": model})
+    for spec in args.lane_file or []:
+        label, path = spec.split("=", 1)
+        lanes.append({"kind": "file", "label": label, "path": path})
+    if not lanes and not args.keep_judged:
         lanes = [
-            ("keyword", ".bettersearch/real", "keyword", None),
-            ("semantic-thin", ".bettersearch/real", "semantic", None),
-            ("semantic-enriched", ".bettersearch/real-enriched", "semantic", None),
+            {"kind": "index", "label": "keyword", "path": ".bettersearch/real",
+             "mode": "keyword", "model": None},
+            {"kind": "index", "label": "semantic-thin", "path": ".bettersearch/real",
+             "mode": "semantic", "model": None},
+            {"kind": "index", "label": "semantic-enriched",
+             "path": ".bettersearch/real-enriched", "mode": "semantic", "model": None},
         ]
-    print("lanes pooled: " + ", ".join(
-        f"{l}({m}{'' if not mdl else ', ' + mdl.rsplit('/', 1)[-1]})"
-        for l, _, m, mdl in lanes))
+    print("lanes pooled: " + (", ".join(
+        l["label"] + ("(file)" if l["kind"] == "file" else
+                      f"({l['mode']}" + ("" if not l["model"]
+                                         else ", " + l["model"].rsplit("/", 1)[-1]) + ")")
+        for l in lanes) or "none this run - the pool is what has already been judged"))
 
     built = build_pools(lanes, queries, per_lane=args.per_lane)
     pools = built["pools"]
     sizes = sorted(built["sizes"])
-    print(f"pool size: min {sizes[0]} median {sizes[len(sizes)//2]} max {sizes[-1]}")
-    print("records only one lane found (these would be lost if it were "
-          "left out of the pool):")
-    for label, n in built["unique_to"].items():
-        print(f"   {label:<20} {n}")
+    if lanes:
+        print(f"pool size: min {sizes[0]} median {sizes[len(sizes)//2]} max {sizes[-1]}")
+    if len(lanes) > 1:
+        print("records only one lane found (these would be lost if it were "
+              "left out of the pool):")
+        for label, n in built["unique_to"].items():
+            print(f"   {label:<20} {n}")
 
-    pairs = []
-    for qi, item in enumerate(queries):
-        for doc_id in pools[item["query"]]:
-            record = corpus[doc_id]
-            text = f"{record['title']}\n{record['text']}"
-            pairs.append((f"q{qi}--{doc_id}", item["query"], text))
-    print(f"\n{len(pairs)} judgements to make\n")
+    for label, n in built["missing_from_file"].items():
+        if n:
+            print(f"   ! {label}: no ranking for {n} quer{'y' if n == 1 else 'ies'} "
+                  f"- the pool is thinner there")
 
-    result = judge_pairs(pairs, model=args.model)
-    grades = result["grades"]
+    reuse = load_reuse(args.reuse, args.judgements_out) if args.reuse else {}
+    inherited, prior_consistency = [], None
+    if reuse and args.keep_judged:
+        restored = keep_judged(pools, queries, reuse)
+        prior = json.loads(args.reuse.read_text(encoding="utf-8"))
+        prior_consistency = prior.get("judge_self_consistency")
+        inherited = [l for l in prior.get("lanes_pooled") or []
+                     if l not in {x["label"] for x in lanes}]
+        sizes = sorted(len(pools[q["query"]]) for q in queries)
+        print(f"kept {len(reuse)} judged records in the pool "
+              f"({restored} no current lane retrieved) · "
+              f"pool size now min {sizes[0]} median {sizes[len(sizes)//2]} "
+              f"max {sizes[-1]}")
+        if inherited:
+            print("   inherited pool support from: " + ", ".join(inherited))
+        # The number that says whether a lane was worth pooling. `unique_to`
+        # compares a lane against the *other lanes in this run*, so a single new
+        # lane is trivially unique in all of it - 820 of 820, which reads like
+        # new information and is not. Against what has already been judged, only
+        # a fraction is genuinely unseen.
+        for label, got in built["retrieved"].items():
+            unseen = len(got - set(reuse))
+            print(f"   {label}: {unseen} of {len(got)} retrieved pairs were "
+                  f"never judged" + ("" if unseen else
+                  " - this lane adds nothing the pool has not already seen"))
+
+    pairs, grades = split_pairs(queries, pools, corpus, reuse)
+    carried = len(grades)
+
+    # An estimate, not a quote: the real figure is printed from the API's own
+    # usage after the batch. Judging is small - a cached rubric, a one-line
+    # record, a two-field answer - so this is pounds-and-pence territory and the
+    # point of printing it is to show that, not to budget against it.
+    est = len(pairs) * ((50 + 400 * 0.1) * 1.0 + 40 * 5.0) / 1e6 * 0.5
+    print(f"\n{carried} grades carried forward · {len(pairs)} new to judge "
+          f"· estimated ${est:.2f} at {args.model} batch rates")
+    if not pairs:
+        print("  nothing new in the pool - the lanes add no records this eval "
+              "has not already seen")
+    if args.dry_run:
+        print("\n--dry-run: stopping before spending anything")
+        return 0
+
+    result = {"grades": {}, "failed": [], "batch_id": None,
+              "usage": {"in": 0, "out": 0, "cw": 0, "cr": 0}}
+    if pairs:
+        result = judge_pairs(pairs, model=args.model)
+        grades.update(result["grades"])
     if result["failed"]:
         print(f"  ! {len(result['failed'])} judgements failed", file=sys.stderr)
 
@@ -278,6 +488,8 @@ def main() -> int:
     # ---- validate the judge before anyone believes it ----------------------
     consistency = None
     if args.validate and len(pairs) > args.validate:
+        # Only pairs judged in this run - re-judging a carried-forward grade
+        # would measure consistency across runs, which is a different number.
         rng = random.Random(7)
         sample = rng.sample([p for p in pairs if f"{p[0]}" in grades], args.validate)
         recheck = judge_pairs([(k + "--recheck", q, r) for k, q, r in sample],
@@ -317,7 +529,10 @@ def main() -> int:
             f"Relevance judgements over {len(corpus)} real Open Library records. "
             f"Pooled top-{args.per_lane} from each retrieval lane, judged by "
             f"{args.model} blind to which lane retrieved each record. "
-            f"relevant_doc_ids uses grade >= {STRICT_GRADE} (clearly relevant); "
+            + (f"The pool is cumulative: {len(reuse)} records judged for earlier "
+               f"lanes are retained, so adding a lane can only widen it. " if inherited
+               else "")
+            + f"relevant_doc_ids uses grade >= {STRICT_GRADE} (clearly relevant); "
             "per-document grades are kept in `grades`."
         ),
         "caveat": (
@@ -327,8 +542,19 @@ def main() -> int:
             "drafted by the system's author and edited by the reviewer."
         ),
         "judge_model": args.model,
+        # Measured on pairs judged in *this* run, so a run that added few pairs
+        # measures it on few and a run that added none cannot measure it at all.
+        # The previous run's figure is kept beside it rather than overwritten:
+        # most grades in this file were made under that measurement, and
+        # dropping it would leave the file with no stated judge reliability.
         "judge_self_consistency": consistency,
-        "lanes_pooled": [l for l, *_ in lanes],
+        "judge_self_consistency_prior": prior_consistency,
+        # Every lane whose retrievals this pool contains - the ones run now,
+        # plus the ones whose contribution was inherited with the judgements.
+        # Dropping the inherited names would make the pool look narrower than
+        # it is and invite someone to re-judge what is already paid for.
+        "lanes_pooled": [l["label"] for l in lanes] + inherited,
+        "lanes_run": [l["label"] for l in lanes],
         "pool_per_lane": args.per_lane,
         "strict_grade": STRICT_GRADE,
         "queries": out_queries,
@@ -355,14 +581,23 @@ def main() -> int:
             print(f"   {q!r}")
     # ---- 50 pairs for a person to check by eye -----------------------------
     rng = random.Random(11)
+    # Sampled from pairs judged in *this* run. Carried-forward grades were
+    # eyeballed when they were made; re-presenting them would pad the file with
+    # work already reviewed and hide whatever the new lane actually brought in.
     by_key = {k: (q, r) for k, q, r in pairs}
-    sample = rng.sample(sorted(grades), min(50, len(grades)))
+    judged_now = sorted(k for k in by_key if k in grades)
+    sample = rng.sample(judged_now, min(50, len(judged_now)))
     lines = ["# Judge spot check", "",
              f"50 random judgements from `{args.model}`, for you to sanity-check by eye.",
              "The question is not whether you agree with every one - it is whether the",
              "judge is reading **intent** or just matching words. If it is grading a",
              "thriller as relevant to \"something gentle to read before bed\" because the",
              "record says \"night\", the eval is not measuring what we think it is.", ""]
+    if not judged_now:
+        lines = ["# Judge spot check", "",
+                 "Nothing new was judged in this run - every pair in the pool "
+                 "already had a grade, carried forward. The previous spot check "
+                 "still describes the judgements in use."]
     if consistency is not None:
         lines += [f"Measured self-consistency on a re-judged sample: **{consistency:.0%}** "
                   f"identical.", ""]

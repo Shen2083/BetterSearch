@@ -121,6 +121,79 @@ dimensions happen to agree, silently scores one index with another's vectors.
 lane found — if a new lane contributes none, it is not adding information and
 the pool did not need it.
 
+#### Pooling an arm that is not an index and a mode
+
+A reranked lane is a retrieval plus a cross-encoder plus a depth, so there is no
+index path that expresses it. Give it as precomputed rankings instead —
+`{query: [doc_id, ...]}`, the shape `tune_reranking.py --dump` writes and
+`score_rankings.py` reads:
+
+```bash
+python scripts/build_eval_set.py --per-lane 20 \
+    --lane-file "rerank-bge-200=data/rankings/rerank-bge-200.json" \
+    --lane-file "rerank-bge-200-promoted=data/rankings/rerank-bge-200-promoted.json"
+```
+
+Those two files are committed, because the judgements are only auditable if the
+pool they were made over can be reconstructed — and a reranked lane has no index
+path that re-derives it. `data/rankings/README.md` says what each arm is and how
+to regenerate the full depth-200 dump (about 25 minutes of CPU, no network, no
+key):
+
+```bash
+python scripts/tune_reranking.py --depths 200 --rerankers bge --dump /tmp/lane200
+```
+
+The dump is depth-long; `--per-lane` cuts it to the top K, in rank order. Any
+future system — a Vespa ranking profile included — becomes poolable by dumping
+its rankings in that shape, with no code change here.
+
+**Expected** on the two lanes above: `399 new to judge`, about **$0.06** at
+Haiku 4.5 batch rates, against 1,979 grades carried forward. The per-lane line
+reads `399 of 820 retrieved pairs were never judged` — that, not `unique_to`, is
+the number that says whether a lane was worth pooling.
+
+#### The pool only ever grows
+
+`--reuse` (on by default, pointing at `data/eval_real.json`) carries existing
+grades forward and judges only pairs no judge has seen, which is both cheaper
+and the only way published figures stay comparable. Two things it does that are
+worth understanding before you trust a re-pooled number.
+
+**Reuse is keyed on the query's text, not its position.** The judgements file
+keys grades `q{index}--{doc_id}`. Re-pooling invites editing the query list, and
+if reuse read those keys, inserting one query would shift every index after it
+and silently attach grades to the wrong queries. The ground truth would be
+corrupt and nothing would look wrong.
+
+**Records already judged stay in the pool even if no current lane retrieves
+them** (`--no-keep-judged` turns this off, and you almost certainly do not want
+to). Without it, a record the old lanes found and the new ones miss would drop
+out of `relevant_doc_ids`, shrinking the denominator every published figure was
+measured against — so every arm would appear to improve while nothing had. A
+judgement is paid for and permanent.
+
+A useful consequence: the lanes that built the previous pool do **not** have to
+still exist on disk to keep contributing to it. `lanes_pooled` lists them
+alongside this run's lanes, and `lanes_run` lists only the ones actually
+executed. So the command above is reproducible even though `.bettersearch/real`,
+`real-enriched` and `real-bge` are gitignored and do not survive a fresh clone.
+
+To check reuse is wired up correctly, run it with no lanes at all:
+
+```bash
+python scripts/build_eval_set.py --validate 0 --out /tmp/inert.json
+```
+
+**Expected**: `1979 grades carried forward · 0 new to judge`, and `/tmp/inert.json`
+identical to `data/eval_real.json` on every query's `relevant_doc_ids`, `grades`
+and `note`. Only `judge_self_consistency` (null, since no judge ran),
+`lanes_run` (empty) and one sentence of `description` may differ. If anything
+else moves, reuse is mismatching keys and no number downstream can be trusted.
+
+Add `--dry-run` to any of these to pool, report how many pairs are genuinely new
+and what judging them would cost, and stop before spending anything.
+
 ### The tests
 
 ```bash

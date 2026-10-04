@@ -1036,6 +1036,53 @@ goes *up* rather than down, because the queries it rescues were the ones being
 broken. A component measured as worthless becomes valuable the moment something
 upstream is strong enough to be unpredictable.
 
+### Going deeper: the shape is right and the eval cannot see it
+
+"Retrieve wide, rank deep" is what Vespa's phased ranking exists for, and it is
+the natural next move, because the pool we already fetch holds far more of the
+good records than the page we show:
+
+| retrieval depth | recall of judged-relevant | missed |
+|---|---|---|
+| 10 | 0.438 | 420 |
+| **20 — what we display** | **0.672** | **259** |
+| 50 | 0.831 | 135 |
+| **200 — the pool** | **0.954** | 48 |
+
+259 judged-relevant records are retrieved and thrown away on every run. So the
+reranker was given the full pool instead of the top 20. Read naively, the result
+kills the idea:
+
+| rerank depth | 20 | 50 | 100 | 200 |
+|---|---|---|---|---|
+| recall@10 vs baseline | **+0.079** | +0.029 | −0.007 | **−0.062** |
+| judged coverage | 100% | 76.3% | 65.6% | **59.5%** |
+| ms/query (CPU) | 2,560 | 5,433 | 10,405 | 19,166 |
+
+**That reading is wrong, and the coverage column is why.** Re-run with
+`--judged-only`, which keeps only candidates a judge actually saw and pins
+coverage at 100% at every depth:
+
+| rerank depth | 20 | 50 | 100 | 200 |
+|---|---|---|---|---|
+| recall@10 vs baseline | +0.079 | +0.072 | **+0.091** | +0.087 |
+
+**The reranker does not degrade with depth at all.** It holds +0.07 to +0.09
+throughout, and is strongest at 100. The collapse is entirely the pooling
+penalty: reranking 200 candidates promotes records no judge ever saw, and every
+one of them scores zero however good it is.
+
+I proposed this sweep claiming recall@10 was pooling-safe because its
+denominator is fixed. That was wrong — the *numerator* is not safe, since an
+unjudged record entering the top 10 displaces a judged-relevant one. The
+`--judged-only` run is what proved it, and the script now says so where the
+claim was made.
+
+So the shape is right, the gain is real at every depth, and **this eval cannot
+measure it past 20**. The blocker is the judgements, not the engineering — the
+third time that has been true in this project. Rebuilding the pool with a
+reranked lane in it is the next step, and nothing cheaper substitutes for it.
+
 **What is not claimed.** The best arm captures 29% of the headroom; 0.19 of
 nDCG is still on the table and unexplained. `bge-reranker-base` costs 2.4
 seconds per query on CPU for 20 candidates — unusable without ONNX or a GPU,
