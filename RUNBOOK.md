@@ -129,14 +129,29 @@ index path that expresses it. Give it as precomputed rankings instead —
 `score_rankings.py` reads:
 
 ```bash
-python scripts/tune_reranking.py --depths 200 --rerankers bge --dump /tmp/lane200
 python scripts/build_eval_set.py --per-lane 20 \
-    --lane-file "rerank-bge-200=/tmp/lane200/d200-...-enriched-records.json"
+    --lane-file "rerank-bge-200=data/rankings/rerank-bge-200.json" \
+    --lane-file "rerank-bge-200-promoted=data/rankings/rerank-bge-200-promoted.json"
+```
+
+Those two files are committed, because the judgements are only auditable if the
+pool they were made over can be reconstructed — and a reranked lane has no index
+path that re-derives it. `data/rankings/README.md` says what each arm is and how
+to regenerate the full depth-200 dump (about 25 minutes of CPU, no network, no
+key):
+
+```bash
+python scripts/tune_reranking.py --depths 200 --rerankers bge --dump /tmp/lane200
 ```
 
 The dump is depth-long; `--per-lane` cuts it to the top K, in rank order. Any
 future system — a Vespa ranking profile included — becomes poolable by dumping
 its rankings in that shape, with no code change here.
+
+**Expected** on the two lanes above: `399 new to judge`, about **$0.06** at
+Haiku 4.5 batch rates, against 1,979 grades carried forward. The per-lane line
+reads `399 of 820 retrieved pairs were never judged` — that, not `unique_to`, is
+the number that says whether a lane was worth pooling.
 
 #### The pool only ever grows
 
