@@ -22,7 +22,7 @@ from bettersearch import Searcher, load_settings
 from bettersearch.search import MODES
 from bettersearch.types import EmptyIndexError, ModelMismatchError
 
-from .catalogue import load_catalogue, load_meta, run_search
+from .catalogue import RERANK_MODEL, load_catalogue, load_meta, run_search, warm_reranker
 
 WEB_DIR = Path(__file__).resolve().parent.parent / "web"
 
@@ -37,6 +37,19 @@ _settings = load_settings()
 _searcher = Searcher(settings=_settings)
 # Display metadata for the catalogue demo. Read once; the library never sees it.
 _catalogue = load_catalogue()
+
+# The reranker, warmed here for the same reason - and it is not a small
+# difference. `api/catalogue.py` builds it lazily so the test suite can import
+# that module without a model, which is right; but left to load on the first
+# search it cost a measured **85 seconds** on a container with the weights
+# already cached. That is a Hub round-trip plus construction, not a download,
+# so pre-fetching at build time does not avoid it: somebody has to be first,
+# and without this it is a reader.
+#
+# Costs the same time at boot instead, before the health check passes and
+# before any traffic arrives.
+if RERANK_MODEL:
+    warm_reranker(_catalogue)
 
 
 class SearchRequest(BaseModel):

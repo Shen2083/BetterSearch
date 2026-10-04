@@ -38,6 +38,28 @@ arguments is the one that gets run.
 A near-identical top 20 with a little churn at the bottom is the expected
 result. Wholesale disagreement means something is actually wrong - most likely
 the page and the index no longer share a model.
+
+WHAT THIS DELIBERATELY DOES NOT COMPARE
+---------------------------------------
+**The service reranks; the page cannot.** A cross-encoder reorders the
+retrieved candidates before they are shown, worth nDCG@10 0.6582 -> 0.7280, and
+it is the one part of the server the standalone build cannot reproduce: a
+second model plus one inference per candidate does not fit in a file meant to
+open from an email, which is already ~7 MB against an 8 MB ceiling.
+
+So this script runs the Python side with `BETTERSEARCH_RERANK=""` and compares
+the two **retrieval** layers - which is exactly what the page reimplements, and
+the only thing it could ever agree with. Leaving reranking on would fail every
+query for a reason that is not a bug, and a check that cries wolf gets deleted.
+
+That makes the page knowingly the weaker of the two, and the README says so
+rather than leaving a reader to discover it. The failure being avoided is the
+one this project already had: the page ran `bge-small` while the server ran
+`bge-base`, this script was configured to match the page rather than the
+server, and it stayed green while the demo and the live service disagreed on
+most queries. The difference now is that the divergence is stated, bounded to
+one ranking phase, and the thing being compared is still a real implementation
+of the same algorithm.
 """
 
 from __future__ import annotations
@@ -64,6 +86,9 @@ def server_rankings(queries: list[str], catalogue_paths: str, index: str,
     os.environ["BETTERSEARCH_CATALOGUE"] = catalogue_paths
     os.environ["BETTERSEARCH_INDEX_PATH"] = index
     os.environ["BETTERSEARCH_LOCAL_MODEL"] = model
+    # Reranking off, deliberately - see WHAT THIS DELIBERATELY DOES NOT COMPARE.
+    # Set before the import, because api.catalogue reads it at module level.
+    os.environ["BETTERSEARCH_RERANK"] = ""
     from api.catalogue import load_catalogue, run_search
     from bettersearch import Searcher, load_settings
 

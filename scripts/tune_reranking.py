@@ -17,57 +17,76 @@ Reordering only the candidates we already fetch, with every relevant one moved
 to the top:
 
     depth   ours    oracle   headroom   judged coverage
-       10   0.6582  0.7347     +0.077      100%
-       20   0.6582  0.9207     +0.263      100%
-       50   0.6582  0.9710     +0.313       57%
-      100   0.6582  0.9857     +0.328       35%
+       20   0.6582  0.9124     +0.254      100%
+       50   0.6582  0.9703     +0.312     92.7%
+      100   0.6582  0.9850     +0.327     98.8%
+      200   0.6582  1.0000     +0.342      100%
 
 **The retrieval is fine; the ordering is the problem.** 161 records across the
 41 queries are judged relevant, retrieved, and sitting at ranks 11-20 - on page
-two. For scale, +0.26 is three times what the bge-base upgrade bought (+0.079)
-and three times what LLM enrichment bought (+0.092).
+two. For scale, +0.25 is three times what the bge-base upgrade bought (+0.079)
+and nearly three times what LLM enrichment bought (+0.092).
 
-WHAT THE DEPTH SWEEP SAID, AND THE TRAP IN IT
----------------------------------------------
-The shape "retrieve wide, rank deep" is what Vespa's phased ranking exists for,
-so it was swept. Read naively, the result kills it:
-
-    rerank depth      20       50      100      200
-    recall@10     +0.079   +0.029   -0.007   -0.062
-    coverage        100%    76.3%    65.6%    59.5%
-    ms/query       2,560    5,433   10,405   19,166
-
-But coverage falls with depth, and that is the whole explanation. Re-run with
-`--judged-only`, which keeps only candidates a judge actually saw and so pins
-coverage at 100% at every depth:
+WHAT THE DEPTH SWEEP SAYS
+-------------------------
+"Retrieve wide, rank deep" is what Vespa's phased ranking exists for, so it was
+swept. It does not work. The gain decays monotonically with depth:
 
     rerank depth      20       50      100      200
-    recall@10     +0.079   +0.072   +0.091   +0.087
+    recall@10     +0.066   +0.047   +0.035   +0.010
+    coverage        100%    92.7%    98.8%     100%
+    ms/query       2,809    5,548   10,093   19,937
 
-**The reranker does not degrade with depth at all.** It holds +0.07 to +0.09
-throughout and is strongest at 100. The collapse above is the pooling penalty:
-reranking 200 promotes records no judge ever saw, and every one of them scores
-zero however good it is.
+Seven times the latency for a seventh of the gain. **Rerank the twenty you
+display, and stop there.** For a Vespa `rerank-count`, that is the number.
 
-So the shape is right and this eval cannot see it. The blocker is the
-judgements, not the engineering - the third time that has been true here. Until
-the pool is rebuilt with a reranked lane in it, the only honestly measurable
-setting is depth 20, where every candidate is judged.
+IT TOOK TWO WRONG ANSWERS TO GET THERE
+--------------------------------------
+Earlier versions of this docstring published both of them, so they are kept
+here rather than quietly deleted - the way they were wrong is the transferable
+part.
 
-WHY DEPTH 20 NEEDS NO RE-POOLING
---------------------------------
-Every other idea measured in this project had to fight the pooling bias: a new
-retriever finds records no judge ever saw, unjudged counts as irrelevant, and a
-better system can score worse. That nearly got bge-base rejected and did kill
-title weighting.
+**First wrong answer.** Pooled from four lanes, the sweep read `+0.079 / +0.029
+/ -0.007 / -0.062` with coverage falling to 59.5%. That is the pooling penalty:
+reranking 200 candidates promotes records no judge ever saw, and every one
+scores zero however good it is.
 
-**Reranking does not change the candidate set.** The same twenty records come
-back in a different order, so judged coverage stays at 100% by construction -
-and the script asserts that rather than trusting it. This is the first change
-here whose number means something without re-judging first.
+**Second wrong answer, and the larger error.** Re-run with `--judged-only`,
+which discards unjudged candidates and pins coverage at 100%, it read `+0.079 /
++0.072 / +0.091 / +0.087` - apparently no decay at all, strongest at 100. That
+was written up as the true shape the eval could not see. It was not. What
+`--judged-only` discards is precisely the junk the reranker promoted and nobody
+graded, so the arm is scored only on candidates where it was already known to
+be doing well. It flattered the reranker roughly ninefold at depth 200:
+`+0.087` against a judged truth of `+0.010`.
 
-Depth stays at 20 for the same reason. At 50 coverage is 57%, so that region
-cannot be measured on this eval and no figure from it is quoted.
+**Neither estimator is safe; only judgements are.** The fix was to pay for them.
+`data/rankings/` holds the depth-200 reranked lane, plain and
+exact-match-promoted; both were pooled and the 399 records they surfaced that no
+judge had seen were graded for $0.06. 81 came back relevant, coverage at depth
+200 went 59.5% -> 100%, and the number stopped moving.
+
+So: a coverage *correction* is not the same as having the judgements. If you
+reach for `--judged-only` to compare arms, read it as an upper bound on the arm
+that surfaced the unjudged records, never as the answer.
+
+WHY RECALL@10 IS THE HEADLINE
+-----------------------------
+nDCG@10 is barely sensitive to any of this, which is a trap of its own: 28 of
+the 41 queries already have ten or more relevant records, so `IDCG@10` is
+saturated and growing the pool cannot move the metric. Every nDCG figure in this
+project survived re-pooling unchanged for that reason - including the ones that
+*should* have moved.
+
+recall@10 of judged-relevant records has no such protection, because its
+denominator is every relevant record. It is the metric that noticed.
+
+But it is not pooling-safe either, and this script once claimed it was. The
+denominator is fixed; the **numerator** is not, since an unjudged record
+entering the top 10 displaces a judged-relevant one. Coverage is therefore
+reported beside every arm, and it is reported rather than asserted at depths
+past 20 because a reranker there genuinely can reach records the pooled lanes
+missed.
 
 WHAT WOULD MAKE THIS A LIE
 --------------------------
@@ -97,6 +116,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from bettersearch.evaluate import ndcg_at_k, recall_at_k, reciprocal_rank
 from bettersearch.keyword import BM25Index
+# The same rendering of a record the service reranks. Shared on purpose:
+# if the measurement scored one shape of a record and api/catalogue.py
+# reranked another, the figures here would describe nothing anyone runs.
+from bettersearch.rerank import load_enriched as enriched_text
 from bettersearch.types import Chunk
 
 DEPTH = 20
@@ -111,27 +134,6 @@ RERANKERS = {
 }
 
 
-def enriched_text(path: Path, titles: dict[str, str]) -> dict[str, str]:
-    """The record as prose, from the enrichment store.
-
-    Same shape `Enrichment.embed_text` builds for indexing. Reranking reads it
-    at query time rather than embedding it, so this needs no re-ingest.
-    """
-    out: dict[str, str] = {}
-    for line in path.read_text(encoding="utf-8").splitlines():
-        if not line.strip():
-            continue
-        e = json.loads(line)
-        out[e["item_id"]] = "\n".join(filter(None, [
-            titles.get(e["item_id"], ""),
-            " ".join(e.get("questions") or []),
-            e.get("synopsis") or "",
-            "Topics: " + ", ".join(e.get("topics") or []),
-            "Related: " + ", ".join(e.get("entities") or []),
-        ]))
-    return out
-
-
 def load_index(path: Path):
     meta = json.loads(path.with_suffix(".json").read_text(encoding="utf-8"))
     vectors = np.load(path.with_suffix(".npz"))["vectors"].astype(np.float32)
@@ -142,12 +144,18 @@ def load_index(path: Path):
 def candidates(chunks, vectors, queries, provider, depth, judged_only=False):
     """The top `depth` per query, once. Every arm reorders exactly this.
 
-    `judged_only` drops candidates no judge ever saw. That makes the pool
-    unrepresentative of what a real system returns - but it pins judged coverage
-    at 100% at every depth, which is the only way to ask whether a reranker gets
-    worse with more candidates *separately* from whether it is being punished
-    for finding records the pool missed. Those two are otherwise confounded, and
-    they point opposite ways.
+    `judged_only` drops candidates no judge ever saw, pinning judged coverage at
+    100% at every depth. It was added to separate "does a reranker get worse
+    with more candidates" from "is it punished for finding records the pool
+    missed", which are otherwise confounded and point opposite ways.
+
+    **It is a biased estimator, not a correction, and it over-reads the
+    reranker.** What it discards is precisely the candidates the reranker
+    promoted and nobody graded, so the arm is scored only where it was already
+    known to be doing well. Measured against judgements that were then paid for,
+    it overstated the gain at depth 200 roughly ninefold - +0.087 against
+    +0.010. Treat it as an upper bound on whichever arm surfaced the unjudged
+    records, and when the answer matters, pool that arm and judge it instead.
     """
     out = []
     for item in queries:
@@ -198,8 +206,9 @@ def measure(cands, order_fn, *, name: str) -> dict:
             # a judge saw - but the numerator is not safe: an unjudged record
             # promoted into the top 10 displaces a judged-relevant one and
             # recall falls, however good the newcomer was. I claimed this metric
-            # was pooling-safe when proposing the sweep. It is not, and
-            # --judged-only is what proved it.
+            # was pooling-safe when proposing the sweep. It is not - and
+            # --judged-only, which seemed to prove it, was itself biased the
+            # other way. Only judging the candidates settled it.
             "recall@10": recall_at_k(ranked, c["relevant"], 10),
             "mrr@10": reciprocal_rank(ranked, c["relevant"], 10),
             "coverage": sum(1 for d in ranked[:10] if d in c["graded"]) / 10,
@@ -258,7 +267,9 @@ def main() -> int:
                     help="records as prose; reranking reads it, so no re-ingest")
     ap.add_argument("--judged-only", action="store_true",
                     help="keep only judged candidates, pinning coverage at "
-                         "100% so depth and pooling bias separate")
+                         "100%. Separates depth from pooling bias, but is "
+                         "itself biased towards whichever arm found the "
+                         "unjudged records - read it as an upper bound")
     ap.add_argument("--show", type=int, default=8)
     ap.add_argument("--dump", help="write each arm's rankings here, for score_rankings.py")
     args = ap.parse_args()
@@ -386,7 +397,9 @@ def main() -> int:
     print("Comparable ONLY between arms whose judged coverage is 100%. The")
     print("denominator is fixed, but an unjudged record promoted into the top 10")
     print("displaces a judged-relevant one, so a system that finds something the")
-    print("pool missed is penalised for it. Use --judged-only to remove that.")
+    print("pool missed is penalised for it. --judged-only does NOT fix that; it")
+    print("reverses the bias. Pool the arm and judge what it found instead:")
+    print("build_eval_set.py --lane-file, which judges only what is new.")
     print(f"{'=' * 96}\n")
     names = []
     for arms in everything.values():

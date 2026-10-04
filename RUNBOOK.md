@@ -117,7 +117,7 @@ lane shares the configured default and the mismatch either raises or, if the
 dimensions happen to agree, silently scores one index with another's vectors.
 `scripts/compare_arms.py` takes the same suffix.
 
-**Expected**: roughly 1,979 judgements, each lane contributing records no other
+**Expected**: roughly 2,378 judgements, each lane contributing records no other
 lane found — if a new lane contributes none, it is not adding information and
 the pool did not need it.
 
@@ -149,7 +149,9 @@ future system — a Vespa ranking profile included — becomes poolable by dumpi
 its rankings in that shape, with no code change here.
 
 **Expected** on the two lanes above: `399 new to judge`, about **$0.06** at
-Haiku 4.5 batch rates, against 1,979 grades carried forward. The per-lane line
+Haiku 4.5 batch rates, against 1,979 grades carried forward (that run has since
+been made, so a repeat carries 2,378 forward and finds nothing new). The
+per-lane line
 reads `399 of 820 retrieved pairs were never judged` — that, not `unique_to`, is
 the number that says whether a lane was worth pooling.
 
@@ -185,7 +187,7 @@ To check reuse is wired up correctly, run it with no lanes at all:
 python scripts/build_eval_set.py --validate 0 --out /tmp/inert.json
 ```
 
-**Expected**: `1979 grades carried forward · 0 new to judge`, and `/tmp/inert.json`
+**Expected**: `2378 grades carried forward · 0 new to judge`, and `/tmp/inert.json`
 identical to `data/eval_real.json` on every query's `relevant_doc_ids`, `grades`
 and `note`. Only `judge_self_consistency` (null, since no judge ran),
 `lanes_run` (empty) and one sentence of `description` may differ. If anything
@@ -464,10 +466,19 @@ The two approach documents are written as HTML and rendered directly.
 converted from their markdown — **rebuild them after any substantive edit**, because nothing forces it and a
 stale PDF is not visible in a diff.
 
-`docs/ARCHITECTURE.md` draws its diagrams from `docs/architecture/*.svg` rather
-than from Mermaid, because markdown-it has no Mermaid plugin here and would
-print a fenced ```mermaid block as its own source. A relative image works in
-both targets: GitHub renders it, and Chromium resolves it against the
+**Mermaid renders.** A fenced ```mermaid block is drawn to SVG inside the print
+browser, so README keeps its diagrams as diffable text and still produces a
+clean PDF. The library is pinned and cached in `.cache/` on first use, so only
+the first build needs the network — and a document with no diagram fetches
+nothing at all. If a diagram fails to parse the build **fails** rather than
+printing its source: that failure mode is invisible in a PDF, which is how
+`docs/README.pdf` sat stale for over a week.
+
+`docs/ARCHITECTURE.md` still draws from `docs/architecture/*.svg` rather than
+Mermaid. That was originally forced — there was no Mermaid support — and is now
+a choice: those three diagrams are hand-laid-out, and Mermaid's automatic layout
+does not reproduce them. New diagrams should prefer Mermaid. A relative image
+works in both targets: GitHub renders it, and Chromium resolves it against the
 intermediate HTML, which is written beside the markdown. Use `--keep-html` to inspect the generated HTML in a browser
 while changing the print stylesheet, which lives in `scripts/render_pdf.py`.
 

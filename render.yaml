@@ -29,6 +29,10 @@ services:
       pip install torch --index-url https://download.pytorch.org/whl/cpu
       pip install -e ".[local,api]"
       bettersearch ingest --corpus data/corpus_seed.json
+      # Fetch the reranker now, for the same reason ingest runs here: a model
+      # downloaded on the first search makes one unlucky reader wait for it.
+      # Skipped cleanly if reranking is turned off for this service.
+      python -c "import os;m=os.environ.get('BETTERSEARCH_RERANK','cross-encoder/ms-marco-MiniLM-L-6-v2').strip();m and __import__('sentence_transformers').CrossEncoder(m)"
     startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
@@ -41,6 +45,20 @@ services:
       # waiting on a HuggingFace download.
       - key: HF_HOME
         value: /opt/render/project/.cache/huggingface
+      # Reranking reorders the retrieved candidates with a cross-encoder, worth
+      # nDCG@10 0.6582 -> 0.7280 on the judged corpus. It is ON by default in
+      # api/catalogue.py; set this to an empty string to turn it off.
+      #
+      # **It only runs where the records have prose to read.** A cross-encoder
+      # on a bare catalogue record is measured at +0.005 - a 24-word stub gives
+      # a passage model nothing to read - so records absent from the enrichment
+      # store keep their retrieval position. The stores are paired:
+      # corpus_seed.json with enrichment_seed.jsonl, catalogue_real.json with
+      # enrichment_real_haiku.jsonl, and catalogue_library.json has none. A
+      # mismatch is not an error; the service logs that reranking is inert and
+      # carries on.
+      - key: BETTERSEARCH_ENRICHMENT
+        value: data/enrichment_seed.jsonl
 
 # ---------------------------------------------------------------------------
 # Alternative: API embeddings. ~32MB resident, fits the free tier, costs pennies
