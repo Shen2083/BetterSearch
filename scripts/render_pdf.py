@@ -28,6 +28,15 @@ from pathlib import Path
 
 CHROMIUM = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
 
+#: Mermaid renders ```mermaid fences into SVG inside the print browser, so a
+#: markdown file can keep the diagram as diffable text and still produce a PDF.
+#: Pinned rather than floating on @11: a diagram that silently re-lays-out when
+#: the CDN publishes a minor version would change committed PDFs for no reason
+#: anyone could trace. Cached on first use so later builds need no network.
+MERMAID_VERSION = "11.4.1"
+MERMAID_URL = f"https://cdn.jsdelivr.net/npm/mermaid@{MERMAID_VERSION}/dist/mermaid.min.js"
+MERMAID_CACHE = Path(__file__).resolve().parent.parent / ".cache" / f"mermaid-{MERMAID_VERSION}.js"
+
 #: Relative links are dead in a PDF that gets emailed to someone, so they are
 #: rewritten to point at the repository.
 REPO_BLOB = "https://github.com/Shen2083/BetterSearch/blob/main/"
@@ -104,6 +113,21 @@ img {
   border: 1px solid var(--rule);
   break-inside: avoid; page-break-inside: avoid;
 }
+
+/* A rendered Mermaid diagram. `img`'s width:100% must not apply - Mermaid emits
+   an inline <svg> whose intrinsic aspect ratio is its own, and stretching it to
+   the text column distorts tall flowcharts badly. max-width keeps a wide one
+   inside the margins and leaves a narrow one at its natural size. The pre
+   itself loses the code-block chrome: by print time it holds a drawing. */
+pre.mermaid {
+  background: none; border: none; padding: 0; margin: 12pt 0;
+  text-align: center; white-space: normal;
+  break-inside: avoid; page-break-inside: avoid;
+}
+pre.mermaid svg {
+  display: block; margin: 0 auto;
+  max-width: 100%; height: auto;
+}
 """
 
 FOOTER_TEMPLATE = (
@@ -155,8 +179,27 @@ def markdown_to_html(source: Path) -> str:
             token.attrSet("href", REPO_BLOB + href.lstrip("./"))
         return self.renderToken(tokens, idx, options, env)
 
+    # Captured before the rule below replaces it. `renderToken` is NOT a
+    # substitute: it emits only a token's opening tag, and a fence's content
+    # lives on the token itself, so delegating there renders every code block in
+    # the document as an empty <code>. The default rule is the only thing that
+    # knows how to build <pre><code class="language-x">…</code></pre>.
+    default_fence = md.renderer.rules["fence"]
+
+    def render_fence(self, tokens, idx, options, env):
+        token = tokens[idx]
+        # Only the bare info string, so ```mermaid and ```mermaid {theme=x}
+        # both match, and ```mermaidjs does not.
+        if (token.info or "").strip().split(None, 1)[:1] == ["mermaid"]:
+            # Escaped, not raw: diagram labels contain < and > and would
+            # otherwise close the <pre> and inject markup into the document.
+            # Mermaid reads textContent, which unescapes on parse.
+            return f'<pre class="mermaid">{_escape(token.content)}</pre>\n'
+        return default_fence(tokens, idx, options, env)
+
     md.add_render_rule("image", render_image)
     md.add_render_rule("link_open", render_link_open)
+    md.add_render_rule("fence", render_fence)
 
     body = md.render(source.read_text(encoding="utf-8"))
     # Dropping the badge leaves <p><a href="..."></a></p> behind.
@@ -166,6 +209,71 @@ def markdown_to_html(source: Path) -> str:
     if match := re.search(r"<h1[^>]*>(.*?)</h1>", body, re.S):
         title = re.sub(r"<[^>]+>", "", match.group(1)).strip() or title
     return HTML_SHELL.format(title=_escape(title), css=PRINT_CSS, body=body)
+
+
+def mermaid_script() -> str:
+    """The pinned Mermaid bundle, from the local cache or the CDN once.
+
+    Cached rather than vendored: 3.5 MB of minified JavaScript in the tree would
+    dominate every clone of a repository whose own source is a fraction of that,
+    and it is only needed by whoever rebuilds a PDF.
+    """
+    if MERMAID_CACHE.exists():
+        return MERMAID_CACHE.read_text(encoding="utf-8")
+
+    import urllib.request
+
+    print(f"fetching mermaid {MERMAID_VERSION} (once; cached in .cache/)")
+    try:
+        with urllib.request.urlopen(MERMAID_URL, timeout=60) as response:
+            body = response.read().decode("utf-8")
+    except Exception as exc:  # network, proxy, TLS - all the same to the caller
+        raise SystemExit(
+            f"could not fetch Mermaid from {MERMAID_URL}: {exc}\n"
+            "A document with a ```mermaid fence cannot be rendered without it. "
+            "Fetch it by hand to " + str(MERMAID_CACHE) + " if this box has no "
+            "route to the CDN."
+        ) from exc
+    MERMAID_CACHE.parent.mkdir(parents=True, exist_ok=True)
+    MERMAID_CACHE.write_text(body, encoding="utf-8")
+    return body
+
+
+async def draw_mermaid(page) -> int:
+    """Turn every `pre.mermaid` on the page into an SVG. Returns how many.
+
+    Returns 0 without touching the network when the document has no diagrams,
+    which is most of them.
+
+    Loud on failure by design. The reason docs/README.pdf sat stale for over a
+    week is that a fence that does not render looks like a code block, and a
+    code block in a PDF looks deliberate. A build that cannot draw a diagram
+    must fail instead of shipping its source.
+    """
+    count = await page.locator("pre.mermaid").count()
+    if not count:
+        return 0
+
+    await page.add_script_tag(content=mermaid_script())
+    await page.evaluate(
+        """async () => {
+            // startOnLoad is irrelevant - the script is injected after load, so
+            // run() is called explicitly. 'neutral' prints legibly on white;
+            // the default theme assumes a screen.
+            mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
+            await mermaid.run({ querySelector: 'pre.mermaid' });
+        }"""
+    )
+    # Mermaid replaces the element's content rather than the element, so the
+    # selector still matches; what proves success is an <svg> inside each one.
+    drawn = await page.locator("pre.mermaid svg").count()
+    if drawn != count:
+        raise SystemExit(
+            f"Mermaid rendered {drawn} of {count} diagrams. Refusing to write a "
+            "PDF with diagram source printed as a code block - fix the diagram, "
+            "or run with --keep-html and open the HTML to see the parse error."
+        )
+    return drawn
 
 
 def _escape(text: str) -> str:
@@ -185,7 +293,12 @@ async def render(source: Path, out: Path, *, page_numbers: bool = False) -> None
         browser = await p.chromium.launch(executable_path=CHROMIUM)
         page = await browser.new_page()
         await page.goto(source.resolve().as_uri(), wait_until="networkidle")
+        # Print media first, so Mermaid measures its label text against the
+        # fonts the PDF will actually use. Drawing before this would size every
+        # node against screen styles and leave the labels fitting badly.
         await page.emulate_media(media="print")
+        if drawn := await draw_mermaid(page):
+            print(f"  drew {drawn} mermaid diagram{'s' if drawn > 1 else ''}")
         extra = {}
         if page_numbers:
             extra = {

@@ -5,7 +5,7 @@
     python scripts/score_rankings.py ours.json vespa.json      # side by side
 
 The judgements in `data/eval_real.json` are the most expensive thing this
-project produced: 1,979 relevance labels over 41 queries, pooled from four
+project produced: 2,378 relevance labels over 41 queries, pooled from six
 retrieval lanes and judged blind. They describe *records*, not an index, so they
 outlive the engine that produced them. This script exists so a rebuild - in
 Vespa or anything else - can be held to the same bar rather than to a new one.

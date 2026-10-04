@@ -232,14 +232,15 @@ quantised to int8 with a per-vector scale, and base64'd into the file.
 
 ### Scripts — `scripts/`
 
-Eighteen standalone programs, none imported by anything.
+Twenty-two standalone programs, none imported by anything.
 
 | Group | Scripts | Purpose |
 |---|---|---|
-| Fetch and build data | `fetch_openlibrary`, `fetch_wikipedia`, `build_catalogue`, `build_events`, `synthesise_catalogue`, `build_eval_set` | assemble the corpora and the judged query set |
+| Fetch and build data | `fetch_openlibrary`, `fetch_wikipedia`, `build_catalogue`, `build_events`, `synthesise_catalogue`, `build_eval_set`, `rebuild_eval_indexes` | assemble the corpora, the judged query set, and the indexes the published arms were measured on |
 | Build artefacts | `build_standalone` | inline corpus, vectors and engine into one HTML file |
 | Check | `check_corpus`, `check_events`, `check_browser_parity`, `check_answerability`, `check_query_routing` | assert properties that tests cannot — corpus coverage, browser/Python agreement, whether a signal exists at all |
-| Tune | `tune_title_weight`, `tune_cutoff`, `tune_confidence_break`, `compare_arms` | sweeps that chose the constants above, and in several cases argued against shipping a change |
+| Tune | `tune_title_weight`, `tune_cutoff`, `tune_confidence_break`, `tune_reranking`, `compare_arms` | sweeps that chose the constants above, and in several cases argued against shipping a change |
+| Score and cost | `score_rankings`, `bound_repool_effect` | hold any engine to the same judgements, and bound what re-judging could change before paying for it |
 | Present | `render_pdf`, `capture_screenshots` | this PDF, and the README screenshots |
 
 ## 7. Data and persistence
@@ -330,7 +331,7 @@ the hosted embedding providers do.
 
 ## 10. Tests and CI
 
-`pytest -q`, five test files and a `conftest.py`, and the suite needs no model,
+`pytest -q`, nine test files and a `conftest.py`, and the suite needs no model,
 no network and no API key:
 `conftest.py` provides a `FakeEmbeddingProvider` that derives deterministic
 vectors from a SHA-256 hash. That is a deliberate limit — **these tests prove
@@ -344,6 +345,10 @@ the scripts in §6, against judged queries.
 | `test_retrieval.py` | tokenising, BM25 behaviour, fusion, the three metrics, mode dispatch, and that keyword mode never loads the embedding model |
 | `test_catalogue_api.py` | the largest file — paging, facets, filters, series collapsing, card fidelity, explanations, and exact-match promotion |
 | `test_enrichment.py` | caching, prompt-version invalidation, out-of-order batch matching, and that a dead poller does not lose a paid batch |
+| `test_score_rankings.py` | the engine-independent scorer — the arithmetic, and the ways a scorer can flatter a system by scoring fewer queries than asked or reporting confidently over records no judge saw |
+| `test_build_eval_set.py` | pooling a lane given as precomputed rankings, judgement reuse keyed on query *text* rather than index, and that the pool can only grow |
+| `test_bound_repool_effect.py` | the pre-spend bound on what re-pooling can change, including that assuming nothing new is relevant leaves today's figures exactly where they are |
+| `test_render_pdf.py` | the markdown-to-print conversion: Mermaid fences become drawings, every other fence keeps its content, and a document with no diagram fetches nothing |
 
 **CI** (`.github/workflows/ci.yml`) installs the dev extra and runs the suite on
 every push and every pull request, then greps `render.yaml` to assert the deploy

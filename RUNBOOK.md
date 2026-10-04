@@ -466,10 +466,19 @@ The two approach documents are written as HTML and rendered directly.
 converted from their markdown — **rebuild them after any substantive edit**, because nothing forces it and a
 stale PDF is not visible in a diff.
 
-`docs/ARCHITECTURE.md` draws its diagrams from `docs/architecture/*.svg` rather
-than from Mermaid, because markdown-it has no Mermaid plugin here and would
-print a fenced ```mermaid block as its own source. A relative image works in
-both targets: GitHub renders it, and Chromium resolves it against the
+**Mermaid renders.** A fenced ```mermaid block is drawn to SVG inside the print
+browser, so README keeps its diagrams as diffable text and still produces a
+clean PDF. The library is pinned and cached in `.cache/` on first use, so only
+the first build needs the network — and a document with no diagram fetches
+nothing at all. If a diagram fails to parse the build **fails** rather than
+printing its source: that failure mode is invisible in a PDF, which is how
+`docs/README.pdf` sat stale for over a week.
+
+`docs/ARCHITECTURE.md` still draws from `docs/architecture/*.svg` rather than
+Mermaid. That was originally forced — there was no Mermaid support — and is now
+a choice: those three diagrams are hand-laid-out, and Mermaid's automatic layout
+does not reproduce them. New diagrams should prefer Mermaid. A relative image
+works in both targets: GitHub renders it, and Chromium resolves it against the
 intermediate HTML, which is written beside the markdown. Use `--keep-html` to inspect the generated HTML in a browser
 while changing the print stylesheet, which lives in `scripts/render_pdf.py`.
 

@@ -1,6 +1,10 @@
 # Built index (regenerate with `bettersearch ingest`)
 .bettersearch/
 
+# Mermaid bundle, fetched once by scripts/render_pdf.py. 3.5 MB of minified
+# JavaScript, needed only to rebuild a PDF.
+.cache/
+
 # Corpora fetched at runtime rather than committed
 data/corpus_wikipedia.json
 
