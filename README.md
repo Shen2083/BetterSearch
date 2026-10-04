@@ -1115,12 +1115,61 @@ Two general lessons, both cheaper to learn here than in production:
   record entering the top 10 displaces a judged-relevant one. The script says so
   where the claim was made.
 
+### This one ships
+
+`ms-marco-MiniLM-L-6-v2` over enriched records, depth 20, with exact-match
+promotion after it, is wired into `api/catalogue.py` and on by default.
+`src/bettersearch/rerank.py` holds it; `BETTERSEARCH_RERANK=` turns it off.
+
+**Measured through the serving path, not the script** — `run_search` scored
+against the same 41 judged queries:
+
+| path | nDCG@10 | recall@10 | controls |
+|---|---|---|---|
+| retrieval only | 0.6582 | 0.4196 | 1.000 |
+| + rerank, no promotion | 0.7149 | 0.4780 | **0.877** |
+| **+ rerank + promotion** | **0.7280** | **0.4780** | **1.000** |
+
+Identical to the script's figures to four decimals, which is the point of
+running it this way: the number in this README now describes the thing a reader
+actually gets.
+
+**Three things the measurement did not cover, which shipping had to.**
+
+*Order matters.* Reranking runs **before** promotion. Reversed, the reranker
+pushes the named records promotion just lifted straight back down, and the
+controls sit at 0.877 — the middle row above is what that looks like.
+
+*A bare record is not worth reranking.* Records with no enriched prose keep
+their retrieval position rather than being scored on a 24-word stub, so a
+catalogue of books beside un-enriched events reranks the half that benefits.
+Point the service at a catalogue with no enrichment at all and it says so on
+startup rather than no-opping silently.
+
+*The score stays a cosine.* A cross-encoder emits an uncalibrated logit; letting
+it reach the response would redefine a published field. So `score` is still the
+retrieval score and no longer descends with rank — the card carries
+`"reranked": true` to say which ordering it is looking at.
+
+**The cost, measured warm on this container: +104 ms median per search.** Not
+the 356 ms the arm table reports — that figure is the script's per-arm cost and
+includes work the request path does not repeat. Render's hardware is different
+again, so treat 104 ms as this box's number rather than the service's.
+
+**And the demo page cannot do this.** A second model plus one inference per
+candidate does not fit in a file meant to open from an email, already ~7 MB
+against an 8 MB ceiling. So the standalone page shows *retrieval* and the
+service adds a ranking phase on top; `scripts/check_browser_parity.py` compares
+the two retrieval layers and says so in its docstring. The divergence is stated
+rather than discovered, which is the lesson from the page once running
+`bge-small` against a `bge-base` server.
+
 **What is not claimed.** The best arm captures 29% of the headroom; 0.18 of
 nDCG is still on the table and unexplained. `bge-reranker-base` costs 2.8
 seconds per query on CPU for 20 candidates — unusable without ONNX or a GPU, and
-the MiniLM cross-encoder gets most of the gain for **13% of the cost** (356 ms
-against 2,809 ms): 96% of it on nDCG@10 (+0.070 against +0.073) and 89% on
-recall@10 (+0.058 against +0.066). It is the arm to ship if either is.
+MiniLM gets most of the gain for **13% of the cost**: 96% of it on nDCG@10
+(+0.070 against +0.073) and 89% on recall@10 (+0.058 against +0.066), which is
+why it is the one wired in.
 The BM25 second phase at +0.020 is reported, not shipped: `w` was swept on the
 same 41 queries it is scored on, so that number is an upper bound on the idea
 rather than an estimate of it. Forty-one queries remains few, and the ceiling is

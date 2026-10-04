@@ -116,6 +116,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from bettersearch.evaluate import ndcg_at_k, recall_at_k, reciprocal_rank
 from bettersearch.keyword import BM25Index
+# The same rendering of a record the service reranks. Shared on purpose:
+# if the measurement scored one shape of a record and api/catalogue.py
+# reranked another, the figures here would describe nothing anyone runs.
+from bettersearch.rerank import load_enriched as enriched_text
 from bettersearch.types import Chunk
 
 DEPTH = 20
@@ -128,27 +132,6 @@ RERANKERS = {
     "minilm": "cross-encoder/ms-marco-MiniLM-L-6-v2",
     "bge": "BAAI/bge-reranker-base",
 }
-
-
-def enriched_text(path: Path, titles: dict[str, str]) -> dict[str, str]:
-    """The record as prose, from the enrichment store.
-
-    Same shape `Enrichment.embed_text` builds for indexing. Reranking reads it
-    at query time rather than embedding it, so this needs no re-ingest.
-    """
-    out: dict[str, str] = {}
-    for line in path.read_text(encoding="utf-8").splitlines():
-        if not line.strip():
-            continue
-        e = json.loads(line)
-        out[e["item_id"]] = "\n".join(filter(None, [
-            titles.get(e["item_id"], ""),
-            " ".join(e.get("questions") or []),
-            e.get("synopsis") or "",
-            "Topics: " + ", ".join(e.get("topics") or []),
-            "Related: " + ", ".join(e.get("entities") or []),
-        ]))
-    return out
 
 
 def load_index(path: Path):

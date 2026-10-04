@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
@@ -82,6 +83,34 @@ SEMANTIC_TOP_K = int(os.environ.get("BETTERSEARCH_TOP_K", "20"))
 #: candidates than the twenty displayed. Raising it cannot change an unfiltered
 #: search; it only widens what a filter has to choose from.
 SEMANTIC_POOL = int(os.environ.get("BETTERSEARCH_POOL", "200"))
+
+#: Cross-encoder that reorders the retrieved candidates before they are shown.
+#: Set empty to turn reranking off.
+#:
+#: This is the largest measured quality win here - nDCG@10 0.6582 -> 0.7280 on
+#: the 4,000-record judged corpus - and it is the one part of the page the
+#: standalone build **cannot** reproduce: a second model plus per-candidate
+#: inference does not fit in a file meant to open from an email. So the service
+#: and the demo page deliberately differ, and
+#: `scripts/check_browser_parity.py` compares the page against the retrieval
+#: layer rather than against this.
+#:
+#: `ms-marco-MiniLM-L-6-v2` rather than `bge-reranker-base`: 0.7280 against
+#: 0.7308 for an eighth of the latency. See src/bettersearch/rerank.py.
+RERANK_MODEL = os.environ.get("BETTERSEARCH_RERANK",
+                              "cross-encoder/ms-marco-MiniLM-L-6-v2").strip()
+
+#: How many retrieved candidates to reorder. 20 is what the page displays and
+#: what the eval measures; deeper decays monotonically (+0.066 at 20 against
+#: +0.010 at 200) for seven times the cost.
+RERANK_DEPTH = int(os.environ.get("BETTERSEARCH_RERANK_DEPTH", "20"))
+
+#: Where the prose a cross-encoder actually reads comes from. Reranking a bare
+#: catalogue record is measured at nothing - +0.005 - because a 24-word stub
+#: gives a passage model nothing to read. Records absent from this store keep
+#: their retrieval position.
+ENRICHMENT_PATH = Path(os.environ.get(
+    "BETTERSEARCH_ENRICHMENT", str(_DATA / "enrichment_real_haiku.jsonl")))
 
 
 @dataclass(frozen=True, slots=True)
@@ -354,6 +383,63 @@ def _closest_headings(searcher, query: str, records: list[dict],
     return out
 
 
+#: Built once per process. The cross-encoder is ~90 MB and the enrichment store
+#: is 4,000 records of prose; neither belongs in a request.
+_RERANKER: Any = None
+#: (the catalogue it was built for, the prose). Held as a pair rather than a
+#: bare dict because the text is built from the catalogue's own titles: caching
+#: it against the wrong catalogue would silently rerank one collection using
+#: another's titles. One process serves one catalogue in practice, but a test
+#: that builds two should not be able to poison this.
+_ENRICHED: tuple[dict, dict[str, str]] | None = None
+
+
+def _reranker() -> Any:
+    """The shared cross-encoder, constructed on first search rather than import.
+
+    `api/catalogue.py` is imported by the test suite, which has no model, no
+    network and no API key - a property the CI workflow exists to protect. A
+    module-level model would make every test depend on a download.
+    """
+    global _RERANKER
+    if _RERANKER is None:
+        from bettersearch.rerank import Reranker
+
+        _RERANKER = Reranker(RERANK_MODEL)
+    return _RERANKER
+
+
+def _enriched_texts(catalogue: dict[str, dict]) -> dict[str, str]:
+    """Records as prose, keyed by doc_id, read once.
+
+    Empty when no enrichment store is present, which is the honest outcome
+    rather than an error: `rerank` then leaves every record where retrieval put
+    it, and a catalogue nobody has enriched simply does not get this feature.
+    """
+    global _ENRICHED
+    if _ENRICHED is None or _ENRICHED[0] is not catalogue:
+        from bettersearch.rerank import load_enriched
+
+        texts = load_enriched(ENRICHMENT_PATH,
+                              {d: r["title"] for d, r in catalogue.items()})
+        # Say so rather than no-op silently. The enrichment store is paired with
+        # a specific catalogue - enrichment_seed.jsonl with corpus_seed.json,
+        # enrichment_real_haiku.jsonl with catalogue_real.json - and
+        # catalogue_library.json has none at all. Point the service at a
+        # mismatched pair and reranking does nothing, correctly and invisibly,
+        # which is how a deployment ends up believing it has a feature it does
+        # not. One line at startup is cheaper than finding out from a number.
+        overlap = sum(1 for d in catalogue if texts.get(d))
+        if RERANK_MODEL and not overlap:
+            print(f"reranking is configured ({RERANK_MODEL}) but no record in "
+                  f"this catalogue has enriched text in {ENRICHMENT_PATH} - "
+                  f"it will not run. Set BETTERSEARCH_ENRICHMENT to the store "
+                  f"paired with this catalogue, or BETTERSEARCH_RERANK= to "
+                  f"turn reranking off.", file=sys.stderr)
+        _ENRICHED = (catalogue, texts)
+    return _ENRICHED[1]
+
+
 def run_search(
     searcher,
     catalogue: dict[str, dict],
@@ -411,6 +497,24 @@ def run_search(
             series_at[series] = len(ranked)
         ranked.append((record, hit.score))
 
+    # Reorder what retrieval found, before anything downstream reads the order.
+    #
+    # It must come **before** promotion, not after: promotion lifts records the
+    # reader named, by rule, and a reranker run afterwards would push them
+    # straight back down - which is exactly the controls regression (0.877)
+    # that promotion exists to repair.
+    reranked = False
+    if mode != "keyword" and RERANK_MODEL and len(ranked) > 1:
+        from bettersearch.rerank import rerank
+
+        before = len(ranked)
+        ranked = rerank(query, ranked, _enriched_texts(catalogue),
+                        _reranker(), depth=RERANK_DEPTH)
+        # Reranking is a permutation. If this ever fires, something is dropping
+        # or inventing records and the facet counts below are already wrong.
+        assert len(ranked) == before, "reranking changed the candidate count"
+        reranked = True
+
     # Blended mode lifts records the reader arguably *named* - an exact title,
     # an author, a phrase in sequence - above the meaning ranking, each with a
     # reason the card can show. It runs after retrieval and before facets, so
@@ -455,6 +559,14 @@ def run_search(
     for card in cards:
         if (reason := promoted.get(card["doc_id"])) is not None:
             card["promoted"] = reason
+        # `score` stays the retrieval score - a cosine, on the scale everything
+        # downstream expects. A cross-encoder's output is an uncalibrated logit
+        # and letting it reach the response would silently redefine the field.
+        # The consequence is that score no longer descends with rank, so the
+        # card says which ordering it is looking at rather than leaving someone
+        # to conclude the numbers are broken.
+        if reranked:
+            card["reranked"] = True
 
     # Why each card is here, computed for the displayed page only. Catalogue
     # search can be explained exactly - BM25 scores on shared terms, so a word
