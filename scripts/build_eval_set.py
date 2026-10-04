@@ -150,6 +150,7 @@ def build_pools(lanes: list[dict], queries: list[dict],
     unique_to: dict[str, int] = {l["label"]: 0 for l in lanes}
     missing_from_file: dict[str, int] = {l["label"]: 0 for l in lanes
                                          if l["kind"] == "file"}
+    retrieved: dict[str, set[tuple[str, str]]] = {}
     sizes: list[int] = []
 
     for item in queries:
@@ -180,6 +181,9 @@ def build_pools(lanes: list[dict], queries: list[dict],
                      if len(per_lane_ids) > 1 else set()
             unique_to[label] += len(set(per_lane_ids[label]) - others)
 
+        for label, got in per_lane_ids.items():
+            retrieved.setdefault(label, set()).update((q, d) for d in got)
+
         ids = [i for lane in lanes for i in per_lane_ids[lane["label"]]]
         seen: set[str] = set()
         pool = [i for i in ids if not (i in seen or seen.add(i))]
@@ -188,7 +192,8 @@ def build_pools(lanes: list[dict], queries: list[dict],
         sizes.append(len(pool))
 
     return {"pools": pools, "sizes": sizes, "contributed": contributed,
-            "unique_to": unique_to, "missing_from_file": missing_from_file}
+            "unique_to": unique_to, "missing_from_file": missing_from_file,
+            "retrieved": retrieved}
 
 
 def load_reuse(eval_path: Path, judgements_path: Path) -> dict:
@@ -410,11 +415,13 @@ def main() -> int:
     built = build_pools(lanes, queries, per_lane=args.per_lane)
     pools = built["pools"]
     sizes = sorted(built["sizes"])
-    print(f"pool size: min {sizes[0]} median {sizes[len(sizes)//2]} max {sizes[-1]}")
-    print("records only one lane found (these would be lost if it were "
-          "left out of the pool):")
-    for label, n in built["unique_to"].items():
-        print(f"   {label:<20} {n}")
+    if lanes:
+        print(f"pool size: min {sizes[0]} median {sizes[len(sizes)//2]} max {sizes[-1]}")
+    if len(lanes) > 1:
+        print("records only one lane found (these would be lost if it were "
+              "left out of the pool):")
+        for label, n in built["unique_to"].items():
+            print(f"   {label:<20} {n}")
 
     for label, n in built["missing_from_file"].items():
         if n:
@@ -436,6 +443,16 @@ def main() -> int:
               f"max {sizes[-1]}")
         if inherited:
             print("   inherited pool support from: " + ", ".join(inherited))
+        # The number that says whether a lane was worth pooling. `unique_to`
+        # compares a lane against the *other lanes in this run*, so a single new
+        # lane is trivially unique in all of it - 820 of 820, which reads like
+        # new information and is not. Against what has already been judged, only
+        # a fraction is genuinely unseen.
+        for label, got in built["retrieved"].items():
+            unseen = len(got - set(reuse))
+            print(f"   {label}: {unseen} of {len(got)} retrieved pairs were "
+                  f"never judged" + ("" if unseen else
+                  " - this lane adds nothing the pool has not already seen"))
 
     pairs, grades = split_pairs(queries, pools, corpus, reuse)
     carried = len(grades)
