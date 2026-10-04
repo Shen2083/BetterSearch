@@ -409,6 +409,32 @@ def _reranker() -> Any:
     return _RERANKER
 
 
+def warm_reranker(catalogue: dict[str, dict] | None = None) -> None:
+    """Load the cross-encoder and the prose now, so no reader pays for either.
+
+    Separate from `_reranker()` because the laziness there is deliberate - the
+    test suite imports this module and must not need a model - while a *server*
+    wants the cost paid at boot. `api/main.py` calls this at import; nothing
+    else should need to.
+
+    Measured on a container with the weights already cached: left to load on the
+    first search, that search took **85 seconds**. A Hub round-trip plus
+    construction, not a download, so fetching the model at build time does not
+    avoid it. Warming the enrichment store as well takes the first search from
+    2.9 s to about the warm figure, and moves the inert-enrichment warning to
+    startup, where somebody deploying will actually see it.
+    """
+    reranker = _reranker()
+    reranker._load()
+    # One throwaway inference. Loading the weights is not the whole cost: the
+    # first `predict` also pays torch's own warmup, measured at ~2 s of the
+    # first search even after the model was in memory. A reader should not be
+    # the one to trigger that either.
+    reranker.score("warm", ["warm"])
+    if catalogue is not None:
+        _enriched_texts(catalogue)
+
+
 def _enriched_texts(catalogue: dict[str, dict]) -> dict[str, str]:
     """Records as prose, keyed by doc_id, read once.
 

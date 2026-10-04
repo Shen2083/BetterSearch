@@ -1151,10 +1151,26 @@ it reach the response would redefine a published field. So `score` is still the
 retrieval score and no longer descends with rank — the card carries
 `"reranked": true` to say which ordering it is looking at.
 
-**The cost, measured warm on this container: +104 ms median per search.** Not
-the 356 ms the arm table reports — that figure is the script's per-arm cost and
-includes work the request path does not repeat. Render's hardware is different
-again, so treat 104 ms as this box's number rather than the service's.
+**The cost, measured through a running server: +371 ms median per search** —
+184 ms without reranking against 555 ms with, over the same twelve queries on
+the same box, warm. An earlier in-process measurement said +104 ms; it was
+measured against a different baseline and was wrong. Render's hardware is
+different again, so treat 371 ms as this box's number rather than the service's.
+
+**And the model must be warmed at startup, which is not a detail.** Left to load
+on the first search — the obvious lazy design, and what `api/catalogue.py` still
+does so the test suite needs no model — the first search after boot took **85
+seconds** on a container with the weights already cached. That is a Hub
+round-trip plus construction, not a download, so fetching the model during the
+build does not avoid it. `api/main.py` loads it, runs one throwaway inference to
+pay torch's warmup, and builds the enrichment store before the health check
+passes.
+
+One thing reranking is *not* responsible for: the first semantic search is still
+several seconds, because `_closest_headings` embeds the corpus's subject
+headings on first use. Measured with reranking turned off it is **8.1 s**, which
+is slower than with it on. That cost predates this change and is a separate
+thing to fix.
 
 **And the demo page cannot do this.** A second model plus one inference per
 candidate does not fit in a file meant to open from an email, already ~7 MB

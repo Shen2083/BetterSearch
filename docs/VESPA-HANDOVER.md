@@ -364,12 +364,18 @@ MiniLM cross-encoder — which gets most of the gain for **13% of the time**: 96
 of it on nDCG@10 (+0.070 against +0.073) and 89% on recall@10 (+0.058 against
 +0.066). If you ship one reranker, ship that one; it is the one we ship.
 
-Two numbers, because they measure different things and the smaller one is the
-honest guide for a request path. The arms table above reports **356 ms** for
-MiniLM — that is `scripts/tune_reranking.py`'s per-arm cost. Measured warm
-through the serving path, the incremental cost of reranking a search is **104
-ms median** on this container. Neither is Render's hardware and neither is
-yours; measure it on the node that will run it.
+Two numbers, because they measure different things. The arms table above reports
+**356 ms** for MiniLM — that is `scripts/tune_reranking.py`'s per-arm cost.
+Measured through a running server, warm, over twelve queries with reranking on
+and off, the incremental cost is **+371 ms median** (184 ms against 555 ms).
+Neither is Render's hardware and neither is yours; measure it on the node that
+will run it.
+
+**Load the model at startup, not on first use.** Ours lazily loaded on the first
+search and that search took **85 seconds**, on a box where the weights were
+already cached — a Hub round-trip plus construction, so pre-fetching during the
+build does not save you. Whatever Vespa's equivalent is, pay it before the
+health check passes.
 
 **Two implementation details that cost us a cycle each, so you do not have to.**
 Reranking must run **before** exact-match promotion — reversed, it pushes the
