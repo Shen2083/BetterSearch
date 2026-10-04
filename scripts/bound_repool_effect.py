@@ -29,8 +29,24 @@ this script sweeps it. The sweep is a sensitivity analysis, **not** a
 prediction: it says which outcomes are reachable and roughly where the
 break-even sits, so a surprise afterwards can be recognised as a surprise.
 
-TWO THINGS IT CANNOT TELL YOU
------------------------------
+IT WILL OVERSTATE THE GAP BETWEEN ARMS - MEASURED, NOT SUSPECTED
+----------------------------------------------------------------
+The sweep assigns relevance to new records **independently of rank**, and that
+is wrong in a way that matters. Relevance correlates with rank for any
+competent ranker, so scattering it uniformly puts relevant records at positions
+15-20 where no arm's top 10 reaches them. That depresses every arm and widens
+the distance between them.
+
+Measured on the run this script was written for: at the observed 20.3% relevant
+share it predicted baseline 0.3341 against 0.3660 for the reranked arm, a margin
+of +0.032. The judged truth was 0.4196 against 0.4293 - both arms higher, and a
+margin of +0.0097, three times smaller. The **direction** held; the magnitude
+did not.
+
+So read the ordering and the break-even point, and do not quote the margins.
+
+TWO MORE THINGS IT CANNOT TELL YOU
+----------------------------------
 The records being judged are the new lane's own top picks. So "does the new
 lane win" is partly "does the judge agree with the new lane", and a reranker
 that approaches the ceiling here is increasingly agreeing with Claude Haiku

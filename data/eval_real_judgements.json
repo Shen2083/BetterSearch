@@ -1,5 +1,5 @@
 {
-  "batch_id": "msgbatch_0199nfdhQfReVdqHJn6a4x3n",
+  "batch_id": "msgbatch_01KGk1PKaebF7H94iGLmPFd9",
   "judge_model": "claude-haiku-4-5",
   "judgements": {
     "q0--ol-OL10387420W": {
@@ -102,6 +102,10 @@
       "grade": 1,
       "why": "About beekeeping but focuses on beeswax production, not garden-specific care."
     },
+    "q0--ol-OL1696726W": {
+      "grade": 2,
+      "why": "Direct practical guide to beekeeping, exactly what reader needs."
+    },
     "q0--ol-OL17801831W": {
       "grade": 0,
       "why": "Fiction novel about bees, not practical beekeeping guide for gardens."
@@ -117,6 +121,14 @@
     "q0--ol-OL20038979W": {
       "grade": 2,
       "why": "Directly addresses beekeeping practices, including small-scale beekeeping in gardens."
+    },
+    "q0--ol-OL202152W": {
+      "grade": 2,
+      "why": "Directly addresses beekeeping practice. Matches reader's intent perfectly."
+    },
+    "q0--ol-OL2026168W": {
+      "grade": 1,
+      "why": "Broad homesteading guide; likely includes beekeeping but not focused specifically on it."
     },
     "q0--ol-OL21190469W": {
       "grade": 2,
@@ -170,6 +182,10 @@
       "grade": 0,
       "why": "Book about business management, not beekeeping or gardening."
     },
+    "q0--ol-OL5116332W": {
+      "grade": 0,
+      "why": "Covers vegetable gardening in small spaces, not beekeeping."
+    },
     "q0--ol-OL514941W": {
       "grade": 0,
       "why": "Business management guide, not about beekeeping or gardening"
@@ -181,6 +197,10 @@
     "q0--ol-OL5591162W": {
       "grade": 2,
       "why": "Directly addresses beekeeping methods with how-to instruction."
+    },
+    "q0--ol-OL5715378W": {
+      "grade": 1,
+      "why": "Children's fiction about beekeeping, not practical how-to guide."
     },
     "q0--ol-OL5717682W": {
       "grade": 0,
@@ -254,6 +274,10 @@
       "grade": 0,
       "why": "Forest gardening and permaculture, not container vegetable gardening."
     },
+    "q1--ol-OL2026168W": {
+      "grade": 1,
+      "why": "Gardening included but generic encyclopedia, not specifically about container gardening."
+    },
     "q1--ol-OL2040921W": {
       "grade": 0,
       "why": "Children's picture book story, not practical growing guide"
@@ -261,6 +285,10 @@
     "q1--ol-OL2042417W": {
       "grade": 1,
       "why": "Vegetable gardening guide, but no specific mention of container/pot growing."
+    },
+    "q1--ol-OL2042426W": {
+      "grade": 1,
+      "why": "General gardening handbook but no specific focus on container or pot gardening."
     },
     "q1--ol-OL20709638W": {
       "grade": 0,
@@ -358,6 +386,10 @@
       "grade": 0,
       "why": "Book about wealth and business success, not vegetable gardening."
     },
+    "q1--ol-OL52982W": {
+      "grade": 0,
+      "why": "Children's picture book about seed dispersal, not vegetable gardening guide."
+    },
     "q1--ol-OL56484W": {
       "grade": 1,
       "why": "General gardening book, but no specific mention of container or pot gardening."
@@ -378,6 +410,10 @@
       "grade": 1,
       "why": "Gardening and growing plants for children, but likely too juvenile for practical instruction."
     },
+    "q1--ol-OL8138269W": {
+      "grade": 1,
+      "why": "Organic gardening techniques book; may cover container gardening but not specifically focused on it."
+    },
     "q1--ol-OL8333734W": {
       "grade": 0,
       "why": "Children's picture book about puppies, not vegetable gardening."
@@ -393,6 +429,14 @@
     "q1--ol-OL890224W": {
       "grade": 1,
       "why": "Container gardening mentioned, but focuses on houseplants not edible vegetables."
+    },
+    "q1--ol-OL8908355W": {
+      "grade": 1,
+      "why": "Gardening book covers organic/natural methods; may include container gardening but not focused on it."
+    },
+    "q10--ol-OL1503295W": {
+      "grade": 2,
+      "why": "Gentle children's story perfect for bedtime reading."
     },
     "q10--ol-OL15074734W": {
       "grade": 2,
@@ -410,6 +454,10 @@
       "grade": 2,
       "why": "Gentle bedtime picture book about sleep, perfectly matched to query intent."
     },
+    "q10--ol-OL16591657W": {
+      "grade": 0,
+      "why": "Medical reference about sleep scales, not gentle bedtime reading."
+    },
     "q10--ol-OL17089680W": {
       "grade": 0,
       "why": "Philosophy text, not gentle bedtime reading material"
@@ -426,9 +474,17 @@
       "grade": 0,
       "why": "Parenting advice book, not gentle fiction or essays for relaxation."
     },
+    "q10--ol-OL1900403W": {
+      "grade": 2,
+      "why": "Sleep guide with gentle, accessible tone perfect for bedtime reading."
+    },
     "q10--ol-OL1952758W": {
       "grade": 0,
       "why": "Self-help about reading technique, not gentle bedtime material."
+    },
+    "q10--ol-OL1963277W": {
+      "grade": 0,
+      "why": "Horror tale with vampires; not gentle content for bedtime reading"
     },
     "q10--ol-OL19633909W": {
       "grade": 0,
@@ -441,6 +497,10 @@
     "q10--ol-OL19754878W": {
       "grade": 2,
       "why": "Poetry collection with soothing title, gentle love themes ideal for bedtime reading."
+    },
+    "q10--ol-OL19899W": {
+      "grade": 2,
+      "why": "Gentle animal stories perfect for bedtime reading."
     },
     "q10--ol-OL19972938W": {
       "grade": 1,
@@ -457,6 +517,10 @@
     "q10--ol-OL20647089W": {
       "grade": 0,
       "why": "Parenting advice book, not gentle bedtime reading material"
+    },
+    "q10--ol-OL20667961W": {
+      "grade": 2,
+      "why": "Picture book about sleep with calming title, ideal bedtime read."
     },
     "q10--ol-OL20739482W": {
       "grade": 2,
@@ -478,6 +542,10 @@
       "grade": 0,
       "why": "Parenting advice book, not gentle fiction for bedtime reading."
     },
+    "q10--ol-OL22058199W": {
+      "grade": 2,
+      "why": "Gentle bedtime story with sleep themes, suitable pre-bed reading."
+    },
     "q10--ol-OL2255454W": {
       "grade": 0,
       "why": "Instructional grammar handbook, not gentle bedtime reading material"
@@ -489,6 +557,10 @@
     "q10--ol-OL25296570W": {
       "grade": 2,
       "why": "Gentle self-help with mindfulness and self-care subjects perfectly suits bedtime reading."
+    },
+    "q10--ol-OL2568868W": {
+      "grade": 0,
+      "why": "Children's picture book; not suitable bedtime reading for adults"
     },
     "q10--ol-OL25799307W": {
       "grade": 0,
@@ -514,6 +586,10 @@
       "grade": 0,
       "why": "Thriller genre is antithetical to gentle bedtime reading."
     },
+    "q10--ol-OL2712933W": {
+      "grade": 0,
+      "why": "Psychological fiction about sleep disorders, likely not gentle bedtime reading."
+    },
     "q10--ol-OL2724701W": {
       "grade": 1,
       "why": "About sleep but appears to be educational children's book, not gentle fiction."
@@ -534,9 +610,21 @@
       "grade": 2,
       "why": "Explicitly designed for bedtime reading with calming subject matter."
     },
+    "q10--ol-OL4956708W": {
+      "grade": 0,
+      "why": "Academic history book about night and social history, not gentle bedtime reading."
+    },
     "q10--ol-OL508806W": {
       "grade": 0,
       "why": "Children's early reader; too basic for adult bedtime reading."
+    },
+    "q10--ol-OL5258936W": {
+      "grade": 1,
+      "why": "Humorous children's fiction is gentle but may be too playful for bedtime reading."
+    },
+    "q10--ol-OL547418W": {
+      "grade": 2,
+      "why": "Perfect bedtime story: gentle children's book explicitly about sleep and napping."
     },
     "q10--ol-OL554422W": {
       "grade": 0,
@@ -561,6 +649,10 @@
     "q10--ol-OL62236W": {
       "grade": 0,
       "why": "Philosophy essays; not gentle fiction or soothing content for bedtime."
+    },
+    "q10--ol-OL7142879W": {
+      "grade": 0,
+      "why": "Mystery thriller about murder and murderers; unsuitable before bed."
     },
     "q10--ol-OL79039W": {
       "grade": 2,
@@ -634,6 +726,10 @@
       "grade": 2,
       "why": "Humorous children's fiction designed to entertain and cheer readers."
     },
+    "q11--ol-OL15136173W": {
+      "grade": 2,
+      "why": "Humorous children's book with silly, whimsical premise perfect for cheering up"
+    },
     "q11--ol-OL15690949W": {
       "grade": 2,
       "why": "Humorous children's story designed to entertain and lift spirits."
@@ -641,6 +737,14 @@
     "q11--ol-OL16062900W": {
       "grade": 0,
       "why": "Self-help career guide, not humorous or emotionally uplifting fiction."
+    },
+    "q11--ol-OL16445898W": {
+      "grade": 2,
+      "why": "Humorous survival guide with funny premise and light tone matches intent to cheer up."
+    },
+    "q11--ol-OL16599873W": {
+      "grade": 2,
+      "why": "Saunders' satirical short stories are acclaimed for witty, darkly humorous tone."
     },
     "q11--ol-OL16962315W": {
       "grade": 2,
@@ -670,6 +774,14 @@
       "grade": 2,
       "why": "Humorous stories for juveniles; designed to entertain and cheer."
     },
+    "q11--ol-OL17621454W": {
+      "grade": 2,
+      "why": "Humorous children's fiction about friendship explicitly designed to entertain and lift mood."
+    },
+    "q11--ol-OL17812914W": {
+      "grade": 2,
+      "why": "Humorous juvenile fiction explicitly designed to entertain and amuse readers."
+    },
     "q11--ol-OL18010044W": {
       "grade": 2,
       "why": "Humorous stories for juveniles, explicitly marked as funny."
@@ -689,6 +801,10 @@
     "q11--ol-OL1932036W": {
       "grade": 2,
       "why": "Humorous children's story explicitly designed to be funny and lighten mood."
+    },
+    "q11--ol-OL1932875W": {
+      "grade": 2,
+      "why": "Humorous stories explicitly matches request for funny book to cheer up."
     },
     "q11--ol-OL19867803W": {
       "grade": 2,
@@ -717,6 +833,10 @@
     "q11--ol-OL20145719W": {
       "grade": 0,
       "why": "Fantasy/sci-fi action novel; no indication of humor or cheerful tone."
+    },
+    "q11--ol-OL20348172W": {
+      "grade": 0,
+      "why": "Teen fiction about depression, not a humorous cheerful book."
     },
     "q11--ol-OL2040970W": {
       "grade": 2,
@@ -762,9 +882,21 @@
       "grade": 2,
       "why": "Humorous children's picture book in rhyme, designed to entertain and cheer."
     },
+    "q11--ol-OL26663382W": {
+      "grade": 0,
+      "why": "Memoir about abuse and dysfunctional family, not humorous or uplifting."
+    },
     "q11--ol-OL2669386W": {
       "grade": 0,
       "why": "Business management manual, not humor or entertainment for cheering up."
+    },
+    "q11--ol-OL2713466W": {
+      "grade": 2,
+      "why": "Humorous fiction explicitly designed to entertain and amuse readers."
+    },
+    "q11--ol-OL2775807W": {
+      "grade": 2,
+      "why": "Classic feel-good novel centered on cheerfulness and positive outlook."
     },
     "q11--ol-OL28034699W": {
       "grade": 0,
@@ -781,6 +913,10 @@
     "q11--ol-OL38388117W": {
       "grade": 0,
       "why": "Health/mind-body book. No indication of humorous tone or entertainment content."
+    },
+    "q11--ol-OL39320W": {
+      "grade": 0,
+      "why": "Modernist literary novel, not comedic in tone or intent."
     },
     "q11--ol-OL42371W": {
       "grade": 0,
@@ -806,9 +942,17 @@
       "grade": 2,
       "why": "Humorous children's book with silly subject matter, clearly designed to entertain and cheer up readers."
     },
+    "q11--ol-OL545887W": {
+      "grade": 2,
+      "why": "Humorous travel writing explicitly designed to entertain and amuse readers."
+    },
     "q11--ol-OL5459559W": {
       "grade": 0,
       "why": "Local history book; no indication of humor or uplifting tone."
+    },
+    "q11--ol-OL547172W": {
+      "grade": 0,
+      "why": "Dystopian sci-fi about beauty standards. Not inherently humorous or uplifting."
     },
     "q11--ol-OL547437W": {
       "grade": 1,
@@ -846,6 +990,10 @@
       "grade": 0,
       "why": "Self-help for anxiety, not humorous content for entertainment."
     },
+    "q11--ol-OL7518392W": {
+      "grade": 2,
+      "why": "Humorous children's fiction directly matches request for funny, cheering book."
+    },
     "q11--ol-OL762607W": {
       "grade": 2,
       "why": "Humorous children's story with practical jokes, designed to entertain and cheer."
@@ -861,6 +1009,18 @@
     "q12--ol-OL10834W": {
       "grade": 0,
       "why": "Psychological thriller with murder and obsession is likely too dark/violent."
+    },
+    "q12--ol-OL109562W": {
+      "grade": 0,
+      "why": "Humorous juvenile fiction about plays/football, not gripping drama."
+    },
+    "q12--ol-OL114661W": {
+      "grade": 0,
+      "why": "Literary memoir dealing with death and grief; tone doesn't match 'gripping' request."
+    },
+    "q12--ol-OL12514150W": {
+      "grade": 1,
+      "why": "Action-adventure with gripping premise, but 'supernatural' and 'good vs evil' may involve violence."
     },
     "q12--ol-OL149107W": {
       "grade": 0,
@@ -882,6 +1042,10 @@
       "grade": 0,
       "why": "Horror with 'knife' in title suggests violence; R.L. Stine's Fear Street is dark/intense."
     },
+    "q12--ol-OL16341254W": {
+      "grade": 0,
+      "why": "Dark subject matter about cancer and loss; likely emotionally intense rather than gripping-but-light."
+    },
     "q12--ol-OL167155W": {
       "grade": 2,
       "why": "Gripping suspense thriller by Patterson, kidnapping plot drives tension without extreme gore."
@@ -898,6 +1062,14 @@
       "grade": 1,
       "why": "Science fiction adventure with action, but guerrilla warfare suggests violence level unclear."
     },
+    "q12--ol-OL17837968W": {
+      "grade": 2,
+      "why": "Sci-fi action/adventure with conspiracy plot. Gripping tension without gratuitous violence."
+    },
+    "q12--ol-OL18139176W": {
+      "grade": 2,
+      "why": "Gripping memoir with minimal graphic violence despite subject matter."
+    },
     "q12--ol-OL18178779W": {
       "grade": 0,
       "why": "Parenting advice book, not fiction. Reader seeks engaging narrative entertainment."
@@ -909,6 +1081,10 @@
     "q12--ol-OL1929398W": {
       "grade": 0,
       "why": "Self-help psychology book, not gripping fiction or narrative storytelling."
+    },
+    "q12--ol-OL1963277W": {
+      "grade": 0,
+      "why": "Horror tale with vampires; likely too violent for this reader's request."
     },
     "q12--ol-OL19639762W": {
       "grade": 0,
@@ -938,6 +1114,14 @@
       "grade": 1,
       "why": "Relationship drama could be gripping, but not clearly about avoiding violence."
     },
+    "q12--ol-OL20054906W": {
+      "grade": 2,
+      "why": "Thriller with dark academia intrigue; gripping mystery without extreme violence focus."
+    },
+    "q12--ol-OL20126932W": {
+      "grade": 1,
+      "why": "Gripping thriller but King's horror often includes intense violence."
+    },
     "q12--ol-OL20168732W": {
       "grade": 0,
       "why": "Mental health self-help book, doesn't address reader's tone/genre interest."
@@ -953,6 +1137,10 @@
     "q12--ol-OL20760650W": {
       "grade": 0,
       "why": "Cannibalism, murder, and psychopathy likely too violent for request."
+    },
+    "q12--ol-OL20764592W": {
+      "grade": 2,
+      "why": "Suspense thriller with relational drama, likely gripping without extreme violence."
     },
     "q12--ol-OL20980379W": {
       "grade": 0,
@@ -970,6 +1158,10 @@
       "grade": 1,
       "why": "Dystopian sci-fi romance may grip reader, but violence level uncertain from metadata."
     },
+    "q12--ol-OL21780511W": {
+      "grade": 0,
+      "why": "Thriller genre suggests violence; subject headings don't indicate restraint."
+    },
     "q12--ol-OL21802553W": {
       "grade": 1,
       "why": "Action-adventure dystopian romance, likely gripping but may exceed violence tolerance."
@@ -981,6 +1173,10 @@
     "q12--ol-OL24368937W": {
       "grade": 0,
       "why": "Children's picture book about schools; no evidence of gripping narrative tension."
+    },
+    "q12--ol-OL24477958W": {
+      "grade": 0,
+      "why": "Killing Floor is violent action thriller, not suitable for reader's needs."
     },
     "q12--ol-OL24850157W": {
       "grade": 0,
@@ -1042,6 +1238,10 @@
       "grade": 1,
       "why": "Psychological thriller with suspense, but 'gripping' comes with unpredictable violence risk."
     },
+    "q12--ol-OL3753663W": {
+      "grade": 0,
+      "why": "Sports biography, not narrative fiction offering gripping-but-gentle reading experience"
+    },
     "q12--ol-OL40873W": {
       "grade": 0,
       "why": "The Road is intensely violent and bleak, contrary to reader's request."
@@ -1053,6 +1253,10 @@
     "q12--ol-OL42975424W": {
       "grade": 0,
       "why": "Young adult fiction alone doesn't indicate gripping plot or violence level."
+    },
+    "q12--ol-OL43031711W": {
+      "grade": 1,
+      "why": "Thriller with gripping plot, but likely contains violence given subject matter."
     },
     "q12--ol-OL45813W": {
       "grade": 1,
@@ -1070,9 +1274,17 @@
       "grade": 0,
       "why": "Medical memoir about cancer, not fiction. Tone/violence level unclear."
     },
+    "q12--ol-OL52955W": {
+      "grade": 1,
+      "why": "Thriller by Lee Child, gripping but likely contains significant violence given genre/author reputation."
+    },
     "q12--ol-OL530928W": {
       "grade": 0,
       "why": "Geology textbook. Query seeks narrative fiction with specific tone."
+    },
+    "q12--ol-OL551015W": {
+      "grade": 2,
+      "why": "Gripping Victorian mystery with intricate plot, minimal graphic violence."
     },
     "q12--ol-OL554552W": {
       "grade": 1,
@@ -1094,13 +1306,25 @@
       "grade": 1,
       "why": "Horror tale but juvenile audience suggests milder than adult horror. May suit gripping-not-violent preference."
     },
+    "q12--ol-OL762611W": {
+      "grade": 1,
+      "why": "Musical fiction with engaging Dublin characters, but tone unclear from sparse record."
+    },
     "q12--ol-OL79343W": {
       "grade": 1,
       "why": "Suspense thriller, gripping but may contain violence despite subject focus."
     },
+    "q12--ol-OL8400949W": {
+      "grade": 0,
+      "why": "Joe Abercrombie's grimdark fantasy known for graphic violence and brutality."
+    },
     "q12--ol-OL8400950W": {
       "grade": 0,
       "why": "Dark fantasy known for graphic violence and brutality, contrary to request."
+    },
+    "q12--ol-OL85351W": {
+      "grade": 0,
+      "why": "Holocaust and atrocities subject matter contradicts 'not too violent' request."
     },
     "q12--ol-OL8756324W": {
       "grade": 0,
@@ -1122,6 +1346,10 @@
       "grade": 2,
       "why": "Short story collection; easily finished in one sitting."
     },
+    "q13--ol-OL12199W": {
+      "grade": 0,
+      "why": "Technical writing guide, not a short narrative work to enjoy in one sitting."
+    },
     "q13--ol-OL123383W": {
       "grade": 0,
       "why": "Technical manual about woodworking, not a read-in-one-sitting narrative or short text"
@@ -1133,6 +1361,10 @@
     "q13--ol-OL1483670W": {
       "grade": 0,
       "why": "Craft instruction book, not narrative fiction or engaging read-through text."
+    },
+    "q13--ol-OL1503295W": {
+      "grade": 2,
+      "why": "Short children's book easily read in one sitting. Perfect match for request."
     },
     "q13--ol-OL15103529W": {
       "grade": 1,
@@ -1154,6 +1386,10 @@
       "grade": 2,
       "why": "Short story collection perfect for reading in one sitting."
     },
+    "q13--ol-OL16813480W": {
+      "grade": 2,
+      "why": "Board book designed for quick reading; easily finished in one sitting."
+    },
     "q13--ol-OL172923W": {
       "grade": 2,
       "why": "Collection of short stories explicitly designed for quick reading in one sitting."
@@ -1173,6 +1409,10 @@
     "q13--ol-OL17716925W": {
       "grade": 0,
       "why": "Reader wants something short; this novel is 500+ pages."
+    },
+    "q13--ol-OL17797857W": {
+      "grade": 2,
+      "why": "Mystery novel suitable for one-sitting reading. Appropriate length for the request."
     },
     "q13--ol-OL1814898W": {
       "grade": 0,
@@ -1214,9 +1454,21 @@
       "grade": 2,
       "why": "Short stories collection, quick reads suitable for one sitting."
     },
+    "q13--ol-OL20028344W": {
+      "grade": 1,
+      "why": "Thriller novel is readable length but psychologically intense, not ideal for casual one-sitting read"
+    },
     "q13--ol-OL20050396W": {
       "grade": 2,
       "why": "Short illustrated book designed for contemplative reading in one sitting."
+    },
+    "q13--ol-OL20073906W": {
+      "grade": 0,
+      "why": "Recursion is a complex sci-fi thriller, likely 400+ pages. Not suitable for one sitting."
+    },
+    "q13--ol-OL20078135W": {
+      "grade": 1,
+      "why": "Short audio book but philosophical essay, not light/escapist fiction most readers want"
     },
     "q13--ol-OL20148038W": {
       "grade": 2,
@@ -1230,6 +1482,10 @@
       "grade": 2,
       "why": "Short humorous mathematics book easily readable in one sitting."
     },
+    "q13--ol-OL20884548W": {
+      "grade": 0,
+      "why": "Non-fiction self-help book; length unspecified, unlikely brief read."
+    },
     "q13--ol-OL21193848W": {
       "grade": 0,
       "why": "Woodworking instructional book unlikely to be readable in one sitting."
@@ -1237,6 +1493,10 @@
     "q13--ol-OL2140307W": {
       "grade": 2,
       "why": "Short story collection designed to be read in brief sittings."
+    },
+    "q13--ol-OL2162568W": {
+      "grade": 2,
+      "why": "Picture book designed for quick single-sitting reading in children's literature."
     },
     "q13--ol-OL21899442W": {
       "grade": 2,
@@ -1262,6 +1522,14 @@
       "grade": 0,
       "why": "Career advice book, not light reading for one sitting"
     },
+    "q13--ol-OL261181W": {
+      "grade": 2,
+      "why": "Short picture book in rhyme, easily completed in one sitting."
+    },
+    "q13--ol-OL2637599W": {
+      "grade": 2,
+      "why": "Short story collection, concise Japanese fiction, easily readable in one sitting."
+    },
     "q13--ol-OL264083W": {
       "grade": 2,
       "why": "Short stories collection explicitly designed for reading in one sitting."
@@ -1286,6 +1554,10 @@
       "grade": 2,
       "why": "Short story collection designed to be read in segments or singly."
     },
+    "q13--ol-OL2793678W": {
+      "grade": 2,
+      "why": "Short humorous non-fiction book easily readable in one sitting."
+    },
     "q13--ol-OL2971052W": {
       "grade": 2,
       "why": "Wordless picture book is brief, can be read in one sitting."
@@ -1305,6 +1577,10 @@
     "q13--ol-OL34612213W": {
       "grade": 2,
       "why": "Thriller novel suitable for quick, engaging reading in one sitting."
+    },
+    "q13--ol-OL3753663W": {
+      "grade": 0,
+      "why": "No indication of length or brevity in record. Cannot confirm it's short."
     },
     "q13--ol-OL41078W": {
       "grade": 2,
@@ -1358,13 +1634,33 @@
       "grade": 0,
       "why": "Instructional craft book, not leisure reading for one sitting."
     },
+    "q13--ol-OL77009W": {
+      "grade": 2,
+      "why": "John Grisham novel, relatively short, engaging fiction for quick read"
+    },
+    "q13--ol-OL7711724W": {
+      "grade": 1,
+      "why": "Short nonfiction likely finishable in one sitting, but about mental health/rest rather than purely for reading enjoyment."
+    },
     "q13--ol-OL79080W": {
       "grade": 1,
       "why": "A children's board book is short and finishable in one sitting, but unclear if adult reader."
     },
+    "q13--ol-OL8127897W": {
+      "grade": 0,
+      "why": "Cookbook reference guide, not narrative fiction for single-sitting reading"
+    },
     "q13--ol-OL81588W": {
       "grade": 2,
       "why": "Collection of short stories designed for quick reading in one sitting."
+    },
+    "q13--ol-OL81611W": {
+      "grade": 1,
+      "why": "Stephen King novel is readable but 600+ pages, not short-sitting material."
+    },
+    "q13--ol-OL8400949W": {
+      "grade": 1,
+      "why": "Epic fantasy novella, readable in one sitting but lengthy for typical sitting."
     },
     "q13--ol-OL8454248W": {
       "grade": 2,
@@ -1434,9 +1730,25 @@
       "grade": 2,
       "why": "Novel about grief and bereavement with emotional themes likely to move reader."
     },
+    "q14--ol-OL16341254W": {
+      "grade": 2,
+      "why": "Emotionally powerful coming-of-age about grief and loss; known for moving readers to tears."
+    },
+    "q14--ol-OL16444438W": {
+      "grade": 2,
+      "why": "Emotionally devastating YA novel about young people with cancer; widely recognized for evoking tears."
+    },
+    "q14--ol-OL16793507W": {
+      "grade": 2,
+      "why": "Coming-of-age drama about sibling relationships likely to evoke emotion."
+    },
     "q14--ol-OL17323489W": {
       "grade": 2,
       "why": "Emotionally intense YA novel about suicide and deep friendship; designed to move readers deeply."
+    },
+    "q14--ol-OL17359139W": {
+      "grade": 2,
+      "why": "Historical fiction about WWII refugees; emotionally powerful and moving narrative."
     },
     "q14--ol-OL17434786W": {
       "grade": 2,
@@ -1450,6 +1762,10 @@
       "grade": 0,
       "why": "Popular science miscellany. Wrong genre for emotional impact."
     },
+    "q14--ol-OL17850410W": {
+      "grade": 0,
+      "why": "Fantasy adventure about fairies and princes, not an emotional tearjerker."
+    },
     "q14--ol-OL18010044W": {
       "grade": 0,
       "why": "Humorous juvenile fiction unlikely to provoke emotional tears reader seeks."
@@ -1461,6 +1777,10 @@
     "q14--ol-OL18165017W": {
       "grade": 2,
       "why": "Book explicitly about emotional trauma; likely to evoke strong emotional response."
+    },
+    "q14--ol-OL1838370W": {
+      "grade": 2,
+      "why": "Emotionally moving YA novel about grief and loss; known for evoking tears."
     },
     "q14--ol-OL18450700W": {
       "grade": 0,
@@ -1477,6 +1797,14 @@
     "q14--ol-OL1870386W": {
       "grade": 0,
       "why": "Parenting guide about sleep, not emotionally moving literature."
+    },
+    "q14--ol-OL19070821W": {
+      "grade": 1,
+      "why": "Fantasy adventure that might move some readers; not designed to evoke tears."
+    },
+    "q14--ol-OL19912350W": {
+      "grade": 0,
+      "why": "Fantasy romance. Reader seeking emotional catharsis, not genre match."
     },
     "q14--ol-OL19963111W": {
       "grade": 1,
@@ -1506,6 +1834,18 @@
       "grade": 2,
       "why": "Young adult novel about grief and loss. Emotionally powerful subject matter."
     },
+    "q14--ol-OL20354498W": {
+      "grade": 1,
+      "why": "Romance and friendship focus may touch emotions, but primarily comedic tone."
+    },
+    "q14--ol-OL20521090W": {
+      "grade": 1,
+      "why": "Contemporary YA romance likely emotional, but no guarantee of tears."
+    },
+    "q14--ol-OL20564687W": {
+      "grade": 2,
+      "why": "Colleen Hoover's emotionally intense romance known for moving readers to tears."
+    },
     "q14--ol-OL21151953W": {
       "grade": 2,
       "why": "Book about grief and bereavement will likely evoke emotional tears from reader."
@@ -1517,6 +1857,10 @@
     "q14--ol-OL21775531W": {
       "grade": 1,
       "why": "Emotionally intense dystopian romance, may move reader but not guaranteed tearful."
+    },
+    "q14--ol-OL21780511W": {
+      "grade": 1,
+      "why": "Drama and angst suggest emotional engagement, but unclear if genuinely moving or just angsty."
     },
     "q14--ol-OL21802553W": {
       "grade": 1,
@@ -1558,6 +1902,10 @@
       "grade": 2,
       "why": "Book about grief and bereavement directly addresses emotional need to process loss."
     },
+    "q14--ol-OL27245843W": {
+      "grade": 1,
+      "why": "Emotional contemporary romance with angst may resonate, but primarily steamy entertainment."
+    },
     "q14--ol-OL275007W": {
       "grade": 0,
       "why": "Children's picture book unlikely to evoke emotional crying in adult reader."
@@ -1569,6 +1917,14 @@
     "q14--ol-OL28695W": {
       "grade": 2,
       "why": "Emotionally affecting children's book addressing bereavement and disability themes."
+    },
+    "q14--ol-OL29192912W": {
+      "grade": 2,
+      "why": "Epic multigenerational family saga known for emotional depth and moving moments."
+    },
+    "q14--ol-OL2959315W": {
+      "grade": 0,
+      "why": "Contemporary romance; no indication of emotional depth or sadness."
     },
     "q14--ol-OL3452875W": {
       "grade": 2,
@@ -1590,6 +1946,10 @@
       "grade": 0,
       "why": "Health and mind-body book unlikely to provide emotional catharsis reader seeks."
     },
+    "q14--ol-OL41943074W": {
+      "grade": 1,
+      "why": "Fantasy romance likely emotional, but no confirmation it's tearful."
+    },
     "q14--ol-OL42481402W": {
       "grade": 0,
       "why": "Poetry collection title suggests whimsy, not emotional depth or pathos."
@@ -1605,6 +1965,14 @@
     "q14--ol-OL5759988W": {
       "grade": 0,
       "why": "Children's picture book about emotions, unlikely to move adult reader to tears"
+    },
+    "q14--ol-OL6073271W": {
+      "grade": 1,
+      "why": "Emotionally intense YA sci-fi that can move readers, but not guaranteed tearjerker."
+    },
+    "q14--ol-OL71158W": {
+      "grade": 1,
+      "why": "Emotional book about grief, but meditative/essay rather than narrative fiction that induces tears"
     },
     "q14--ol-OL7464782W": {
       "grade": 0,
@@ -1670,9 +2038,17 @@
       "grade": 2,
       "why": "Classic cosy mystery. Detective story, nothing gruesome in tone."
     },
+    "q15--ol-OL16175854W": {
+      "grade": 0,
+      "why": "Fantasy adventure with dragons, not a cosy mystery."
+    },
     "q15--ol-OL16296187W": {
       "grade": 0,
       "why": "Children's picture book about puffins, not a mystery novel."
+    },
+    "q15--ol-OL16552730W": {
+      "grade": 2,
+      "why": "Cosy mystery about beekeeping with investigation and murder, no gore indicated."
     },
     "q15--ol-OL16960410W": {
       "grade": 1,
@@ -1681,6 +2057,10 @@
     "q15--ol-OL17077412W": {
       "grade": 0,
       "why": "Horror & Ghost Stories subject conflicts with 'nothing gruesome' requirement."
+    },
+    "q15--ol-OL17557879W": {
+      "grade": 0,
+      "why": "Fantasy with paranormal elements, not a mystery. No detective plot."
     },
     "q15--ol-OL17640880W": {
       "grade": 0,
@@ -1702,13 +2082,25 @@
       "grade": 0,
       "why": "Sidney Sheldon thriller, not cosy mystery. Likely dark and intense."
     },
+    "q15--ol-OL1963277W": {
+      "grade": 0,
+      "why": "Horror novel with vampires; explicitly gruesome subject matter."
+    },
     "q15--ol-OL20005800W": {
       "grade": 0,
       "why": "Serial murderer thriller - explicitly gruesome subject matter, opposite of cosy mystery request"
     },
+    "q15--ol-OL20027994W": {
+      "grade": 0,
+      "why": "Horror fiction with witches and haunted places, not cosy mystery."
+    },
     "q15--ol-OL20036652W": {
       "grade": 0,
       "why": "Dark thriller about kidnapping victims, not cosy mystery at all."
+    },
+    "q15--ol-OL20073906W": {
+      "grade": 0,
+      "why": "Suspense thriller, not a cosy mystery. Subject matter appears dark/intense."
     },
     "q15--ol-OL20078135W": {
       "grade": 0,
@@ -1721,6 +2113,14 @@
     "q15--ol-OL20764592W": {
       "grade": 0,
       "why": "Thriller/suspense, not cosy mystery. Likely contains gruesome content."
+    },
+    "q15--ol-OL21692056W": {
+      "grade": 0,
+      "why": "Young adult thriller/suspense, not cosy mystery. Likely too intense for reader's request."
+    },
+    "q15--ol-OL24217618W": {
+      "grade": 0,
+      "why": "Fantasy adventure about feral cats, not a mystery novel."
     },
     "q15--ol-OL24341413W": {
       "grade": 0,
@@ -1754,6 +2154,10 @@
       "grade": 0,
       "why": "Horror novel with mass murder; reader wants cosy mystery without gruesome content."
     },
+    "q15--ol-OL2712933W": {
+      "grade": 0,
+      "why": "Psychological fiction about sleep disorders, likely dark/complex not cosy."
+    },
     "q15--ol-OL278290W": {
       "grade": 0,
       "why": "Dark fantasy with gruesome content despite mystery and magic elements."
@@ -1785,6 +2189,10 @@
     "q15--ol-OL438998W": {
       "grade": 2,
       "why": "Cosy mystery with child-friendly tone, no gruesome content indicated."
+    },
+    "q15--ol-OL453670W": {
+      "grade": 0,
+      "why": "Cosy mystery novel requested; record shows fantasy comedy with wizards."
     },
     "q15--ol-OL471664W": {
       "grade": 2,
@@ -1818,6 +2226,10 @@
       "grade": 0,
       "why": "Pale Horse involves occult murder plot, not cosy mystery tone"
     },
+    "q15--ol-OL471932W": {
+      "grade": 2,
+      "why": "Classic cosy mystery by Agatha Christie, detective-focused investigation without graphic violence."
+    },
     "q15--ol-OL472044W": {
       "grade": 2,
       "why": "Classic cosy mystery by Agatha Christie. Poirot detective story, no gore."
@@ -1834,6 +2246,10 @@
       "grade": 0,
       "why": "Dark psychological thriller about murder and curse, not cosy mystery."
     },
+    "q15--ol-OL472536W": {
+      "grade": 2,
+      "why": "Classic Agatha Christie mystery, cosy genre standard, no graphic violence."
+    },
     "q15--ol-OL472549W": {
       "grade": 2,
       "why": "Classic Agatha Christie mystery, traditional detective fiction, no gore indicated."
@@ -1846,6 +2262,10 @@
       "grade": 0,
       "why": "Children's picture book about insects, not a mystery."
     },
+    "q15--ol-OL535201W": {
+      "grade": 0,
+      "why": "Fantasy adventure with magic, not a mystery plot structure."
+    },
     "q15--ol-OL5604754W": {
       "grade": 2,
       "why": "Mystery story for young readers, no gore or gruesome content implied."
@@ -1857,6 +2277,14 @@
     "q15--ol-OL5725866W": {
       "grade": 0,
       "why": "Karin Slaughter writes dark, graphic crime thrillers, not cosy mysteries."
+    },
+    "q15--ol-OL59379W": {
+      "grade": 0,
+      "why": "Historical romance novel, not a mystery. Doesn't match query intent."
+    },
+    "q15--ol-OL64222W": {
+      "grade": 0,
+      "why": "Horror novel about demonic possession; explicitly gruesome and dark."
     },
     "q15--ol-OL64225W": {
       "grade": 0,
@@ -1878,9 +2306,17 @@
       "grade": 0,
       "why": "Romance with bereavement and stalking themes, not cosy mystery genre."
     },
+    "q16--ol-OL1057175W": {
+      "grade": 0,
+      "why": "Bereavement subject matter contradicts need for uplift after hard year."
+    },
     "q16--ol-OL108101W": {
       "grade": 2,
       "why": "Uplifting Christmas story about friendship and compassion amid grief."
+    },
+    "q16--ol-OL114661W": {
+      "grade": 0,
+      "why": "Heartbreaking memoir about death and loss, not uplifting"
     },
     "q16--ol-OL116157W": {
       "grade": 1,
@@ -1898,6 +2334,10 @@
       "grade": 1,
       "why": "Uplifting stories, but specifically about parenting, not general audience."
     },
+    "q16--ol-OL14999414W": {
+      "grade": 1,
+      "why": "Self-help on positive thinking, adjacent to emotional uplift but not narrative fiction."
+    },
     "q16--ol-OL15103529W": {
       "grade": 1,
       "why": "Self-improvement and uplifting content, but specifically grief-focused, not general uplift."
@@ -1906,6 +2346,10 @@
       "grade": 0,
       "why": "Self-help book about grief, not an uplifting story or narrative."
     },
+    "q16--ol-OL15572356W": {
+      "grade": 2,
+      "why": "Heartwarming animal story about love and purpose across lives."
+    },
     "q16--ol-OL15829778W": {
       "grade": 0,
       "why": "Grief-focused, not uplifting. Reader needs encouragement, not bereavement support."
@@ -1913,6 +2357,14 @@
     "q16--ol-OL15841756W": {
       "grade": 2,
       "why": "A true story about passionate birders pursuing an uplifting competition goal."
+    },
+    "q16--ol-OL16341254W": {
+      "grade": 0,
+      "why": "Fiction about grief and terminal illness, not uplifting comfort reading."
+    },
+    "q16--ol-OL16444438W": {
+      "grade": 0,
+      "why": "Teen romance centered on terminal cancer, not uplifting or restorative."
     },
     "q16--ol-OL166256W": {
       "grade": 0,
@@ -1934,9 +2386,17 @@
       "grade": 0,
       "why": "Story centered on bereavement, unlikely to uplift after difficult year."
     },
+    "q16--ol-OL17621454W": {
+      "grade": 2,
+      "why": "Humorous friendship story about middle school life, uplifting and age-appropriate for young readers."
+    },
     "q16--ol-OL17710048W": {
       "grade": 2,
       "why": "Grief/resilience memoir directly addresses emotional recovery after hardship."
+    },
+    "q16--ol-OL17795349W": {
+      "grade": 0,
+      "why": "Historical fiction about slavery is not uplifting after hardship."
     },
     "q16--ol-OL17800586W": {
       "grade": 2,
@@ -1978,6 +2438,10 @@
       "grade": 0,
       "why": "Personal finance guide, not an uplifting story or narrative."
     },
+    "q16--ol-OL20042375W": {
+      "grade": 0,
+      "why": "Psychology text about grief, not uplifting story. Wrong genre entirely."
+    },
     "q16--ol-OL20050042W": {
       "grade": 1,
       "why": "Marriage/parenting humor addresses relationship stress, somewhat uplifting but narrow focus."
@@ -1998,6 +2462,10 @@
       "grade": 0,
       "why": "Memoir about grief and loss, not an uplifting story for recovery."
     },
+    "q16--ol-OL20348172W": {
+      "grade": 0,
+      "why": "Depression in adolescence subject suggests heavy content, not uplifting tone."
+    },
     "q16--ol-OL2038452W": {
       "grade": 0,
       "why": "Self-help psychology book, not narrative story. Wrong format entirely."
@@ -2009,6 +2477,10 @@
     "q16--ol-OL20564687W": {
       "grade": 0,
       "why": "Dark romance dealing with trauma, not uplifting. Title contradicts intent."
+    },
+    "q16--ol-OL21027778W": {
+      "grade": 2,
+      "why": "Humorous children's story about happiness and friendship - uplifting tone"
     },
     "q16--ol-OL21666608W": {
       "grade": 0,
@@ -2058,6 +2530,18 @@
       "grade": 2,
       "why": "Buddhist spiritual guidance on finding peace amid adversity. Directly addresses uplift after hardship."
     },
+    "q16--ol-OL26663382W": {
+      "grade": 0,
+      "why": "Memoir about trauma and abuse, not uplifting or feel-good reading."
+    },
+    "q16--ol-OL2679254W": {
+      "grade": 0,
+      "why": "Memoir about eating disorders is clinical, not uplifting for struggling reader."
+    },
+    "q16--ol-OL2703648W": {
+      "grade": 0,
+      "why": "Self-help/counseling book, not an uplifting story as requested."
+    },
     "q16--ol-OL2705619W": {
       "grade": 2,
       "why": "Romance novel likely to provide uplifting, hopeful emotional experience reader seeks."
@@ -2086,6 +2570,10 @@
       "grade": 0,
       "why": "Professional grief counseling manual, not an uplifting story for personal reading."
     },
+    "q16--ol-OL3923952W": {
+      "grade": 0,
+      "why": "Dark psychological novel about alienation and despair, not uplifting."
+    },
     "q16--ol-OL42975424W": {
       "grade": 0,
       "why": "Title suggests relationship breakdown, not uplifting recovery. Too ambiguous."
@@ -2101,6 +2589,10 @@
     "q16--ol-OL5695925W": {
       "grade": 2,
       "why": "Romance novel set in Scotland. Uplifting, escapist, matches reader's emotional need."
+    },
+    "q16--ol-OL5762090W": {
+      "grade": 1,
+      "why": "Humorous fiction may lift mood, but unclear if genuinely uplifting."
     },
     "q16--ol-OL6143049W": {
       "grade": 0,
@@ -2118,9 +2610,17 @@
       "grade": 1,
       "why": "Self-improvement nonfiction, not an uplifting story. Wrong format."
     },
+    "q16--ol-OL7972587W": {
+      "grade": 0,
+      "why": "Personal finance guide, not an uplifting story or narrative work."
+    },
     "q16--ol-OL81588W": {
       "grade": 0,
       "why": "Horror tales are not uplifting; contrary to reader's emotional need."
+    },
+    "q16--ol-OL860483W": {
+      "grade": 0,
+      "why": "Post-apocalyptic survival story, not uplifting comfort reading."
     },
     "q16--ol-OL8699780W": {
       "grade": 0,
@@ -2138,6 +2638,10 @@
       "grade": 1,
       "why": "Well-regarded short stories, but Munro's work often explores difficult relationships and melancholy themes."
     },
+    "q17--ol-OL107969W": {
+      "grade": 1,
+      "why": "Historic cookbook with budget cooking; may include vegetable recipes but dated for modern parenting."
+    },
     "q17--ol-OL1088551W": {
       "grade": 0,
       "why": "Philosophy autobiography. No connection to parenting or nutrition."
@@ -2154,9 +2658,17 @@
       "grade": 1,
       "why": "General parenting advice book; likely contains relevant tips but not specifically about vegetables."
     },
+    "q17--ol-OL1503295W": {
+      "grade": 0,
+      "why": "Fiction story about animals. Not a parenting/nutrition guide for toddlers."
+    },
     "q17--ol-OL151277W": {
       "grade": 0,
       "why": "Vegetarian recipes for adults, not guidance on toddler feeding."
+    },
+    "q17--ol-OL15136173W": {
+      "grade": 0,
+      "why": "Whimsical fiction about weather, not parenting advice for picky eaters."
     },
     "q17--ol-OL15230140W": {
       "grade": 1,
@@ -2174,6 +2686,10 @@
       "grade": 0,
       "why": "Romance novel. No connection to parenting or nutrition advice."
     },
+    "q17--ol-OL15440775W": {
+      "grade": 0,
+      "why": "Academic nutrition textbook, not parenting advice for toddlers."
+    },
     "q17--ol-OL15538004W": {
       "grade": 0,
       "why": "General nutrition textbook, not parenting guide for picky eaters."
@@ -2190,6 +2706,10 @@
       "grade": 2,
       "why": "Practical guide on nutrition and baby food preparation for young children."
     },
+    "q17--ol-OL16767034W": {
+      "grade": 1,
+      "why": "Nutrition reference but appears academic, not parenting/picky eater advice"
+    },
     "q17--ol-OL16810338W": {
       "grade": 1,
       "why": "Covers eating and health, but likely general audience, not toddler-specific parenting."
@@ -2197,6 +2717,10 @@
     "q17--ol-OL17469685W": {
       "grade": 0,
       "why": "Academic textbook on food science, not parenting advice for picky eaters."
+    },
+    "q17--ol-OL1820657W": {
+      "grade": 1,
+      "why": "Cooking resource but not specifically about toddler nutrition or picky eaters."
     },
     "q17--ol-OL1826076W": {
       "grade": 2,
@@ -2209,6 +2733,14 @@
     "q17--ol-OL18667569W": {
       "grade": 2,
       "why": "Directly addresses nutrition and health for young children, including dietary aspects."
+    },
+    "q17--ol-OL19101888W": {
+      "grade": 1,
+      "why": "Nutrition textbook covers children's nutrition but likely too academic for parenting advice."
+    },
+    "q17--ol-OL1923961W": {
+      "grade": 1,
+      "why": "General parenting book covers child rearing but unlikely focused on nutrition/vegetables."
     },
     "q17--ol-OL1973169W": {
       "grade": 0,
@@ -2298,6 +2830,10 @@
       "grade": 1,
       "why": "Nutrition textbook likely too technical for parenting advice on toddlers."
     },
+    "q17--ol-OL3900613W": {
+      "grade": 0,
+      "why": "Technical nutrition assessment text, not parenting guidance for toddlers."
+    },
     "q17--ol-OL49931W": {
       "grade": 0,
       "why": "About growing vegetables, not feeding them to toddlers."
@@ -2330,6 +2866,10 @@
       "grade": 1,
       "why": "Children's story about food, but fiction rather than practical parenting guidance."
     },
+    "q17--ol-OL8127897W": {
+      "grade": 1,
+      "why": "Cooking guide, not specifically about feeding toddlers vegetables."
+    },
     "q17--ol-OL81934W": {
       "grade": 0,
       "why": "Book about grief and bereavement, not parenting or nutrition advice."
@@ -2358,6 +2898,10 @@
       "grade": 2,
       "why": "Picture book directly addresses child sleep issues through fiction narrative."
     },
+    "q18--ol-OL15145243W": {
+      "grade": 2,
+      "why": "Picture book directly addresses bedtime struggles with young children."
+    },
     "q18--ol-OL151883W": {
       "grade": 2,
       "why": "Classic bedtime book designed to help children fall asleep peacefully."
@@ -2365,6 +2909,10 @@
     "q18--ol-OL15842511W": {
       "grade": 2,
       "why": "Practical parenting guide directly addresses child care and sleep issues."
+    },
+    "q18--ol-OL15845911W": {
+      "grade": 0,
+      "why": "Trauma memoir, not a parenting guide for sleep issues."
     },
     "q18--ol-OL16072170W": {
       "grade": 1,
@@ -2405,6 +2953,10 @@
     "q18--ol-OL1900403W": {
       "grade": 2,
       "why": "Directly addresses sleep and sleep disorders. Practical guide for understanding and treating sleep issues."
+    },
+    "q18--ol-OL1908436W": {
+      "grade": 1,
+      "why": "General parenting guidance book; addresses parenting relationships but not specifically sleep issues."
     },
     "q18--ol-OL19353882W": {
       "grade": 1,
@@ -2478,6 +3030,10 @@
       "grade": 1,
       "why": "Parenting guide on discipline and child rearing, plausibly relevant to sleep issues but not specifically about sleep."
     },
+    "q18--ol-OL22058199W": {
+      "grade": 2,
+      "why": "Children's book directly addressing nighttime fears and sleep issues in children."
+    },
     "q18--ol-OL2403653W": {
       "grade": 2,
       "why": "Directly addresses children's sleep issues and bedtime, explicitly for juvenile audience."
@@ -2502,6 +3058,14 @@
       "grade": 0,
       "why": "About grief and bereavement, not child sleep issues."
     },
+    "q18--ol-OL5099026W": {
+      "grade": 0,
+      "why": "Story about misbehavior, not about sleep problems or solutions."
+    },
+    "q18--ol-OL547418W": {
+      "grade": 2,
+      "why": "Picture book specifically about sleep for young children, addresses reader's stated problem."
+    },
     "q18--ol-OL5857189W": {
       "grade": 2,
       "why": "Direct advice for children's sleep problems. Exactly what parent needs."
@@ -2513,6 +3077,10 @@
     "q18--ol-OL6553689W": {
       "grade": 0,
       "why": "Promotes sleeping less, not helping children sleep better."
+    },
+    "q18--ol-OL773852W": {
+      "grade": 0,
+      "why": "Academic psychology text on bereavement, not sleep help for children."
     },
     "q18--ol-OL7917130W": {
       "grade": 2,
@@ -2562,6 +3130,14 @@
       "grade": 0,
       "why": "Fiction with death as plot device, not a coping/grief support resource."
     },
+    "q19--ol-OL17710048W": {
+      "grade": 2,
+      "why": "Non-fiction about grief and bereavement by bereaved author. Directly helps coping."
+    },
+    "q19--ol-OL1838370W": {
+      "grade": 2,
+      "why": "Fiction about bereavement in adolescence; directly addresses coping with death."
+    },
     "q19--ol-OL1868480W": {
       "grade": 2,
       "why": "Directly addresses coping with grief and bereavement after death."
@@ -2606,13 +3182,25 @@
       "grade": 2,
       "why": "Direct counseling resource explicitly addressing grief support and coping."
     },
+    "q19--ol-OL21151953W": {
+      "grade": 2,
+      "why": "Directly addresses grief and bereavement with practical coping guidance."
+    },
     "q19--ol-OL2319934W": {
       "grade": 0,
       "why": "Adventure fiction; doesn't address grief or bereavement coping."
     },
+    "q19--ol-OL24306499W": {
+      "grade": 0,
+      "why": "Fiction where death is plot device, not coping guidance book."
+    },
     "q19--ol-OL24494910W": {
       "grade": 2,
       "why": "Non-fiction essay explicitly about grief and coping with loss."
+    },
+    "q19--ol-OL26193470W": {
+      "grade": 2,
+      "why": "Directly addresses grief and bereavement with psychological coping focus."
     },
     "q19--ol-OL2636504W": {
       "grade": 2,
@@ -2633,6 +3221,10 @@
     "q19--ol-OL2715724W": {
       "grade": 2,
       "why": "Directly addresses grief and bereavement with practical coping methods."
+    },
+    "q19--ol-OL2730672W": {
+      "grade": 1,
+      "why": "About bereavement but for pet loss, not human death specifically."
     },
     "q19--ol-OL2771267W": {
       "grade": 2,
@@ -2666,9 +3258,17 @@
       "grade": 0,
       "why": "Literary fiction with death as plot device, not a coping resource."
     },
+    "q19--ol-OL45911W": {
+      "grade": 2,
+      "why": "Directly addresses bereavement and consolation from religious perspective."
+    },
     "q19--ol-OL5695925W": {
       "grade": 0,
       "why": "Historical romance novel. Death is not the subject matter."
+    },
+    "q19--ol-OL5758240W": {
+      "grade": 2,
+      "why": "Drama exploring bereavement and grief after loss. Directly addresses coping."
     },
     "q19--ol-OL5762090W": {
       "grade": 0,
@@ -2734,6 +3334,10 @@
       "grade": 2,
       "why": "Beginner's practical manual for observing the night sky and astronomy."
     },
+    "q2--ol-OL14858984W": {
+      "grade": 2,
+      "why": "Classic astronomy textbook with illustrations, suitable for beginners learning about night sky."
+    },
     "q2--ol-OL151883W": {
       "grade": 0,
       "why": "Bedtime story, not astronomy. Wrong subject despite night/sleep keywords."
@@ -2758,6 +3362,10 @@
       "grade": 0,
       "why": "About introversion and career advice, not astronomy or night sky."
     },
+    "q2--ol-OL166256W": {
+      "grade": 0,
+      "why": "Almanac with tables/ephemerides, not introductory guide for beginners"
+    },
     "q2--ol-OL18191919W": {
       "grade": 0,
       "why": "Science fiction novel, not educational astronomy for beginners."
@@ -2770,17 +3378,37 @@
       "grade": 0,
       "why": "Short story collection about relationships, unrelated to astronomy or night sky."
     },
+    "q2--ol-OL1876782W": {
+      "grade": 1,
+      "why": "Astronomy book, but focuses on exobiology and extraterrestrial life, not sky observation."
+    },
     "q2--ol-OL19075470W": {
       "grade": 0,
       "why": "Science fiction novel, not an astronomy/stargazing guide for beginners"
+    },
+    "q2--ol-OL1909291W": {
+      "grade": 1,
+      "why": "Cosmology book, but focuses on physics/spacetime, not stargazing basics."
+    },
+    "q2--ol-OL1919526W": {
+      "grade": 2,
+      "why": "Astronomy textbook for beginners covers night sky fundamentals."
     },
     "q2--ol-OL19707401W": {
       "grade": 2,
       "why": "Introductory astronomy guide directly matches beginner's request for sky knowledge."
     },
+    "q2--ol-OL19722127W": {
+      "grade": 1,
+      "why": "Astronomy book but focuses on exoplanets, not introductory night sky observation."
+    },
     "q2--ol-OL1975705W": {
       "grade": 0,
       "why": "Science fiction novel, not beginner guide to astronomy or night sky observation"
+    },
+    "q2--ol-OL19923556W": {
+      "grade": 0,
+      "why": "Science fiction novel, not an educational guide to night sky observation."
     },
     "q2--ol-OL19979307W": {
       "grade": 2,
@@ -2790,9 +3418,17 @@
       "grade": 0,
       "why": "Poetry collection; reader wants astronomy/stargazing instruction book"
     },
+    "q2--ol-OL21094959W": {
+      "grade": 2,
+      "why": "Introductory astronomy textbook directly addresses night sky learning for beginners."
+    },
     "q2--ol-OL21725900W": {
       "grade": 1,
       "why": "Astronomy textbook covers night sky topics but aimed at students, not casual beginners."
+    },
+    "q2--ol-OL24217618W": {
+      "grade": 0,
+      "why": "Fiction about cats. No astronomy or night sky content."
     },
     "q2--ol-OL246503W": {
       "grade": 2,
@@ -2826,6 +3462,10 @@
       "grade": 2,
       "why": "Astronomy textbook for beginners covering sky observation topics."
     },
+    "q2--ol-OL2744497W": {
+      "grade": 1,
+      "why": "Astronomy popular work by accessible author, but focuses on cosmic phenomena rather than observing the night sky."
+    },
     "q2--ol-OL2764668W": {
       "grade": 2,
       "why": "Introductory astronomy book directly matches beginner-level night sky learning needs."
@@ -2837,6 +3477,10 @@
     "q2--ol-OL28695W": {
       "grade": 0,
       "why": "Fiction about bereavement, not astronomy or stargazing guide."
+    },
+    "q2--ol-OL2950948W": {
+      "grade": 1,
+      "why": "Astronomy and space content, but cosmology focus may exceed beginner level."
     },
     "q2--ol-OL3052093W": {
       "grade": 2,
@@ -2862,9 +3506,17 @@
       "grade": 1,
       "why": "Astronomy book but focuses on philosophy/religion, not introductory night sky."
     },
+    "q2--ol-OL4758779W": {
+      "grade": 0,
+      "why": "Historical Hindu astronomy text, not beginner stargazing guide."
+    },
     "q2--ol-OL4992030W": {
       "grade": 2,
       "why": "Complete amateur astronomy manual covers night sky observation for beginners."
+    },
+    "q2--ol-OL5458493W": {
+      "grade": 0,
+      "why": "Historical astronomy text, not beginner guide to night sky observation"
     },
     "q2--ol-OL5760362W": {
       "grade": 1,
@@ -2873,6 +3525,10 @@
     "q2--ol-OL5817030W": {
       "grade": 0,
       "why": "Fiction short story collection. No astronomy or night sky content."
+    },
+    "q2--ol-OL6598783W": {
+      "grade": 0,
+      "why": "About spacecraft engineering, not observing night sky for beginners."
     },
     "q2--ol-OL8036442W": {
       "grade": 0,
@@ -2885,6 +3541,10 @@
     "q2--ol-OL81934W": {
       "grade": 0,
       "why": "About grief, not astronomy. Word 'night' is incidental only."
+    },
+    "q2--ol-OL8514692W": {
+      "grade": 0,
+      "why": "Science fiction novel about aliens, not an instructional astronomy book for beginners."
     },
     "q2--ol-OL88447W": {
       "grade": 0,
@@ -2905,6 +3565,10 @@
     "q20--ol-OL16135128W": {
       "grade": 2,
       "why": "Directly addresses job hunting and career development for job search preparation."
+    },
+    "q20--ol-OL16465640W": {
+      "grade": 1,
+      "why": "Job hunting adjacent but not interview-specific preparation guidance."
     },
     "q20--ol-OL16715005W": {
       "grade": 2,
@@ -2985,6 +3649,10 @@
     "q20--ol-OL3505594W": {
       "grade": 2,
       "why": "Directly addresses job hunting and career preparation for interviews."
+    },
+    "q20--ol-OL4491032W": {
+      "grade": 2,
+      "why": "Directly addresses job hunting and employment interviewing skills."
     },
     "q20--ol-OL4961605W": {
       "grade": 2,
@@ -3078,6 +3746,10 @@
       "grade": 0,
       "why": "Romance fiction with pregnancy as plot device, not pregnancy information guide."
     },
+    "q21--ol-OL175868W": {
+      "grade": 0,
+      "why": "Fiction novel about pregnancy, not informational guide as requested."
+    },
     "q21--ol-OL17725972W": {
       "grade": 2,
       "why": "Directly addresses pregnancy expectations and childbirth preparation."
@@ -3085,6 +3757,10 @@
     "q21--ol-OL17739755W": {
       "grade": 0,
       "why": "Romance novel with pregnancy plot, not pregnancy guidance book."
+    },
+    "q21--ol-OL1841294W": {
+      "grade": 1,
+      "why": "Related to pregnancy and babies, but focuses on infant care and parenting after birth, not pregnancy itself."
     },
     "q21--ol-OL1981595W": {
       "grade": 2,
@@ -3138,6 +3814,10 @@
       "grade": 0,
       "why": "Fiction romance novel, not practical pregnancy guide reader seeks."
     },
+    "q21--ol-OL3956903W": {
+      "grade": 0,
+      "why": "Book about loss of mothers, not pregnancy guidance or expectations."
+    },
     "q21--ol-OL4273148W": {
       "grade": 0,
       "why": "Romance novel where pregnancy is plot device, not informational guide."
@@ -3174,6 +3854,14 @@
       "grade": 1,
       "why": "Covers pregnancy but through fictional teenage narrative, not informational guide."
     },
+    "q21--ol-OL7917130W": {
+      "grade": 1,
+      "why": "Parenting guide, but focuses on infant care not pregnancy itself."
+    },
+    "q21--ol-OL8515205W": {
+      "grade": 0,
+      "why": "About borderline personality disorder in mothers, not pregnancy preparation."
+    },
     "q21--ol-OL99159W": {
       "grade": 2,
       "why": "Directly addresses pregnancy and nutritional health during pregnancy and infancy."
@@ -3190,6 +3878,10 @@
       "grade": 0,
       "why": "Essay collection about travel and philosophy, not about physical fitness or recovery."
     },
+    "q22--ol-OL15578776W": {
+      "grade": 1,
+      "why": "Fitness guide, but generic recovery-focused approach unclear from record."
+    },
     "q22--ol-OL1647552W": {
       "grade": 1,
       "why": "General fitness book, but not recovery-focused or post-illness specific."
@@ -3197,6 +3889,10 @@
     "q22--ol-OL16479869W": {
       "grade": 2,
       "why": "Directly addresses fitness and physical health recovery/wellness after illness."
+    },
+    "q22--ol-OL16767034W": {
+      "grade": 1,
+      "why": "Nutrition text relevant to recovery, but not fitness-focused or recovery-specific."
     },
     "q22--ol-OL17319629W": {
       "grade": 1,
@@ -3210,6 +3906,10 @@
       "grade": 0,
       "why": "About grief and bereavement, not physical fitness or recovery from illness."
     },
+    "q22--ol-OL17447903W": {
+      "grade": 1,
+      "why": "Health and nutrition focused, but not specifically about fitness recovery post-illness."
+    },
     "q22--ol-OL17717017W": {
       "grade": 1,
       "why": "Fitness guide but may lack illness-specific guidance or recovery focus."
@@ -3221,6 +3921,18 @@
     "q22--ol-OL1867086W": {
       "grade": 0,
       "why": "Mental illness exploration, not physical rehabilitation or fitness recovery guide."
+    },
+    "q22--ol-OL18799656W": {
+      "grade": 1,
+      "why": "Mind-body connection relevant but not specifically fitness recovery guide."
+    },
+    "q22--ol-OL19101888W": {
+      "grade": 1,
+      "why": "Nutrition relevant to recovery but covers lifecycle broadly, not recovery-specific."
+    },
+    "q22--ol-OL20022947W": {
+      "grade": 1,
+      "why": "Sleep supports recovery, but doesn't directly address fitness or post-illness exercise."
     },
     "q22--ol-OL20139482W": {
       "grade": 1,
@@ -3238,6 +3950,14 @@
       "grade": 1,
       "why": "Covers fitness and nutrition, but not recovery from illness specifically."
     },
+    "q22--ol-OL20898605W": {
+      "grade": 0,
+      "why": "Textbook on exercise physiology, not recovery guidance after illness."
+    },
+    "q22--ol-OL21302859W": {
+      "grade": 0,
+      "why": "Mental health workbook, not physical fitness or recovery from illness."
+    },
     "q22--ol-OL21430808W": {
       "grade": 2,
       "why": "Directly addresses fitness and health recovery with practical guidance."
@@ -3246,9 +3966,21 @@
       "grade": 2,
       "why": "Directly addresses fitness recovery with exercise guidance and health focus."
     },
+    "q22--ol-OL24225829W": {
+      "grade": 0,
+      "why": "Book about slavery and mental health, not physical fitness recovery guidance."
+    },
     "q22--ol-OL24434912W": {
       "grade": 0,
       "why": "Job hunting guide, unrelated to fitness or health recovery."
+    },
+    "q22--ol-OL2629038W": {
+      "grade": 0,
+      "why": "About trauma recovery, not physical fitness after illness."
+    },
+    "q22--ol-OL2643503W": {
+      "grade": 0,
+      "why": "Book about sleep and fitness, not recovery from illness."
     },
     "q22--ol-OL26511046W": {
       "grade": 0,
@@ -3258,6 +3990,10 @@
       "grade": 0,
       "why": "Memoir about eating disorders, not recovery from acute illness."
     },
+    "q22--ol-OL2756738W": {
+      "grade": 0,
+      "why": "Mental health self-help, not physical fitness recovery guidance."
+    },
     "q22--ol-OL2890057W": {
       "grade": 1,
       "why": "Fitness-related but focuses on body image and self-acceptance, not recovery from illness."
@@ -3266,9 +4002,17 @@
       "grade": 2,
       "why": "Exercise guide for women, practical fitness instruction suitable for recovery."
     },
+    "q22--ol-OL2946486W": {
+      "grade": 1,
+      "why": "Exercise book but no indication of post-illness recovery approach."
+    },
     "q22--ol-OL2958043W": {
       "grade": 1,
       "why": "Fitness basics covered, but doesn't address post-illness recovery context."
+    },
+    "q22--ol-OL3004974W": {
+      "grade": 1,
+      "why": "General fitness book, not recovery-focused after illness."
     },
     "q22--ol-OL30989W": {
       "grade": 0,
@@ -3318,6 +4062,10 @@
       "grade": 1,
       "why": "Self-help on healing and mind-body connection, but not exercise-specific fitness guidance."
     },
+    "q22--ol-OL548765W": {
+      "grade": 1,
+      "why": "Wellness and vitality focus, but not recovery-specific after illness."
+    },
     "q22--ol-OL5695925W": {
       "grade": 0,
       "why": "Historical romance novel; unrelated to fitness or recovery after illness."
@@ -3338,6 +4086,10 @@
       "grade": 1,
       "why": "General fitness book, but doesn't address recovery from illness specifically."
     },
+    "q22--ol-OL6730337W": {
+      "grade": 0,
+      "why": "Mental health focus, not physical recovery from illness or fitness."
+    },
     "q22--ol-OL7013737W": {
       "grade": 2,
       "why": "Practical guide to returning to physical fitness after setback."
@@ -3345,6 +4097,10 @@
     "q22--ol-OL7096938W": {
       "grade": 0,
       "why": "About knitting/crocheting garments, not fitness or recovery from illness."
+    },
+    "q22--ol-OL7497934W": {
+      "grade": 1,
+      "why": "Health and rejuvenation topics, but likely general wellness not post-illness recovery."
     },
     "q22--ol-OL81934W": {
       "grade": 0,
@@ -3401,6 +4157,10 @@
     "q23--ol-OL1308117W": {
       "grade": 1,
       "why": "General cookbook, but no evidence of budget-focused content or recipes."
+    },
+    "q23--ol-OL14873323W": {
+      "grade": 1,
+      "why": "Food and nutrition focus, but doesn't emphasize budget cooking or affordability."
     },
     "q23--ol-OL15030499W": {
       "grade": 1,
@@ -3462,6 +4222,10 @@
       "grade": 1,
       "why": "Cooking instruction but no indication of budget-friendly approach"
     },
+    "q23--ol-OL1961785W": {
+      "grade": 1,
+      "why": "Budget and thrift focus, but not specifically about cooking."
+    },
     "q23--ol-OL19729685W": {
       "grade": 0,
       "why": "Financial budgeting book, not cooking. Different subject entirely."
@@ -3474,13 +4238,25 @@
       "grade": 0,
       "why": "About child discipline and parenting, not cooking or budgeting."
     },
+    "q23--ol-OL21303236W": {
+      "grade": 0,
+      "why": "Educational textbook focused on nutrition study, not budget cooking guidance."
+    },
     "q23--ol-OL21403593W": {
       "grade": 0,
       "why": "Nutrition science textbook, not a budget cooking guide for practical learners."
     },
+    "q23--ol-OL2568868W": {
+      "grade": 0,
+      "why": "Children's picture book fantasy, not practical cooking instruction or budget guidance."
+    },
     "q23--ol-OL2652448W": {
       "grade": 1,
       "why": "General cookbook by respected chef, but no indication of budget-conscious focus."
+    },
+    "q23--ol-OL267968W": {
+      "grade": 1,
+      "why": "Comprehensive cookbook but doesn't specifically address budget cooking."
     },
     "q23--ol-OL2701683W": {
       "grade": 1,
@@ -3502,6 +4278,10 @@
       "grade": 1,
       "why": "General cookbook, but no clear budget focus mentioned in record."
     },
+    "q23--ol-OL2962452W": {
+      "grade": 1,
+      "why": "Right topic but doesn't explicitly address budget constraints or economical cooking."
+    },
     "q23--ol-OL3102259W": {
       "grade": 1,
       "why": "Cookery book but no mention of budget-conscious cooking techniques."
@@ -3513,6 +4293,14 @@
     "q23--ol-OL3279081W": {
       "grade": 0,
       "why": "Classic French haute cuisine, not budget-focused cooking instruction."
+    },
+    "q23--ol-OL3279082W": {
+      "grade": 0,
+      "why": "Classic French haute cuisine guide, not budget-conscious cooking."
+    },
+    "q23--ol-OL3348011W": {
+      "grade": 1,
+      "why": "Cooking memoir but focuses on restaurant work, not budget cooking"
     },
     "q23--ol-OL3375060W": {
       "grade": 1,
@@ -3565,6 +4353,14 @@
     "q23--ol-OL8482807W": {
       "grade": 0,
       "why": "Woodworking is completely unrelated to cooking or budget meal preparation."
+    },
+    "q24--ol-OL109562W": {
+      "grade": 0,
+      "why": "Humorous fiction about school theater and football, not dog training."
+    },
+    "q24--ol-OL11370619M": {
+      "grade": 0,
+      "why": "Beekeeping book; completely unrelated to dog training."
     },
     "q24--ol-OL116157W": {
       "grade": 0,
@@ -3626,6 +4422,10 @@
       "grade": 0,
       "why": "Fiction picture book, not instructional dog training guide."
     },
+    "q24--ol-OL1928809W": {
+      "grade": 0,
+      "why": "Natural history audiobook, not practical dog training guide for owners."
+    },
     "q24--ol-OL20031020W": {
       "grade": 2,
       "why": "Direct match: dog training book by recognized expert, covers training topic."
@@ -3670,6 +4470,14 @@
       "grade": 0,
       "why": "Fictional story, not instructional guide for dog training."
     },
+    "q24--ol-OL39320W": {
+      "grade": 0,
+      "why": "Fiction biography of a dog, not practical puppy training guide."
+    },
+    "q24--ol-OL42308W": {
+      "grade": 0,
+      "why": "Veterinary memoir, not a dog training guide or puppy care manual."
+    },
     "q24--ol-OL4478449W": {
       "grade": 2,
       "why": "Directly addresses puppy training with relevant subjects and practical nonfiction focus."
@@ -3698,6 +4506,18 @@
       "grade": 0,
       "why": "Children's fiction story, not practical dog training guidance."
     },
+    "q24--ol-OL64169W": {
+      "grade": 0,
+      "why": "Fiction story about a boy and his dog, not puppy training guidance."
+    },
+    "q24--ol-OL73128W": {
+      "grade": 0,
+      "why": "Fiction story about a dog, not practical puppy training guide."
+    },
+    "q24--ol-OL8201009W": {
+      "grade": 0,
+      "why": "Book about parenting children, not dog training or puppy care."
+    },
     "q24--ol-OL8333734W": {
       "grade": 2,
       "why": "Puppy-focused guide for new dog owners, directly addresses query topic."
@@ -3713,6 +4533,10 @@
     "q25--ol-OL15162550W": {
       "grade": 2,
       "why": "Anthology of detective and mystery stories, exactly Christie's genre and style."
+    },
+    "q25--ol-OL1881764W": {
+      "grade": 1,
+      "why": "Mystery/detective genre match, but different author style and cultural setting."
     },
     "q25--ol-OL26121595W": {
       "grade": 1,
@@ -3826,6 +4650,18 @@
       "grade": 2,
       "why": "Exactly Agatha Christie—a classic detective mystery by the author they requested."
     },
+    "q25--ol-OL937096W": {
+      "grade": 0,
+      "why": "Gothic ghost story, not mystery. Wrong genre from Christie's detective fiction."
+    },
+    "q26--ol-OL12514150W": {
+      "grade": 1,
+      "why": "Action & adventure with good vs evil themes; young adult rather than Tolkien's epic fantasy scope."
+    },
+    "q26--ol-OL15331302W": {
+      "grade": 0,
+      "why": "Hard sci-fi space opera, not fantasy. Wrong genre entirely."
+    },
     "q26--ol-OL15358691W": {
       "grade": 2,
       "why": "Epic fantasy with similar scope, worldbuilding, and themes to LOTR."
@@ -3854,9 +4690,21 @@
       "grade": 0,
       "why": "Reader seeks fantasy adventure like LOTR; this is nature writing/travel memoir."
     },
+    "q26--ol-OL17267881W": {
+      "grade": 0,
+      "why": "Hard sci-fi space opera, not fantasy epic. Different genre and tone entirely."
+    },
+    "q26--ol-OL17339151W": {
+      "grade": 1,
+      "why": "Fantasy with magic and magical school, but YA romance focus differs from LOTR's epic adventure tone."
+    },
     "q26--ol-OL17423096W": {
       "grade": 1,
       "why": "Fantasy adventure with dragons, similar tone but juvenile audience versus adult epic."
+    },
+    "q26--ol-OL17591401W": {
+      "grade": 1,
+      "why": "Fantasy adventure with quests and dragons; juvenile audience may differ from LOTR appeal"
     },
     "q26--ol-OL17625829W": {
       "grade": 1,
@@ -3873,6 +4721,14 @@
     "q26--ol-OL17843058W": {
       "grade": 1,
       "why": "Fantasy adventure with dragons and quests, but aimed at juveniles not adult readers."
+    },
+    "q26--ol-OL17850410W": {
+      "grade": 1,
+      "why": "Fantasy with court intrigue and princes, but lighter YA tone than Tolkien's epic."
+    },
+    "q26--ol-OL19070821W": {
+      "grade": 1,
+      "why": "Fantasy adventure with magic and world-building, but different tone and scope than LOTR."
     },
     "q26--ol-OL1923013W": {
       "grade": 2,
@@ -3898,6 +4754,10 @@
       "grade": 1,
       "why": "Fantasy adventure for young readers, but lighter tone than LOTR epic."
     },
+    "q26--ol-OL20142351W": {
+      "grade": 1,
+      "why": "Fantasy with magical creatures, but lighter tone than LOTR. Different target audience."
+    },
     "q26--ol-OL20639427W": {
       "grade": 0,
       "why": "Contemporary YA mystery thriller; completely unrelated to epic fantasy."
@@ -3905,6 +4765,10 @@
     "q26--ol-OL21676651W": {
       "grade": 1,
       "why": "Fantasy with similar epic scope, but YA dark fantasy differs from LOTR's style."
+    },
+    "q26--ol-OL23318W": {
+      "grade": 1,
+      "why": "Cornwell's historical fiction; similar epic scope but different setting/era."
     },
     "q26--ol-OL2461964W": {
       "grade": 0,
@@ -3917,6 +4781,10 @@
     "q26--ol-OL26432388W": {
       "grade": 0,
       "why": "Art instruction book, unrelated to fantasy fiction preferences."
+    },
+    "q26--ol-OL26443093W": {
+      "grade": 1,
+      "why": "Epic fantasy with magic system, but academic-focused rather than adventure-driven like LOTR."
     },
     "q26--ol-OL26480426W": {
       "grade": 0,
@@ -3954,9 +4822,17 @@
       "grade": 0,
       "why": "Graphic novel political thriller; shares no fantasy/epic elements with LOTR."
     },
+    "q26--ol-OL34028551W": {
+      "grade": 1,
+      "why": "Fantasy epic with dragons, but different from Tolkien's style and tone."
+    },
     "q26--ol-OL34957950W": {
       "grade": 1,
       "why": "Epic fantasy with dragons and medieval setting appeals to LOTR fans, but it's YA not adult audience."
+    },
+    "q26--ol-OL3506035W": {
+      "grade": 0,
+      "why": "Zoology book, not fantasy fiction. No connection to LOTR."
     },
     "q26--ol-OL453707W": {
       "grade": 1,
@@ -3969,6 +4845,10 @@
     "q26--ol-OL510428W": {
       "grade": 0,
       "why": "Science fiction, but lacks fantasy worldbuilding and epic quest elements."
+    },
+    "q26--ol-OL548164W": {
+      "grade": 0,
+      "why": "Science fiction time travel, not epic fantasy like Lord of the Rings."
     },
     "q26--ol-OL5734756W": {
       "grade": 2,
@@ -4001,6 +4881,10 @@
     "q26--ol-OL73412W": {
       "grade": 2,
       "why": "Epic fantasy with dragons, comparable scope and adventure to LOTR."
+    },
+    "q26--ol-OL76837W": {
+      "grade": 0,
+      "why": "Thriller/mystery about codes. Not epic fantasy adventure like LOTR."
     },
     "q26--ol-OL7924135W": {
       "grade": 2,
@@ -4062,6 +4946,10 @@
       "grade": 2,
       "why": "Direct Sherlock Holmes stories. Exactly what reader asked for."
     },
+    "q27--ol-OL17062642W": {
+      "grade": 0,
+      "why": "Science fiction space opera, not mystery or detective fiction like Sherlock Holmes."
+    },
     "q27--ol-OL17798838W": {
       "grade": 0,
       "why": "Children's humorous graphic novel about animals, not detective fiction like Holmes."
@@ -4086,9 +4974,25 @@
       "grade": 0,
       "why": "Animal behavior book, completely unrelated to detective fiction."
     },
+    "q27--ol-OL20036652W": {
+      "grade": 0,
+      "why": "Psychological thriller about kidnapping, not detective mystery like Holmes."
+    },
+    "q27--ol-OL20054906W": {
+      "grade": 1,
+      "why": "Mystery thriller with dark academia, but lacks Holmes's detective logic and wit."
+    },
+    "q27--ol-OL20126932W": {
+      "grade": 0,
+      "why": "Horror thriller with supernatural elements, not detective mystery like Holmes."
+    },
     "q27--ol-OL20646061W": {
       "grade": 2,
       "why": "Mystery and detective investigation featuring cold cases. Similar appeal to Holmes."
+    },
+    "q27--ol-OL21692056W": {
+      "grade": 1,
+      "why": "Mystery/detective story for young adults, but not Sherlock Holmes-like deductive fiction"
     },
     "q27--ol-OL26121595W": {
       "grade": 0,
@@ -4138,9 +5042,21 @@
       "grade": 2,
       "why": "Science fiction mystery featuring detective protagonist solving crimes methodically."
     },
+    "q27--ol-OL46401W": {
+      "grade": 1,
+      "why": "Mystery detective story with science fiction elements, but futuristic setting differs from Holmes."
+    },
+    "q27--ol-OL471565W": {
+      "grade": 1,
+      "why": "Classic detective mystery with crime-solving, but no deductive genius protagonist like Holmes."
+    },
     "q27--ol-OL471670W": {
       "grade": 2,
       "why": "Classic detective mystery by acclaimed author. Similar to Holmes."
+    },
+    "q27--ol-OL471738W": {
+      "grade": 1,
+      "why": "Mystery/detective fiction by classic author, but not Sherlock Holmes"
     },
     "q27--ol-OL471765W": {
       "grade": 2,
@@ -4149,6 +5065,14 @@
     "q27--ol-OL471784W": {
       "grade": 1,
       "why": "Detective mystery by Christie, but not Sherlock Holmes or direct equivalent."
+    },
+    "q27--ol-OL471919W": {
+      "grade": 1,
+      "why": "Mystery and detective fiction by classic author, but not Holmes-like protagonist."
+    },
+    "q27--ol-OL471932W": {
+      "grade": 2,
+      "why": "Classic detective mystery with investigation; similar era and appeal to Holmes."
     },
     "q27--ol-OL471940W": {
       "grade": 2,
@@ -4161,6 +5085,10 @@
     "q27--ol-OL472159W": {
       "grade": 1,
       "why": "Mystery/detective fiction by major crime author, but espionage-focused rather than classic detective"
+    },
+    "q27--ol-OL472165W": {
+      "grade": 2,
+      "why": "Classic detective mystery similar to Holmes; features famous fictional detective solving cases."
     },
     "q27--ol-OL472324W": {
       "grade": 2,
@@ -4202,6 +5130,14 @@
       "grade": 1,
       "why": "Mystery detective fiction but psychological/domestic focus, not deductive puzzle-solving."
     },
+    "q27--ol-OL8317400W": {
+      "grade": 0,
+      "why": "Juvenile spy fiction. Not detective mystery like Sherlock Holmes."
+    },
+    "q27--ol-OL8400949W": {
+      "grade": 0,
+      "why": "Dark fantasy revenge tale, not detective mystery like Sherlock Holmes."
+    },
     "q28--ol-OL10592258W": {
       "grade": 0,
       "why": "Non-fiction beekeeping guide, not a narrative about a woman and bees"
@@ -4209,6 +5145,10 @@
     "q28--ol-OL10592260W": {
       "grade": 0,
       "why": "Technical beekeeping manual, not a narrative about a woman in South Carolina."
+    },
+    "q28--ol-OL106069W": {
+      "grade": 0,
+      "why": "No bees, no South Carolina, no woman protagonist. Different book entirely."
     },
     "q28--ol-OL11378159M": {
       "grade": 0,
@@ -4230,6 +5170,10 @@
       "grade": 0,
       "why": "Technical beekeeping biography in Slovak, not narrative about woman and bees in South Carolina"
     },
+    "q28--ol-OL12284323W": {
+      "grade": 0,
+      "why": "Fantasy about bookbinders and locksmiths, not about a woman and bees in South Carolina."
+    },
     "q28--ol-OL12655657W": {
       "grade": 0,
       "why": "Historical beekeeping manual, not contemporary novel about woman protagonist."
@@ -4237,6 +5181,10 @@
     "q28--ol-OL13066324W": {
       "grade": 0,
       "why": "Technical beekeeping manual, not narrative about woman and bees."
+    },
+    "q28--ol-OL14851450W": {
+      "grade": 0,
+      "why": "About a raven, not bees. Wrong animal, wrong focus entirely."
     },
     "q28--ol-OL14953777W": {
       "grade": 0,
@@ -4286,9 +5234,21 @@
       "grade": 0,
       "why": "Norwegian saga about bees, not South Carolina woman story reader seeks."
     },
+    "q28--ol-OL18139176W": {
+      "grade": 0,
+      "why": "Memoir about homeschooling and family, not about bees or South Carolina."
+    },
+    "q28--ol-OL1824918W": {
+      "grade": 0,
+      "why": "English garden memoir, not about bees or South Carolina woman"
+    },
     "q28--ol-OL1865851W": {
       "grade": 0,
       "why": "Raymond Carver short stories; no bees, woman protagonist, or South Carolina setting"
+    },
+    "q28--ol-OL1903745W": {
+      "grade": 0,
+      "why": "No woman protagonist, bees, or South Carolina setting mentioned."
     },
     "q28--ol-OL1916893W": {
       "grade": 0,
@@ -4310,6 +5270,10 @@
       "grade": 0,
       "why": "Non-fiction beekeeping manual, not a narrative about a woman and bees."
     },
+    "q28--ol-OL21672342W": {
+      "grade": 0,
+      "why": "Wrong location, wrong protagonist gender, wrong conflict context."
+    },
     "q28--ol-OL23704937W": {
       "grade": 0,
       "why": "Business textbook; no connection to bees or narrative about a woman"
@@ -4322,6 +5286,14 @@
       "grade": 0,
       "why": "Historical memoirs of North Carolina, not about bees or women."
     },
+    "q28--ol-OL26198943W": {
+      "grade": 0,
+      "why": "Technical beekeeping manual, not narrative about woman in South Carolina."
+    },
+    "q28--ol-OL26663382W": {
+      "grade": 0,
+      "why": "Memoir about TV actress, not about woman and bees in South Carolina."
+    },
     "q28--ol-OL2941508W": {
       "grade": 2,
       "why": "Exactly matches: woman, bees, South Carolina. Famous novel by Kidd."
@@ -4329,6 +5301,10 @@
     "q28--ol-OL31243649W": {
       "grade": 0,
       "why": "Technical beekeeping reference, not narrative about woman and bees in South Carolina."
+    },
+    "q28--ol-OL3171083W": {
+      "grade": 0,
+      "why": "Horror stories about lotteries and stoning, not about bees or South Carolina"
     },
     "q28--ol-OL31904934W": {
       "grade": 0,
@@ -4349,6 +5325,10 @@
     "q28--ol-OL34883819W": {
       "grade": 0,
       "why": "How-to beekeeping guide, not a book about a woman's story with bees."
+    },
+    "q28--ol-OL41815W": {
+      "grade": 0,
+      "why": "Memoir about travel and self-discovery; no bees or South Carolina setting."
     },
     "q28--ol-OL42371W": {
       "grade": 0,
@@ -4382,9 +5362,17 @@
       "grade": 2,
       "why": "Woman beekeeper in South Carolina setting matches query description exactly."
     },
+    "q28--ol-OL59384W": {
+      "grade": 0,
+      "why": "Historical romance set in eighteenth century, no bees or South Carolina connection."
+    },
     "q28--ol-OL6660859W": {
       "grade": 0,
       "why": "Juvenile beekeeping instructional, not a narrative about a woman and bees."
+    },
+    "q28--ol-OL8317292W": {
+      "grade": 0,
+      "why": "Juvenile chapter book about uncle and bees, not woman protagonist in South Carolina."
     },
     "q28--ol-OL8482827W": {
       "grade": 0,
@@ -4394,9 +5382,17 @@
       "grade": 0,
       "why": "Male beekeeper protagonist, not a woman. Wrong gender for main character."
     },
+    "q29--ol-OL1057175W": {
+      "grade": 0,
+      "why": "No wizard, no school setting, no young protagonist. Different subject entirely."
+    },
     "q29--ol-OL109579W": {
       "grade": 0,
       "why": "Boy at school, but no magic. Different subject entirely."
+    },
+    "q29--ol-OL11326416W": {
+      "grade": 0,
+      "why": "Dystopian political fiction, not about a boy wizard at school."
     },
     "q29--ol-OL116253W": {
       "grade": 0,
@@ -4410,9 +5406,17 @@
       "grade": 0,
       "why": "About a sports coach, not a wizard at school."
     },
+    "q29--ol-OL15104126W": {
+      "grade": 0,
+      "why": "Gothic mystery series, not wizard school fantasy. Different tone and premise."
+    },
     "q29--ol-OL15129062W": {
       "grade": 0,
       "why": "Humorous children's story unrelated to wizards or school settings."
+    },
+    "q29--ol-OL15131205W": {
+      "grade": 1,
+      "why": "Magic and boy wizard at school setting, but different series/character"
     },
     "q29--ol-OL15505465W": {
       "grade": 0,
@@ -4458,6 +5462,10 @@
       "grade": 2,
       "why": "Boy wizard at magical school, fantasy young adult fiction. Clearly matches the query."
     },
+    "q29--ol-OL17357353W": {
+      "grade": 0,
+      "why": "About teen romance and secrets, not a boy wizard at school."
+    },
     "q29--ol-OL17434786W": {
       "grade": 0,
       "why": "Literary fiction about fathers, sons, bereavement. Not about wizards or school."
@@ -4498,6 +5506,10 @@
       "grade": 0,
       "why": "Short story collection about relationships. No wizard, school, or young protagonist."
     },
+    "q29--ol-OL19070821W": {
+      "grade": 0,
+      "why": "Fantasy with magic but no boy wizard student protagonist or school setting."
+    },
     "q29--ol-OL1916893W": {
       "grade": 0,
       "why": "About a Boy is contemporary humorous fiction, not fantasy. No wizard or magic school."
@@ -4529,6 +5541,10 @@
     "q29--ol-OL20115515W": {
       "grade": 0,
       "why": "School setting and humor, but no wizard or magic elements present."
+    },
+    "q29--ol-OL20142351W": {
+      "grade": 0,
+      "why": "Wayward Son is adult fantasy, not about a boy wizard at school."
     },
     "q29--ol-OL202152W": {
       "grade": 0,
@@ -4566,6 +5582,10 @@
       "grade": 0,
       "why": "About plants and seeds, not a boy wizard school narrative."
     },
+    "q29--ol-OL2568868W": {
+      "grade": 0,
+      "why": "Picture book about a child in a fantasy kitchen, not a wizard school story."
+    },
     "q29--ol-OL27818823W": {
       "grade": 0,
       "why": "Romance thriller with no magic, school, or wizard elements."
@@ -4602,9 +5622,17 @@
       "grade": 0,
       "why": "Biography of Roald Dahl, not a wizard school fiction story."
     },
+    "q29--ol-OL469218W": {
+      "grade": 0,
+      "why": "Picture book about a mouse and blanket. No wizard or school elements."
+    },
     "q29--ol-OL5233135W": {
       "grade": 0,
       "why": "About a cow named Boy, not a wizard at school."
+    },
+    "q29--ol-OL5258936W": {
+      "grade": 0,
+      "why": "School setting present, but no wizard or magic elements whatsoever."
     },
     "q29--ol-OL5817030W": {
       "grade": 0,
@@ -4618,9 +5646,21 @@
       "grade": 0,
       "why": "Children's picture book about a mouse, not wizard school fiction."
     },
+    "q29--ol-OL66275W": {
+      "grade": 0,
+      "why": "Early reader series, not wizard school fiction. Wrong audience and premise."
+    },
     "q29--ol-OL67164W": {
       "grade": 0,
       "why": "Historical fiction set in schools, not about a boy wizard at school."
+    },
+    "q29--ol-OL708284W": {
+      "grade": 0,
+      "why": "Fantasy comic about animals and cousins, not a boy wizard at school."
+    },
+    "q29--ol-OL73128W": {
+      "grade": 0,
+      "why": "Children's fiction about a dog, not a boy wizard at school."
     },
     "q29--ol-OL7518392W": {
       "grade": 0,
@@ -4662,6 +5702,10 @@
       "grade": 1,
       "why": "Programming book, not fundamentals of computer hardware/architecture."
     },
+    "q3--ol-OL17319280W": {
+      "grade": 0,
+      "why": "About AI ethics and philosophy, not how computers function mechanically."
+    },
     "q3--ol-OL17361343W": {
       "grade": 0,
       "why": "About photography criticism, not how computers work. Title match only."
@@ -4681,6 +5725,10 @@
     "q3--ol-OL1926026W": {
       "grade": 2,
       "why": "Comprehensive computer science fundamentals textbook covering general computing theory and concepts."
+    },
+    "q3--ol-OL19547345W": {
+      "grade": 0,
+      "why": "Specialized hacking/security book, not foundational computer architecture."
     },
     "q3--ol-OL1972516W": {
       "grade": 2,
@@ -4713,6 +5761,10 @@
     "q3--ol-OL2118057W": {
       "grade": 0,
       "why": "About gardening methods, not computer technology or how computers work."
+    },
+    "q3--ol-OL21513749W": {
+      "grade": 0,
+      "why": "Bioinformatics is specialized application, not how computers fundamentally work."
     },
     "q3--ol-OL21665266W": {
       "grade": 0,
@@ -4774,6 +5826,10 @@
       "grade": 0,
       "why": "About astrology and child rearing, not computer technology."
     },
+    "q3--ol-OL4617640W": {
+      "grade": 1,
+      "why": "Teaching programming language, not how computers fundamentally work."
+    },
     "q3--ol-OL4781294W": {
       "grade": 1,
       "why": "Algorithms are fundamental to CS, but doesn't cover hardware, architecture, or how computers actually work."
@@ -4789,6 +5845,10 @@
     "q3--ol-OL520219W": {
       "grade": 2,
       "why": "Directly addresses how computers work with technical engineering focus."
+    },
+    "q3--ol-OL5603179W": {
+      "grade": 0,
+      "why": "Book teaches hacking techniques, not computer fundamentals or how computers work."
     },
     "q3--ol-OL56272W": {
       "grade": 1,
@@ -4822,6 +5882,10 @@
       "grade": 2,
       "why": "Direct match for understanding computers fundamentals and how they work."
     },
+    "q30--ol-OL10561719W": {
+      "grade": 0,
+      "why": "Short story collection, not a detective novel with beekeeper protagonist."
+    },
     "q30--ol-OL10592258W": {
       "grade": 0,
       "why": "Non-fiction beekeeping guide, not a detective novel."
@@ -4854,6 +5918,10 @@
       "grade": 0,
       "why": "Non-fiction biography of beekeepers, not a detective novel"
     },
+    "q30--ol-OL12284323W": {
+      "grade": 1,
+      "why": "Features a beekeeper character but not a detective; fantasy, not mystery."
+    },
     "q30--ol-OL1253282W": {
       "grade": 0,
       "why": "Detective story but no beekeeper character or theme present."
@@ -4862,9 +5930,17 @@
       "grade": 0,
       "why": "Non-fiction beekeeping manual, not a detective novel."
     },
+    "q30--ol-OL130478W": {
+      "grade": 0,
+      "why": "Biography of a beekeeper, not a detective novel with a beekeeper protagonist."
+    },
     "q30--ol-OL137388W": {
       "grade": 0,
       "why": "Detective novel but no beekeeper protagonist. Wrong detective character."
+    },
+    "q30--ol-OL14953777W": {
+      "grade": 0,
+      "why": "Fantasy novel with beekeeper protagonist, not a detective mystery."
     },
     "q30--ol-OL14975235W": {
       "grade": 0,
@@ -4934,9 +6010,21 @@
       "grade": 0,
       "why": "Beekeeper is protagonist, not detective; no mystery plot."
     },
+    "q30--ol-OL20504271W": {
+      "grade": 0,
+      "why": "Short story about beekeeper, not a detective novel."
+    },
     "q30--ol-OL20844408W": {
       "grade": 0,
       "why": "Beekeeper subject present, but no indication of detective fiction plot."
+    },
+    "q30--ol-OL21672342W": {
+      "grade": 0,
+      "why": "Beekeeper protagonist, but not a detective novel. Wrong genre."
+    },
+    "q30--ol-OL21692056W": {
+      "grade": 0,
+      "why": "Mystery novel for young adults, but no beekeeper character or profession."
     },
     "q30--ol-OL24793569W": {
       "grade": 0,
@@ -5018,6 +6106,10 @@
       "grade": 0,
       "why": "Biography of historical beekeeper, not a detective novel."
     },
+    "q30--ol-OL66275W": {
+      "grade": 0,
+      "why": "Children's humorous fiction about school, not a detective mystery novel."
+    },
     "q30--ol-OL6660859W": {
       "grade": 0,
       "why": "Juvenile nonfiction about beekeeping, not a detective novel"
@@ -5054,6 +6146,10 @@
       "grade": 0,
       "why": "Reader asked for 'Joy of Cooking' by Rombauer; this is Betty Crocker cookbook."
     },
+    "q31--ol-OL1503295W": {
+      "grade": 0,
+      "why": "Children's fiction about mice making soup, not the cookbook."
+    },
     "q31--ol-OL15134190W": {
       "grade": 0,
       "why": "Betty Crocker cookbook, not Joy of Cooking. Different author, different book."
@@ -5078,6 +6174,10 @@
       "grade": 0,
       "why": "Mathematics popular science book, not a cookbook despite title similarity."
     },
+    "q31--ol-OL1696665W": {
+      "grade": 0,
+      "why": "Similar title but completely different subject. Not cooking."
+    },
     "q31--ol-OL1798750W": {
       "grade": 1,
       "why": "Classic American cookbook, similar era/style but different specific title."
@@ -5085,6 +6185,10 @@
     "q31--ol-OL18162153W": {
       "grade": 0,
       "why": "Different cookbook. Reader asked for specific title by Rombauer/Becker."
+    },
+    "q31--ol-OL1820657W": {
+      "grade": 1,
+      "why": "Different cookbook by same author; similar cooking focus but not the requested title."
     },
     "q31--ol-OL1820661W": {
       "grade": 1,
@@ -5138,6 +6242,18 @@
       "grade": 0,
       "why": "Different book. Reader wants cookbook; this is about trauma history."
     },
+    "q31--ol-OL2445290W": {
+      "grade": 1,
+      "why": "Similar cookbook, different title/author. Useful for cooking interest."
+    },
+    "q31--ol-OL2568868W": {
+      "grade": 0,
+      "why": "Children's picture book fantasy, not the famous cookbook by Irma S. Rombauer"
+    },
+    "q31--ol-OL2648201W": {
+      "grade": 0,
+      "why": "Query is for specific cookbook title; this is different cookbook entirely."
+    },
     "q31--ol-OL2653703W": {
       "grade": 1,
       "why": "Related cookbook, different title/author. Adjacent cookery subject."
@@ -5158,9 +6274,17 @@
       "grade": 1,
       "why": "Related cooking topic, but not the specific classic work requested."
     },
+    "q31--ol-OL2846748W": {
+      "grade": 1,
+      "why": "Similar cookbook but different title and author. Not the exact work requested."
+    },
     "q31--ol-OL2959019W": {
       "grade": 1,
       "why": "Similar cookbook but not the exact famous title reader sought."
+    },
+    "q31--ol-OL2962452W": {
+      "grade": 0,
+      "why": "Different cuisine. Reader asked for specific cookbook title, not general cooking."
     },
     "q31--ol-OL3102259W": {
       "grade": 1,
@@ -5174,9 +6298,17 @@
       "grade": 0,
       "why": "Different cookbook. Reader asked for specific Joy of Cooking title."
     },
+    "q31--ol-OL3296483W": {
+      "grade": 0,
+      "why": "Food writing about sourcing, not a cookbook with recipes."
+    },
     "q31--ol-OL3346875W": {
       "grade": 0,
       "why": "Different cookbook. Query seeks specific title; record is unrelated cuisine."
+    },
+    "q31--ol-OL3348011W": {
+      "grade": 0,
+      "why": "Memoir about restaurant industry, not cooking instruction like Joy of Cooking."
     },
     "q31--ol-OL3375060W": {
       "grade": 1,
@@ -5302,6 +6434,10 @@
       "grade": 2,
       "why": "Classic Agatha Christie novel featuring Hercule Poirot, exactly what reader seeks."
     },
+    "q32--ol-OL472388W": {
+      "grade": 2,
+      "why": "Work by Agatha Christie. Classic detective mystery novel by requested author."
+    },
     "q32--ol-OL472470W": {
       "grade": 2,
       "why": "Exact author match. Classic Agatha Christie detective novel."
@@ -5394,6 +6530,10 @@
       "grade": 0,
       "why": "Reader wants specific fiction title; this is nonfiction about beekeeping."
     },
+    "q33--ol-OL15839737W": {
+      "grade": 0,
+      "why": "Different book entirely. Title overlap only; Byrne's self-help, not Kidd's historical fiction."
+    },
     "q33--ol-OL1623613W": {
       "grade": 0,
       "why": "Different book. Title similarity misleading; unrelated subjects."
@@ -5418,9 +6558,17 @@
       "grade": 0,
       "why": "Different book. Reader wants 'Secret Life of Bees' by Sue Monk Kidd; this is 'Recipe for Bees' by Anderson-Dargatz."
     },
+    "q33--ol-OL1928809W": {
+      "grade": 0,
+      "why": "Different work. Query names exact title; this is unrelated book."
+    },
     "q33--ol-OL196668W": {
       "grade": 0,
       "why": "Nonfiction beekeeping manual, not the novel reader requested."
+    },
+    "q33--ol-OL20036652W": {
+      "grade": 0,
+      "why": "Different book. Similar nature theme, but wrong title and author entirely."
     },
     "q33--ol-OL20038979W": {
       "grade": 0,
@@ -5442,9 +6590,17 @@
       "grade": 0,
       "why": "Beekeeping manual, not the novel by Sue Monk Kidd"
     },
+    "q33--ol-OL27092839W": {
+      "grade": 0,
+      "why": "Different book entirely. No overlap with The Secret Life of Bees."
+    },
     "q33--ol-OL2941508W": {
       "grade": 2,
       "why": "Exact title and author match. This is precisely what the reader asked for."
+    },
+    "q33--ol-OL2971052W": {
+      "grade": 0,
+      "why": "Wordless picture book about frogs, not about bees or their secrets."
     },
     "q33--ol-OL31904934W": {
       "grade": 0,
@@ -5453,6 +6609,10 @@
     "q33--ol-OL32557288W": {
       "grade": 0,
       "why": "Practical beekeeping manual, not the novel The Secret Life of Bees"
+    },
+    "q33--ol-OL3473412W": {
+      "grade": 0,
+      "why": "Different book. Reader wants Kidd's novel; this is Wiseman's nonfiction on teen girls."
     },
     "q33--ol-OL34883819W": {
       "grade": 0,
@@ -5469,6 +6629,10 @@
     "q33--ol-OL446989W": {
       "grade": 0,
       "why": "Non-fiction beekeeping guide, not the novel reader requested."
+    },
+    "q33--ol-OL492629W": {
+      "grade": 0,
+      "why": "Different book. Query names specific title; this is different work entirely."
     },
     "q33--ol-OL51738W": {
       "grade": 0,
@@ -5490,9 +6654,21 @@
       "grade": 0,
       "why": "Different book. Reader named exact title by Sue Monk Kidd."
     },
+    "q33--ol-OL6216050W": {
+      "grade": 0,
+      "why": "Science fiction short stories, not the requested novel about bees."
+    },
+    "q33--ol-OL66275W": {
+      "grade": 0,
+      "why": "Different book entirely. Only word overlap is 'bees' if present; reader seeking specific title."
+    },
     "q33--ol-OL6660859W": {
       "grade": 0,
       "why": "Nonfiction about beekeeping, not the novel 'The Secret Life of Bees'"
+    },
+    "q33--ol-OL8317292W": {
+      "grade": 0,
+      "why": "Different book. Sharing bees/beekeeping subject doesn't match the exact title requested."
     },
     "q33--ol-OL8482827W": {
       "grade": 0,
@@ -5501,6 +6677,10 @@
     "q33--ol-OL8579149W": {
       "grade": 0,
       "why": "Different book. Reader asked for specific title by Sue Monk Kidd."
+    },
+    "q33--ol-OL860483W": {
+      "grade": 0,
+      "why": "Different book. Reader asked for specific title; this is unrelated work."
     },
     "q34--ol-OL10592260W": {
       "grade": 0,
@@ -5554,6 +6734,22 @@
       "grade": 0,
       "why": "Wrong cookbook author. Reader wants Betty Crocker recipes."
     },
+    "q34--ol-OL1820645W": {
+      "grade": 0,
+      "why": "Different author and cookbook. Not Betty Crocker."
+    },
+    "q34--ol-OL1820657W": {
+      "grade": 0,
+      "why": "Reader asked for Betty Crocker, not Julia Child. Different author."
+    },
+    "q34--ol-OL1820661W": {
+      "grade": 0,
+      "why": "Reader seeking Betty Crocker, record offers Julia Child French cookbook instead."
+    },
+    "q34--ol-OL1837594W": {
+      "grade": 0,
+      "why": "Woodworking book; reader is looking for Betty Crocker cookbook or recipes."
+    },
     "q34--ol-OL1857683W": {
       "grade": 0,
       "why": "Reader asked for Betty Crocker, not Alice B. Toklas cookbook."
@@ -5581,6 +6777,10 @@
     "q34--ol-OL2026168W": {
       "grade": 0,
       "why": "Reader asked for Betty Crocker, this is unrelated homesteading encyclopedia."
+    },
+    "q34--ol-OL2389187W": {
+      "grade": 0,
+      "why": "Reader asked for Betty Crocker, got early American cookbook by different author."
     },
     "q34--ol-OL2637599W": {
       "grade": 0,
@@ -5614,6 +6814,10 @@
       "grade": 0,
       "why": "Knitting patterns book, completely unrelated to Betty Crocker cooking."
     },
+    "q34--ol-OL3102259W": {
+      "grade": 0,
+      "why": "Not Betty Crocker. Different author, different cookbook entirely."
+    },
     "q34--ol-OL31869W": {
       "grade": 2,
       "why": "Exact title match for a classic cookbook by Betty Crocker."
@@ -5621,6 +6825,10 @@
     "q34--ol-OL31895W": {
       "grade": 2,
       "why": "Exact author and subject match. Classic Betty Crocker cookbook."
+    },
+    "q34--ol-OL3279082W": {
+      "grade": 0,
+      "why": "Different author and cuisine. Not the Betty Crocker work requested."
     },
     "q34--ol-OL3375060W": {
       "grade": 0,
@@ -5666,13 +6874,29 @@
       "grade": 0,
       "why": "Query names specific brand; record is different author entirely."
     },
+    "q34--ol-OL4731902W": {
+      "grade": 0,
+      "why": "Different author and era. Reader wants Betty Crocker specifically."
+    },
     "q34--ol-OL7096938W": {
       "grade": 0,
       "why": "Knitting patterns book. No connection to Betty Crocker cookbook brand."
     },
+    "q34--ol-OL7096939W": {
+      "grade": 0,
+      "why": "Knitting book, not cooking. No connection to Betty Crocker brand."
+    },
     "q34--ol-OL7646136W": {
       "grade": 0,
       "why": "Different author and cookbook. Not the Betty Crocker work requested."
+    },
+    "q34--ol-OL8127897W": {
+      "grade": 0,
+      "why": "Reader asked for Betty Crocker, got unrelated cookbook author."
+    },
+    "q34--ol-OL8746318W": {
+      "grade": 0,
+      "why": "Reader asked for Betty Crocker, got knitting craft book instead."
     },
     "q35--ol-OL12899W": {
       "grade": 0,
@@ -5694,6 +6918,10 @@
       "grade": 0,
       "why": "Different author. Reader asked for Sue Monk Kidd, not Lemony Snicket."
     },
+    "q35--ol-OL15146249W": {
+      "grade": 0,
+      "why": "Different author entirely. No connection to Sue Monk Kidd."
+    },
     "q35--ol-OL15216357W": {
       "grade": 0,
       "why": "Wrong author. Reader asked for Sue Monk Kidd, not Mary Pope Osborne."
@@ -5713,6 +6941,10 @@
     "q35--ol-OL16797372W": {
       "grade": 0,
       "why": "Different author entirely. Not Sue Monk Kidd's work."
+    },
+    "q35--ol-OL16799686W": {
+      "grade": 0,
+      "why": "Wrong author entirely. Reader asked for Sue Monk Kidd, not Elisabetta Dami."
     },
     "q35--ol-OL17324672W": {
       "grade": 0,
@@ -5734,9 +6966,17 @@
       "grade": 0,
       "why": "Not Sue Monk Kidd. Different author entirely. Unrelated work."
     },
+    "q35--ol-OL1862408W": {
+      "grade": 0,
+      "why": "Different author. Reader asked for Sue Monk Kidd, not Paul Martin."
+    },
     "q35--ol-OL1933963W": {
       "grade": 0,
       "why": "Neurosurgeon biography. Reader asked for Sue Monk Kidd, author."
+    },
+    "q35--ol-OL19410173W": {
+      "grade": 0,
+      "why": "Knitting instruction book. Reader is looking for Sue Monk Kidd novels."
     },
     "q35--ol-OL19713135W": {
       "grade": 0,
@@ -5786,17 +7026,37 @@
       "grade": 0,
       "why": "Different author entirely. No connection to Sue Monk Kidd."
     },
+    "q35--ol-OL20207829W": {
+      "grade": 0,
+      "why": "Wrong author. Reader asked for Sue Monk Kidd, not Alexis Dubief."
+    },
+    "q35--ol-OL20249546W": {
+      "grade": 0,
+      "why": "Developmental psychology textbook. Reader wants works by Sue Monk Kidd."
+    },
     "q35--ol-OL20341110W": {
       "grade": 0,
       "why": "Different author. Not a work by Sue Monk Kidd."
+    },
+    "q35--ol-OL2042180W": {
+      "grade": 0,
+      "why": "Reader seeks Sue Monk Kidd works; this is parenting guide by different author."
     },
     "q35--ol-OL20522187W": {
       "grade": 0,
       "why": "Different author. Reader asked for Sue Monk Kidd, not Sue Morris."
     },
+    "q35--ol-OL20636364W": {
+      "grade": 0,
+      "why": "Different author. No connection to Sue Monk Kidd's works."
+    },
     "q35--ol-OL20646270W": {
       "grade": 0,
       "why": "Different author entirely. Not by Sue Monk Kidd."
+    },
+    "q35--ol-OL20739482W": {
+      "grade": 0,
+      "why": "Different author entirely. Reader seeks Sue Monk Kidd's works."
     },
     "q35--ol-OL20758206W": {
       "grade": 0,
@@ -5814,6 +7074,14 @@
       "grade": 0,
       "why": "Different author. Not a work by Sue Monk Kidd."
     },
+    "q35--ol-OL21513744W": {
+      "grade": 0,
+      "why": "Reader asked for Sue Monk Kidd; this is a parenting textbook by different author."
+    },
+    "q35--ol-OL21574747W": {
+      "grade": 0,
+      "why": "Reader asked for Sue Monk Kidd; this is unrelated parenting book."
+    },
     "q35--ol-OL2231038W": {
       "grade": 0,
       "why": "Different author. Sue Rodwell Williams, not Sue Monk Kidd."
@@ -5830,6 +7098,10 @@
       "grade": 2,
       "why": "Exact author match. A primary work by Sue Monk Kidd."
     },
+    "q35--ol-OL2952674W": {
+      "grade": 0,
+      "why": "Different author. Not a Sue Monk Kidd work or related to her writing."
+    },
     "q35--ol-OL2960938W": {
       "grade": 0,
       "why": "Knitting guide by Barbara Walker, not Sue Monk Kidd novels"
@@ -5845,6 +7117,10 @@
     "q35--ol-OL3964904W": {
       "grade": 0,
       "why": "Reader seeks Sue Monk Kidd; this is unrelated author on adoption psychology."
+    },
+    "q35--ol-OL4113233W": {
+      "grade": 0,
+      "why": "Not by Sue Monk Kidd. Different author entirely."
     },
     "q35--ol-OL4478449W": {
       "grade": 0,
@@ -5866,6 +7142,14 @@
       "grade": 0,
       "why": "Completely unrelated author. Reader asked for Sue Monk Kidd works."
     },
+    "q35--ol-OL5844479W": {
+      "grade": 0,
+      "why": "Reader wants Sue Monk Kidd; this is different author entirely."
+    },
+    "q35--ol-OL5857189W": {
+      "grade": 0,
+      "why": "Different author. Not a work by Sue Monk Kidd."
+    },
     "q35--ol-OL6032481W": {
       "grade": 0,
       "why": "Different author. Not Sue Monk Kidd's work."
@@ -5873,6 +7157,14 @@
     "q35--ol-OL6143928W": {
       "grade": 0,
       "why": "Different author. Not a work by Sue Monk Kidd."
+    },
+    "q35--ol-OL6811313W": {
+      "grade": 0,
+      "why": "Different author. Not a work by Sue Monk Kidd."
+    },
+    "q35--ol-OL7096939W": {
+      "grade": 0,
+      "why": "Different author entirely. No connection to Sue Monk Kidd's works."
     },
     "q35--ol-OL762607W": {
       "grade": 0,
@@ -5974,6 +7266,14 @@
       "grade": 1,
       "why": "WWII fiction but focuses on aftermath in Australia, not Pacific theater itself."
     },
+    "q36--ol-OL2918736W": {
+      "grade": 2,
+      "why": "Historical fiction about WWII Pacific theater, focused on POW camps and soldiers."
+    },
+    "q36--ol-OL2918760W": {
+      "grade": 0,
+      "why": "Historical fiction set in 19th century Hong Kong, not WWII Pacific history."
+    },
     "q36--ol-OL31378W": {
       "grade": 1,
       "why": "WWII fiction but European theater, not Pacific campaign focus."
@@ -5985,6 +7285,10 @@
     "q36--ol-OL3236299W": {
       "grade": 1,
       "why": "Covers WWII broadly via personal narratives, but not specifically Pacific theater."
+    },
+    "q36--ol-OL38494W": {
+      "grade": 1,
+      "why": "WWII fiction with cryptography focus, not Pacific theater specifically."
     },
     "q36--ol-OL3914678W": {
       "grade": 1,
@@ -6018,6 +7322,10 @@
       "grade": 0,
       "why": "Focuses on German atrocities, not Pacific Theater operations."
     },
+    "q36--ol-OL520956W": {
+      "grade": 1,
+      "why": "World War II content but European focus, not Pacific theater"
+    },
     "q36--ol-OL549652W": {
       "grade": 1,
       "why": "WWII naval fiction, but set in Atlantic not Pacific theater."
@@ -6030,9 +7338,21 @@
       "grade": 2,
       "why": "Directly addresses WWII Pacific naval operations and Indianapolis naval history."
     },
+    "q36--ol-OL729088W": {
+      "grade": 2,
+      "why": "Novel set in WWII Pacific naval operations, directly matches reader's interest."
+    },
     "q36--ol-OL729146W": {
       "grade": 2,
       "why": "Classic historical fiction covering World War II, directly matches query topic."
+    },
+    "q36--ol-OL7920331W": {
+      "grade": 0,
+      "why": "Set in Greece during WWII, not Pacific Theater. Wrong geographic focus."
+    },
+    "q36--ol-OL7986913W": {
+      "grade": 0,
+      "why": "Travel writing about Soviet Union. Not about WWII Pacific conflict."
     },
     "q36--ol-OL8373753W": {
       "grade": 1,
@@ -6049,6 +7369,10 @@
     "q37--ol-OL10586527W": {
       "grade": 2,
       "why": "Local history work covering antiquities, architecture and regional description."
+    },
+    "q37--ol-OL12319669W": {
+      "grade": 2,
+      "why": "Directly provides local history for Bedale area through annals."
     },
     "q37--ol-OL130729W": {
       "grade": 2,
@@ -6166,6 +7490,10 @@
       "grade": 0,
       "why": "Portuguese local history. Reader's local area unknown; likely not this region."
     },
+    "q37--ol-OL4230160W": {
+      "grade": 1,
+      "why": "Local history topic but no indication of specific area covered."
+    },
     "q37--ol-OL4290012W": {
       "grade": 2,
       "why": "Detailed local history reference work with geographic names and Oregon history focus."
@@ -6205,6 +7533,10 @@
     "q37--ol-OL5136214W": {
       "grade": 0,
       "why": "No indication this covers the reader's specific local area."
+    },
+    "q37--ol-OL5459559W": {
+      "grade": 2,
+      "why": "Local history of Houma, Terrebonne directly matches reader's request for area history."
     },
     "q37--ol-OL6560818W": {
       "grade": 1,
@@ -6290,6 +7622,10 @@
       "grade": 1,
       "why": "Fiction about bereavement, not poetry collection. Related theme, wrong format."
     },
+    "q38--ol-OL17606111W": {
+      "grade": 2,
+      "why": "Poetry collection addressing loss through survival and emotional resilience themes."
+    },
     "q38--ol-OL17800586W": {
       "grade": 2,
       "why": "Poetry collection addressing emotional themes including loss and self-actualization."
@@ -6305,6 +7641,10 @@
     "q38--ol-OL1865547W": {
       "grade": 1,
       "why": "Plath's poetry often addresses loss and suffering, but record lacks specific confirmation."
+    },
+    "q38--ol-OL1865549W": {
+      "grade": 2,
+      "why": "Sylvia Plath's Ariel is a major poetry collection addressing grief, mortality, and loss."
     },
     "q38--ol-OL1865851W": {
       "grade": 0,
@@ -6333,6 +7673,10 @@
     "q38--ol-OL20032791W": {
       "grade": 0,
       "why": "Fiction novel about grief, not a poetry collection about loss."
+    },
+    "q38--ol-OL20150388W": {
+      "grade": 2,
+      "why": "Memoir about grief and bereavement directly addresses loss through personal experience."
     },
     "q38--ol-OL20567504W": {
       "grade": 0,
@@ -6366,6 +7710,10 @@
       "grade": 1,
       "why": "Wordsworth wrote about loss and nature, but record doesn't confirm this collection addresses loss specifically."
     },
+    "q38--ol-OL264083W": {
+      "grade": 0,
+      "why": "Anthology of short stories, not poems. Subject mismatch."
+    },
     "q38--ol-OL2730672W": {
       "grade": 0,
       "why": "Prose guide about pet bereavement, not poetry collection requested."
@@ -6390,6 +7738,10 @@
       "grade": 0,
       "why": "Self-help psychology book, not poetry collection about loss."
     },
+    "q38--ol-OL38382569W": {
+      "grade": 2,
+      "why": "Love poetry collection explicitly about relationship ending and loss."
+    },
     "q38--ol-OL38847W": {
       "grade": 1,
       "why": "Yeats wrote about loss, but record shows mainly love poetry focus."
@@ -6401,6 +7753,10 @@
     "q38--ol-OL40992W": {
       "grade": 2,
       "why": "Poe collection with grief and laments as subjects directly matches loss poetry query."
+    },
+    "q38--ol-OL41081W": {
+      "grade": 0,
+      "why": "Supernatural narrative poem, not about grief or loss itself."
     },
     "q38--ol-OL42481402W": {
       "grade": 0,
@@ -6418,9 +7774,17 @@
       "grade": 2,
       "why": "Poetry collection addressing loss and mortality themes directly."
     },
+    "q38--ol-OL50443W": {
+      "grade": 2,
+      "why": "Bukowski poetry collection examining loss, heartbreak, and human suffering."
+    },
     "q38--ol-OL51381W": {
       "grade": 1,
       "why": "Dickinson wrote extensively about loss and grief, but record lacks thematic clarity."
+    },
+    "q38--ol-OL655908W": {
+      "grade": 0,
+      "why": "Festive narrative poem about Santa's visit, not about loss or grief."
     },
     "q38--ol-OL71158W": {
       "grade": 1,
@@ -6442,6 +7806,10 @@
       "grade": 2,
       "why": "Explicitly addresses loss/grief through poems about sadness and death."
     },
+    "q38--ol-OL847061W": {
+      "grade": 1,
+      "why": "Portuguese poetry collection addressing existential themes; not explicitly loss-focused."
+    },
     "q38--ol-OL8699780W": {
       "grade": 2,
       "why": "Self-help book on grief and bereavement directly addresses emotional loss the reader seeks."
@@ -6457,6 +7825,10 @@
     "q38--ol-OL979517W": {
       "grade": 1,
       "why": "Poetry about love and desperation; loss appears in themes but not primary focus."
+    },
+    "q39--ol-OL1000805W": {
+      "grade": 1,
+      "why": "Teen thriller matches audience but is prose novel, not graphic novel."
     },
     "q39--ol-OL12514150W": {
       "grade": 1,
@@ -6482,6 +7854,10 @@
       "grade": 2,
       "why": "Graphic novel explicitly for mature teens with complex themes."
     },
+    "q39--ol-OL17080079W": {
+      "grade": 0,
+      "why": "Novel fiction, not graphic novel format. Wrong medium entirely."
+    },
     "q39--ol-OL17112882W": {
       "grade": 0,
       "why": "Novel prose fiction, not a graphic novel format."
@@ -6493,6 +7869,10 @@
     "q39--ol-OL17357353W": {
       "grade": 1,
       "why": "Young adult novel about teens, but not a graphic novel format."
+    },
+    "q39--ol-OL17525929W": {
+      "grade": 0,
+      "why": "Novel about teenage pregnancy, not a graphic novel format"
     },
     "q39--ol-OL17615005W": {
       "grade": 0,
@@ -6510,6 +7890,10 @@
       "grade": 2,
       "why": "Graphic novel about middle school students, explicitly labeled for juvenile audience."
     },
+    "q39--ol-OL17842319W": {
+      "grade": 0,
+      "why": "Novel, not graphic novel. Reader explicitly seeking graphic format."
+    },
     "q39--ol-OL17844203W": {
       "grade": 1,
       "why": "Graphic novel for young readers, but juvenile rather than teen level."
@@ -6517,6 +7901,10 @@
     "q39--ol-OL1800611W": {
       "grade": 2,
       "why": "Graphic novel for teens with fantasy adventure elements and quality artwork."
+    },
+    "q39--ol-OL1838370W": {
+      "grade": 0,
+      "why": "Novel format, not a graphic novel. Wrong medium."
     },
     "q39--ol-OL1871582W": {
       "grade": 2,
@@ -6570,6 +7958,10 @@
       "grade": 1,
       "why": "Picture book for younger children, not graphic novel for teens."
     },
+    "q39--ol-OL20757074W": {
+      "grade": 2,
+      "why": "Young adult graphic novel with LGBTQ+ themes, appropriate for teenagers."
+    },
     "q39--ol-OL20846536W": {
       "grade": 2,
       "why": "Graphic novel/manga for teens with action/adventure themes."
@@ -6593,6 +7985,10 @@
     "q39--ol-OL21691171W": {
       "grade": 0,
       "why": "Young adult novel, not graphic novel format. Wrong medium."
+    },
+    "q39--ol-OL21692056W": {
+      "grade": 0,
+      "why": "Prose novel for teenagers, not a graphic novel"
     },
     "q39--ol-OL21802553W": {
       "grade": 1,
@@ -6626,6 +8022,10 @@
       "grade": 0,
       "why": "This is a prose novel, not a graphic novel format."
     },
+    "q39--ol-OL2718327W": {
+      "grade": 0,
+      "why": "Novel format, not graphic novel. Wrong medium despite teen audience."
+    },
     "q39--ol-OL2738175W": {
       "grade": 2,
       "why": "Graphic novel about teenagers, appropriate for teen audience, established YA series."
@@ -6646,9 +8046,17 @@
       "grade": 1,
       "why": "Comic fiction for teens, but not explicitly a graphic novel format."
     },
+    "q39--ol-OL3473412W": {
+      "grade": 0,
+      "why": "Self-help nonfiction about teen social dynamics, not graphic novels."
+    },
     "q39--ol-OL42487406W": {
       "grade": 0,
       "why": "Young adult novel, not a graphic novel. Wrong format entirely."
+    },
+    "q39--ol-OL4357801W": {
+      "grade": 1,
+      "why": "Graphic novel for younger children, not specifically teenagers."
     },
     "q39--ol-OL45808W": {
       "grade": 0,
@@ -6682,6 +8090,10 @@
       "grade": 2,
       "why": "Graphic novel by acclaimed author, appropriate for teen readers interested in fantasy."
     },
+    "q39--ol-OL72434W": {
+      "grade": 1,
+      "why": "Horror fiction for juveniles, but not a graphic novel format."
+    },
     "q39--ol-OL8463012W": {
       "grade": 2,
       "why": "Graphic novel for teens, science fiction, directly matches query criteria."
@@ -6706,9 +8118,17 @@
       "grade": 1,
       "why": "Related to small business but focuses on taxes, not starting with no capital."
     },
+    "q4--ol-OL16036992W": {
+      "grade": 1,
+      "why": "Personal finance book, but doesn't specifically address starting business with no capital."
+    },
     "q4--ol-OL16070198W": {
       "grade": 1,
       "why": "Business planning guide, but doesn't specifically address no-money constraints."
+    },
+    "q4--ol-OL16981184W": {
+      "grade": 1,
+      "why": "Entrepreneurship focus, but likely targets wealth-building rather than zero-capital startups."
     },
     "q4--ol-OL17078706W": {
       "grade": 1,
@@ -6717,6 +8137,10 @@
     "q4--ol-OL17191894W": {
       "grade": 1,
       "why": "Business growth guide, but assumes existing business with resources."
+    },
+    "q4--ol-OL17387190W": {
+      "grade": 1,
+      "why": "Personal finance book, but unclear if addresses zero-capital startup scenarios."
     },
     "q4--ol-OL17466968W": {
       "grade": 1,
@@ -6734,6 +8158,10 @@
       "grade": 1,
       "why": "Business success focus, but targets teens/education, not startup practicalities."
     },
+    "q4--ol-OL17745510W": {
+      "grade": 1,
+      "why": "Financial advice relevant but focuses on investments, not starting business with no capital."
+    },
     "q4--ol-OL1821254W": {
       "grade": 1,
       "why": "Business and entrepreneurship book, but not specifically about starting with no money."
@@ -6741,6 +8169,10 @@
     "q4--ol-OL1862063W": {
       "grade": 1,
       "why": "Covers small business but focuses on making money, not starting with no capital."
+    },
+    "q4--ol-OL1876664W": {
+      "grade": 0,
+      "why": "Book is about stock trading and finance, not starting a business."
     },
     "q4--ol-OL1917124W": {
       "grade": 1,
@@ -6758,9 +8190,29 @@
       "grade": 2,
       "why": "Directly addresses profitable business management with financial strategies."
     },
+    "q4--ol-OL19747351W": {
+      "grade": 1,
+      "why": "Finance book, but focuses on wealth-building and investing, not business startup."
+    },
+    "q4--ol-OL19799434W": {
+      "grade": 2,
+      "why": "Direct guidance on starting/running business with minimal resources."
+    },
+    "q4--ol-OL1986060W": {
+      "grade": 1,
+      "why": "Wealth-building mindset relevant but focuses on existing wealth, not starting from zero."
+    },
+    "q4--ol-OL19977886W": {
+      "grade": 0,
+      "why": "Book about hedge funds and investment evaluation, not starting businesses with limited capital."
+    },
     "q4--ol-OL20002583W": {
       "grade": 1,
       "why": "Business management and success book, but no clear focus on bootstrapping or starting with limited capital."
+    },
+    "q4--ol-OL20022715W": {
+      "grade": 1,
+      "why": "Business fundamentals covered, but unclear if it addresses starting with no money specifically."
     },
     "q4--ol-OL20027725W": {
       "grade": 2,
@@ -6769,6 +8221,14 @@
     "q4--ol-OL20045135W": {
       "grade": 1,
       "why": "Entrepreneurship book but unclear if addresses zero-capital constraint specifically."
+    },
+    "q4--ol-OL20078135W": {
+      "grade": 0,
+      "why": "Philosophy essay about attention and society, not practical business startup advice."
+    },
+    "q4--ol-OL2010894W": {
+      "grade": 1,
+      "why": "Finance/investing book, but focuses on investing money, not starting business with none."
     },
     "q4--ol-OL2024678W": {
       "grade": 2,
@@ -6797,6 +8257,10 @@
     "q4--ol-OL2118057W": {
       "grade": 0,
       "why": "Gardening advice, not business startup guidance. Different subject."
+    },
+    "q4--ol-OL21308855W": {
+      "grade": 1,
+      "why": "Covers entrepreneurship and small business but focuses on marketing, not startup capital."
     },
     "q4--ol-OL21392938W": {
       "grade": 2,
@@ -6846,6 +8310,10 @@
       "grade": 1,
       "why": "About business growth but doesn't address starting with no money specifically."
     },
+    "q4--ol-OL465158W": {
+      "grade": 1,
+      "why": "Covers marketing for small business, but not starting with no money specifically."
+    },
     "q4--ol-OL4701140W": {
       "grade": 0,
       "why": "Spiritual self-help about money mindset, not practical business startup advice."
@@ -6858,6 +8326,10 @@
       "grade": 1,
       "why": "Personal finance book, but doesn't specifically address starting business with limited capital."
     },
+    "q4--ol-OL5756579W": {
+      "grade": 1,
+      "why": "Business and entrepreneurship focus, but about wealth-building generally, not startup capital specifics."
+    },
     "q4--ol-OL5851380W": {
       "grade": 2,
       "why": "Directly addresses entrepreneurship and starting small businesses, core topic."
@@ -6865,6 +8337,10 @@
     "q4--ol-OL6718546W": {
       "grade": 1,
       "why": "Business planning guide, but doesn't specifically address starting with no money."
+    },
+    "q4--ol-OL8204748W": {
+      "grade": 1,
+      "why": "Covers entrepreneurship and small business but focuses on investing, not starting with no money."
     },
     "q4--ol-OL8226761W": {
       "grade": 1,
@@ -6881,6 +8357,10 @@
     "q4--ol-OL8799516W": {
       "grade": 1,
       "why": "Specific ranching business, not general startups. Adjacent but narrow focus."
+    },
+    "q4--ol-OL9371985W": {
+      "grade": 0,
+      "why": "Focuses on investment and high-powered finance, not bootstrapping or no-money startup fundamentals."
     },
     "q40--ol-OL111807W": {
       "grade": 2,
@@ -6958,6 +8438,10 @@
       "grade": 1,
       "why": "Related to exercise physiology but not specifically about long-distance cycling techniques."
     },
+    "q40--ol-OL20898605W": {
+      "grade": 1,
+      "why": "Sports physiology text; relevant but academic rather than practical cycling guide"
+    },
     "q40--ol-OL2097670W": {
       "grade": 0,
       "why": "Fiction about travel and travelers, not practical cycling distance guide."
@@ -6965,6 +8449,10 @@
     "q40--ol-OL2131995W": {
       "grade": 1,
       "why": "Travel narrative involving journeys through Europe, but primarily walking not cycling."
+    },
+    "q40--ol-OL21902481W": {
+      "grade": 0,
+      "why": "Generic sports fitness book, no indication of cycling or distance content."
     },
     "q40--ol-OL2625422W": {
       "grade": 0,
@@ -6982,6 +8470,14 @@
       "grade": 0,
       "why": "About sailing and ocean navigation, not cycling long distances."
     },
+    "q40--ol-OL2946486W": {
+      "grade": 0,
+      "why": "Exercise book, not about cycling or long-distance travel."
+    },
+    "q40--ol-OL3004974W": {
+      "grade": 1,
+      "why": "Covers exercise and fitness broadly; cycling is one application among many."
+    },
     "q40--ol-OL31792711W": {
       "grade": 1,
       "why": "Cycling and travel subjects present, but unclear if focuses on distance cycling specifically."
@@ -6993,6 +8489,10 @@
     "q40--ol-OL3649944W": {
       "grade": 2,
       "why": "Bicycle touring book directly addresses cycling long distances."
+    },
+    "q40--ol-OL37643W": {
+      "grade": 0,
+      "why": "Travel book about trains, not cycling. Different transportation mode."
     },
     "q40--ol-OL3771113W": {
       "grade": 0,
@@ -7010,6 +8510,10 @@
       "grade": 1,
       "why": "Fiction about cycling, but comedic travel narrative, not instructional guide."
     },
+    "q40--ol-OL471011W": {
+      "grade": 1,
+      "why": "Fitness book; may discuss endurance training but not cycling-specific."
+    },
     "q40--ol-OL4802436W": {
       "grade": 0,
       "why": "About woodworking, not cycling. No relevant content."
@@ -7021,6 +8525,10 @@
     "q40--ol-OL74123W": {
       "grade": 1,
       "why": "Long-distance travel/journey narrative, but hiking not cycling."
+    },
+    "q40--ol-OL827357W": {
+      "grade": 1,
+      "why": "Long-distance travel journey, but motorcycles not bicycles. Adjacent topic."
     },
     "q40--ol-OL8368448W": {
       "grade": 0,
@@ -7114,6 +8622,10 @@
       "grade": 2,
       "why": "Directly addresses personal finance and financial peace for money worries."
     },
+    "q5--ol-OL17745510W": {
+      "grade": 2,
+      "why": "Direct practical guide to financial planning and managing money concerns."
+    },
     "q5--ol-OL18609068W": {
       "grade": 0,
       "why": "General thinking/science book, not about financial stress or money management."
@@ -7130,6 +8642,10 @@
       "grade": 1,
       "why": "Personal finance book, but focused on stock trading rather than managing money worries."
     },
+    "q5--ol-OL1881227W": {
+      "grade": 0,
+      "why": "Technical business textbook, not personal finance guidance for money worries."
+    },
     "q5--ol-OL1900976W": {
       "grade": 2,
       "why": "Directly addresses personal finance management and money concerns."
@@ -7142,6 +8658,10 @@
       "grade": 2,
       "why": "Practical personal finance guidance addressing money concerns directly."
     },
+    "q5--ol-OL19696996W": {
+      "grade": 2,
+      "why": "Personal finance guide directly addresses money management and financial concerns."
+    },
     "q5--ol-OL19722141W": {
       "grade": 2,
       "why": "Personal finance guide directly addressing money concerns and building wealth."
@@ -7149,6 +8669,10 @@
     "q5--ol-OL19729685W": {
       "grade": 2,
       "why": "Directly addresses personal finance and budgeting to manage money worries."
+    },
+    "q5--ol-OL19747351W": {
+      "grade": 2,
+      "why": "Directly addresses financial security and wealth-building for personal money concerns."
     },
     "q5--ol-OL1980582W": {
       "grade": 0,
@@ -7238,13 +8762,25 @@
       "grade": 2,
       "why": "Practical personal finance book directly addressing money concerns."
     },
+    "q5--ol-OL8982032W": {
+      "grade": 2,
+      "why": "Directly addresses personal finance and money management for financial well-being."
+    },
     "q5--ol-OL9205113W": {
       "grade": 2,
       "why": "Personal finance guide directly addressing financial security and money management."
     },
+    "q5--ol-OL9371985W": {
+      "grade": 1,
+      "why": "Personal finance topic, but focuses on investing rather than managing worry or debt."
+    },
     "q6--ol-OL1217765W": {
       "grade": 2,
       "why": "Historical bird identification guide directly matches query for identifying birds."
+    },
+    "q6--ol-OL151885W": {
+      "grade": 0,
+      "why": "Fiction about a dead bird, not a bird identification guide."
     },
     "q6--ol-OL1565057W": {
       "grade": 1,
@@ -7298,9 +8834,17 @@
       "grade": 2,
       "why": "Comprehensive bird identification guide, appropriate scope and format."
     },
+    "q6--ol-OL255002W": {
+      "grade": 2,
+      "why": "Classic bird identification guide covering North American birds and natural history."
+    },
     "q6--ol-OL257486W": {
       "grade": 0,
       "why": "Regional focus on Caribbean birds, not general garden bird identification."
+    },
+    "q6--ol-OL2654939W": {
+      "grade": 1,
+      "why": "Bird identification focus, but broader scope includes all North American natural history."
     },
     "q6--ol-OL2654940W": {
       "grade": 2,
@@ -7325,6 +8869,10 @@
     "q6--ol-OL327560W": {
       "grade": 1,
       "why": "Identification guide, but regional focus on India/Pakistan, not general garden birds."
+    },
+    "q6--ol-OL3506035W": {
+      "grade": 1,
+      "why": "Bird behavior book, but not specifically for identification purposes."
     },
     "q6--ol-OL3527164W": {
       "grade": 1,
@@ -7410,6 +8958,10 @@
       "grade": 0,
       "why": "Book about naps and sleep, not photography instruction or technique."
     },
+    "q7--ol-OL1645781W": {
+      "grade": 0,
+      "why": "English grammar textbook, unrelated to photography instruction."
+    },
     "q7--ol-OL16499528W": {
       "grade": 2,
       "why": "Directly addresses photography with philosophical approach to improvement"
@@ -7437,6 +8989,10 @@
     "q7--ol-OL1944503W": {
       "grade": 2,
       "why": "Book about photography directly addresses how to improve photographic skills."
+    },
+    "q7--ol-OL1980225W": {
+      "grade": 0,
+      "why": "Essays on art and perception, not practical photography instruction."
     },
     "q7--ol-OL19969030W": {
       "grade": 0,
@@ -7481,6 +9037,10 @@
     "q7--ol-OL24708292W": {
       "grade": 1,
       "why": "Photography featured but focuses on extinct animals, not photo technique."
+    },
+    "q7--ol-OL2627594W": {
+      "grade": 0,
+      "why": "Book about digital and internet literacy, not photography techniques."
     },
     "q7--ol-OL2677506W": {
       "grade": 2,
@@ -7562,9 +9122,17 @@
       "grade": 0,
       "why": "Photography catalogue focused on erotic/nude work, not instructional photography."
     },
+    "q7--ol-OL686192W": {
+      "grade": 1,
+      "why": "Art theory and visual perception relevant to composition, but not photography instruction."
+    },
     "q7--ol-OL71938W": {
       "grade": 2,
       "why": "Instructional book on digital photography techniques, directly addresses learning photography."
+    },
+    "q7--ol-OL79158W": {
+      "grade": 2,
+      "why": "Directly addresses photography printing and enlarging techniques fundamentals."
     },
     "q7--ol-OL8092445W": {
       "grade": 1,
@@ -7598,6 +9166,10 @@
       "grade": 2,
       "why": "Knitting patterns book from publisher known for practical instructional content."
     },
+    "q8--ol-OL16718067W": {
+      "grade": 2,
+      "why": "Directly matches query. Knitting book suitable for beginners learning the craft."
+    },
     "q8--ol-OL18019743W": {
       "grade": 2,
       "why": "Directly matches: beginner-friendly knitting patterns for sweaters."
@@ -7605,6 +9177,10 @@
     "q8--ol-OL1811501W": {
       "grade": 1,
       "why": "Has knitting patterns but folk-focused; unclear if beginner-appropriate level"
+    },
+    "q8--ol-OL19410173W": {
+      "grade": 1,
+      "why": "Knitting patterns included, but targeted at teens not beginners."
     },
     "q8--ol-OL19974168W": {
       "grade": 2,
@@ -7637,6 +9213,10 @@
     "q8--ol-OL2960921W": {
       "grade": 1,
       "why": "Knitting patterns but focuses on advanced cable technique, not beginners."
+    },
+    "q8--ol-OL2960941W": {
+      "grade": 1,
+      "why": "Knitting patterns but likely advanced charted designs, not beginner-focused."
     },
     "q8--ol-OL2960945W": {
       "grade": 1,
@@ -7758,6 +9338,10 @@
       "grade": 2,
       "why": "Directly matches reader's interest in woodworking. Manual training confirms hand tools focus."
     },
+    "q9--ol-OL16184589W": {
+      "grade": 2,
+      "why": "Directly addresses woodworking; handbook format for hand tool techniques."
+    },
     "q9--ol-OL17020801W": {
       "grade": 2,
       "why": "Directly addresses woodworking techniques, core subject match."
@@ -7781,6 +9365,10 @@
     "q9--ol-OL1838222W": {
       "grade": 2,
       "why": "Directly addresses hand tools used in woodworking, Japanese focus."
+    },
+    "q9--ol-OL1875671W": {
+      "grade": 1,
+      "why": "General woodworking handbook, but unclear if hand tools are emphasized."
     },
     "q9--ol-OL1898011W": {
       "grade": 1,
@@ -7813,6 +9401,10 @@
     "q9--ol-OL2703038W": {
       "grade": 1,
       "why": "Woodworking textbook but industrial arts focus, not hand tools specific."
+    },
+    "q9--ol-OL2703040W": {
+      "grade": 2,
+      "why": "Directly addresses woodwork and hand tools instruction via textbook."
     },
     "q9--ol-OL2906069W": {
       "grade": 2,
@@ -7861,6 +9453,10 @@
     "q9--ol-OL3563291W": {
       "grade": 2,
       "why": "Comprehensive woodworking techniques reference with tools and carpentry subjects."
+    },
+    "q9--ol-OL3936186W": {
+      "grade": 2,
+      "why": "Comprehensive woodworking guide covering hand tools and techniques."
     },
     "q9--ol-OL4083096W": {
       "grade": 2,
