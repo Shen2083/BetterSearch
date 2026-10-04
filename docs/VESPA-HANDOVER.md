@@ -58,6 +58,11 @@ A Vespa implementation over the same 4,000 records should reach **0.658** on
 semantic retrieval and **0.443** on BM25 alone. Below that, something in the
 port has gone wrong. Meaningfully above it, read §5 before celebrating.
 
+**With a reranking phase, the bar is 0.728**, which is what the service now
+ships — a cross-encoder over the enriched text at depth 20, then exact-match
+promotion. That is the number to hold a Vespa global phase to; §5a has how it
+is built and the two ways we got it wrong first.
+
 Both figures were re-measured while writing this note and reproduce exactly —
 0.6582 and 0.4433, at 100% judged coverage — and again after the pool was
 widened to six lanes, unchanged. The bar is real, not remembered.
@@ -308,8 +313,16 @@ depth 20 where judged coverage is 100%:
 
 | | nDCG@10 |
 |---|---|
-| what we ship | 0.6582 |
+| retrieval alone | 0.6582 |
+| **what we ship now** — reranked at depth 20 | **0.7280** |
 | perfect reordering of the same 20 candidates | **0.9124** |
+
+**The middle row is new since this note was first written.** Reranking used to
+live only in a measurement script; it is now in `api/catalogue.py`, on by
+default, and the figure above is `run_search` scored against the judged
+queries rather than the script. So the acceptance bar in §2 has moved: a Vespa
+implementation should reach **0.658 on retrieval alone** and **0.728 with its
+global phase doing what ours does**.
 
 The retrieval is fine. 161 judged-relevant records across 41 queries are
 retrieved and sitting at ranks 11–20. At depth 20 reranking never changes the
@@ -347,9 +360,29 @@ Three things follow, and all three are rank-profile decisions:
 
 **The cost is the catch.** `bge-reranker-base` is 2.8 s/query on CPU for 20
 candidates. Vespa pays that on every search, so it needs ONNX, a GPU, or the
-MiniLM cross-encoder — which gets most of the gain for **13% of the time** (356
-ms against 2,809 ms): 96% of it on nDCG@10 (+0.070 against +0.073) and 89% on
-recall@10 (+0.058 against +0.066). If you ship one reranker, ship that one.
+MiniLM cross-encoder — which gets most of the gain for **13% of the time**: 96%
+of it on nDCG@10 (+0.070 against +0.073) and 89% on recall@10 (+0.058 against
++0.066). If you ship one reranker, ship that one; it is the one we ship.
+
+Two numbers, because they measure different things. The arms table above reports
+**356 ms** for MiniLM — that is `scripts/tune_reranking.py`'s per-arm cost.
+Measured through a running server, warm, over twelve queries with reranking on
+and off, the incremental cost is **+371 ms median** (184 ms against 555 ms).
+Neither is Render's hardware and neither is yours; measure it on the node that
+will run it.
+
+**Load the model at startup, not on first use.** Ours lazily loaded on the first
+search and that search took **85 seconds**, on a box where the weights were
+already cached — a Hub round-trip plus construction, so pre-fetching during the
+build does not save you. Whatever Vespa's equivalent is, pay it before the
+health check passes.
+
+**Two implementation details that cost us a cycle each, so you do not have to.**
+Reranking must run **before** exact-match promotion — reversed, it pushes the
+named records straight back down and the controls land at 0.877. And a
+cross-encoder's output must not reach the response as a relevance score: it is
+an uncalibrated logit, not a cosine, and anything downstream reading that field
+will be quietly wrong. We keep the retrieval score and label the card instead.
 
 **Depth: set `rerank-count` to 20.** This is the headline correction to an
 earlier draft of this note, which told you quality does not fall off with depth.
