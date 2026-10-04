@@ -42,8 +42,8 @@ profiles will make implicitly whether or not anyone makes it deliberately:
 
 ## 2. The numbers, as an acceptance bar
 
-41 queries over 4,000 real Open Library records, with 1,979 relevance
-judgements pooled from four retrieval lanes and judged blind. Each row names
+41 queries over 4,000 real Open Library records, with 2,378 relevance
+judgements pooled from six retrieval lanes and judged blind. Each row names
 the encoder it used, because mixing them is how the gap gets misread:
 
 | arm | nDCG@10 |
@@ -59,7 +59,19 @@ semantic retrieval and **0.443** on BM25 alone. Below that, something in the
 port has gone wrong. Meaningfully above it, read §5 before celebrating.
 
 Both figures were re-measured while writing this note and reproduce exactly —
-0.6582 and 0.4433, at 100% judged coverage. The bar is real, not remembered.
+0.6582 and 0.4433, at 100% judged coverage — and again after the pool was
+widened to six lanes, unchanged. The bar is real, not remembered.
+
+Why a bigger pool left them untouched is worth knowing before you read any
+nDCG@10 here: 28 of the 41 queries already have ten or more relevant records, so
+`IDCG@10` is saturated and adding more cannot move the metric. **nDCG@10 is
+insensitive to pool growth on this eval; recall@10 is not**, since its
+denominator is every relevant record. That is why recall@10 is the headline
+wherever depth or coverage is in play, and it is why the enrichment and encoder
+figures above survived re-pooling while the reranking figures did not. The one
+arm of the table not re-measured after re-pooling is `bge-base + enrichment`
+(0.743) — its index was lost to a container restart and only the MiniLM
+enrichment arm was rebuilt, which did hold exactly.
 
 The five deliberate known-item controls — exact titles and author names — score
 **1.000** today. They are a tripwire, not a target: if a change drops them, it
@@ -202,15 +214,22 @@ and will:
 
 **Read this before quoting any score, including ours.**
 
-The judgements were produced by pooling: the top 20 from each of four lanes —
-BM25, MiniLM over thin records, MiniLM over enriched records, and bge-base —
-unioned and judged blind. A record that no lane retrieved was never shown to a
-judge, and **an unjudged record counts as irrelevant**.
+The judgements were produced by pooling: the top 20 from each of six lanes —
+BM25, MiniLM over thin records, MiniLM over enriched records, bge-base, and the
+depth-200 `bge-reranker-base` lane plain and exact-match-promoted — unioned and
+judged blind. A record that no lane retrieved was never shown to a judge, and
+**an unjudged record counts as irrelevant**.
 
-A Vespa implementation is a *fifth lane*. Every good record it finds that those
-four missed scores zero. **A better system can therefore score worse.**
+A Vespa implementation is a *seventh lane*. Every good record it finds that
+those six missed scores zero. **A better system can therefore score worse.**
 
-This is not hypothetical and not small. It happened twice here:
+Pool it before you quote it. `scripts/build_eval_set.py --lane-file
+label=rankings.json` takes `{query: [doc_id, ...]}` and judges only what no
+judge has seen — the last lane cost $0.06 for 399 records. Carried grades are
+keyed on query *text*, not index, and the pool only ever grows, so this is safe
+to repeat.
+
+This is not hypothetical and not small. It happened three times here:
 
 - bge-base first measured *worse* than MiniLM, 0.578 against 0.588, and was
   nearly rejected. 100% of MiniLM's top 10 had been judged against **71%** of
@@ -220,6 +239,12 @@ This is not hypothetical and not small. It happened twice here:
 - A BM25 title-weighting change looked harmful for the same reason, and the
   sweep now reports coverage beside the score so nobody draws that conclusion
   again.
+- Deep reranking measured at **−0.062** at rerank depth 200 on 59.5% coverage.
+  The obvious fix — discard unjudged candidates, pin coverage at 100% — read
+  **+0.087** and was believed. The judged truth is **+0.010**. Both estimators
+  were wrong, in opposite directions, and the second was wrong by more. §5a
+  has the detail; the lesson is that *correcting* for coverage is not the same
+  as *having* the judgements.
 
 And it is reproducible in two minutes, which is the clearest way to see it.
 Adding one more collection to the index — 114 community events alongside the
@@ -284,12 +309,13 @@ depth 20 where judged coverage is 100%:
 | | nDCG@10 |
 |---|---|
 | what we ship | 0.6582 |
-| perfect reordering of the same 20 candidates | **0.9207** |
+| perfect reordering of the same 20 candidates | **0.9124** |
 
 The retrieval is fine. 161 judged-relevant records across 41 queries are
-retrieved and sitting at ranks 11–20. **This is also the only change we can
-measure without re-pooling**, because reranking never changes the candidate set
-— §5's trap does not apply to it.
+retrieved and sitting at ranks 11–20. At depth 20 reranking never changes the
+candidate set, so §5's trap does not apply. **Deeper it does**, and §5's warning
+is not decoration — it cost us two wrong answers before we paid to re-pool. See
+*Depth* below.
 
 **What reached the ceiling, and what did not:**
 
@@ -297,10 +323,10 @@ measure without re-pooling**, because reranking never changes the candidate set
 |---|---|---|---|
 | baseline | 0.6582 | 1.000 | 0 |
 | BM25 as a weighted second phase | 0.6782 | 1.000 | 0 |
-| cross-encoder over the records **as they are** | 0.6573–0.6632 | 1.000 | 100–734 |
-| cross-encoder over **enriched** records | 0.7149–0.7289 | 0.877–0.926 | 314–2,391 |
-| **the same, plus exact-match promotion** | **0.7340** | **1.000** | 2,391 |
-| oracle | 0.9207 | 1.000 | — |
+| cross-encoder over the records **as they are** | 0.6573–0.6632 | 1.000 | 186–890 |
+| cross-encoder over **enriched** records | 0.7149–0.7257 | 0.877–0.926 | 356–2,809 |
+| **the same, plus exact-match promotion** | **0.7308** | **1.000** | 2,809 |
+| oracle | 0.9124 | 1.000 | — |
 
 Three things follow, and all three are rank-profile decisions:
 
@@ -310,7 +336,7 @@ Three things follow, and all three are rank-profile decisions:
    this is the data, not the model. **If you put a reranker in the global phase
    without giving it prose, you will pay the latency and get nothing.**
 2. **Enrichment unlocks it.** At 95 words median the same reranker is worth
-   +0.071. Reranking and enrichment are not alternatives; they are the same bet
+   +0.073. Reranking and enrichment are not alternatives; they are the same bet
    that these records are too thin, and they compound.
 3. **It breaks exact-name lookup, and that must be caught.** Both enriched arms
    regressed the known-item controls — `Sue Monk Kidd` −0.369 — because a model
@@ -319,22 +345,47 @@ Three things follow, and all three are rank-profile decisions:
    the mean. Whatever you build, make the controls a gate in CI, not a thing
    somebody notices later.
 
-**The cost is the catch.** `bge-reranker-base` is 2.4 s/query on CPU for 20
+**The cost is the catch.** `bge-reranker-base` is 2.8 s/query on CPU for 20
 candidates. Vespa pays that on every search, so it needs ONNX, a GPU, or the
-MiniLM cross-encoder — which gets +0.070 of the +0.076 for an eighth of the
-time. Rerank depth is the lever you will actually tune, and ours is 20 because
-beyond that the eval cannot see.
+MiniLM cross-encoder — which gets most of the gain for **13% of the time** (356
+ms against 2,809 ms): 96% of it on nDCG@10 (+0.070 against +0.073) and 89% on
+recall@10 (+0.058 against +0.066). If you ship one reranker, ship that one.
 
-**Depth is the parameter, and we know its shape.** The pool holds 95% of the
-judged-relevant records at depth 200 against 67% at depth 20, so reranking deep
-is the natural move — and measured with coverage held at 100%, a cross-encoder
-keeps its gain all the way down: +0.079 at depth 20, +0.091 at 100, +0.087 at
-200. Set `rerank-count` by latency, not by a fear that quality falls off; it
-does not. On CPU here the cost does: 2.5 s/query at 20 and 19 s at 200, which
-is exactly the argument for ONNX or a GPU in the global phase.
+**Depth: set `rerank-count` to 20.** This is the headline correction to an
+earlier draft of this note, which told you quality does not fall off with depth.
+It does, monotonically:
+
+| rerank depth | 20 | 50 | 100 | 200 |
+|---|---|---|---|---|
+| recall@10 vs baseline | **+0.066** | +0.047 | +0.035 | **+0.010** |
+| judged coverage | 100% | 92.7% | 98.8% | 100% |
+| ms/query (CPU) | 2,809 | 5,548 | 10,093 | 19,937 |
+
+Seven times the latency for a seventh of the gain. Rerank the twenty you
+display.
+
+**How that draft got it wrong is the most useful thing in this section**, because
+it is a trap any team measuring a Vespa rank profile will meet. The first sweep,
+pooled from four lanes, read `+0.079 / +0.029 / −0.007 / −0.062` with coverage
+falling to 59.5% — §5's bias, clearly. So it was re-run with unjudged candidates
+*discarded*, pinning coverage at 100%, which read `+0.079 / +0.072 / +0.091 /
++0.087` and was written up here as the true shape.
+
+That correction was the bigger error. Discarding unjudged candidates does not
+remove the bias, it inverts it: what gets discarded is exactly the junk the
+reranker promoted and nobody graded, so the arm is scored only where it was
+already known to be doing well. It overstated the gain roughly ninefold at depth
+200 — `+0.087` against a judged `+0.010`.
+
+**Neither estimator is safe. Only judgements are.** We pooled the depth-200
+reranked lane and graded the 399 records it surfaced that no judge had seen, for
+$0.06; 81 were relevant; coverage went to 100% and the number stopped moving.
+`data/rankings/` holds that lane so you can reproduce the pool, and
+`scripts/bound_repool_effect.py` bounds the gap before you spend — read its
+ordering, not its margins, which were 3× out.
 
 **Still unexplained:** the best arm captures 29% of the available headroom. The
-remaining 0.19 is real, measured, and nobody here knows what reaches it. That is
+remaining 0.18 is real, measured, and nobody here knows what reaches it. That is
 the most interesting open question in this handover, and the first one worth
 spending a week on.
 
