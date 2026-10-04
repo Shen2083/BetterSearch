@@ -93,13 +93,34 @@ def load_enriched(path: str | Path, titles: dict[str, str]) -> dict[str, str]:
     return out
 
 
+#: Models scored by late interaction rather than as a cross-encoder. They encode
+#: the query and the record separately, into one vector per token, and score by
+#: summing each query token's best match (MaxSim) - so they need a different
+#: call, and `pylate` rather than `sentence_transformers`.
+#:
+#: Measured at depth 20 on the judged corpus, `answerai-colbert-small-v1` beats
+#: both cross-encoders (nDCG@10 0.7407 against 0.7308) and, unlike either of
+#: them, does **not** regress the known-item controls - so it needs no
+#: exact-match repair to be safe. It is not the default yet: the depth sweep and
+#: a serving-path latency number come first. Select it with
+#: BETTERSEARCH_RERANK=answerdotai/answerai-colbert-small-v1.
+LATE_INTERACTION = {"answerdotai/answerai-colbert-small-v1"}
+
+
 class Reranker:
-    """A cross-encoder, loaded once on first use.
+    """A reranking model, loaded once on first use.
 
     Lazy because `api/catalogue.py` is imported by tests that have no model and
     no network. Constructing this at import time would make the whole test suite
     depend on a 90 MB download, which is the property the CI workflow exists to
     protect.
+
+    Two kinds of model are supported behind one `score`: a cross-encoder, which
+    reads the query and record together, and a late-interaction model, which
+    does not. Dispatching here rather than at the call site means
+    `api/catalogue.py` and every test stay the same whichever is configured, and
+    a latency comparison between them measures the models rather than two
+    different code paths.
     """
 
     def __init__(self, model_name: str = DEFAULT_MODEL, *, max_length: int = 512) -> None:
@@ -107,18 +128,50 @@ class Reranker:
         self._max_length = max_length
         self._model: Any = None
 
+    @property
+    def late_interaction(self) -> bool:
+        return self.model_name in LATE_INTERACTION
+
     def _load(self) -> Any:
         if self._model is None:
-            from sentence_transformers import CrossEncoder
+            if self.late_interaction:
+                try:
+                    from pylate import models as pylate_models
+                except ImportError as exc:
+                    raise RuntimeError(
+                        f"{self.model_name} needs pylate: pip install pylate. "
+                        "Install it on its own - it pins sentence-transformers "
+                        "and torch, and re-measure afterwards, because the test "
+                        "suite runs on a fake provider and cannot tell you "
+                        "whether a number moved."
+                    ) from exc
 
-            self._model = CrossEncoder(self.model_name, max_length=self._max_length)
+                self._model = pylate_models.ColBERT(model_name_or_path=self.model_name)
+            else:
+                from sentence_transformers import CrossEncoder
+
+                self._model = CrossEncoder(self.model_name, max_length=self._max_length)
         return self._model
 
     def score(self, query: str, texts: list[str]) -> list[float]:
-        """One score per text. Higher is more relevant to `query`."""
+        """One score per text. Higher is more relevant to `query`.
+
+        Scores are comparable *within* a call and nothing more. A cross-encoder
+        emits a logit; MaxSim emits a sum of per-token cosines that sits near 30
+        and barely spreads. `rerank` uses the order and discards the values,
+        which is what lets the two be swapped at all.
+        """
         if not texts:
             return []
         model = self._load()
+        if self.late_interaction:
+            import numpy as np
+
+            q = model.encode([query], is_query=True, show_progress_bar=False)
+            d = model.encode([texts], is_query=False, show_progress_bar=False)
+            qv = np.asarray(q[0], dtype=np.float32)
+            return [float((np.asarray(doc, dtype=np.float32) @ qv.T).max(axis=0).sum())
+                    for doc in d[0]]
         return [float(s) for s in model.predict([(query, t) for t in texts],
                                                 show_progress_bar=False)]
 
