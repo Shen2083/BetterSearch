@@ -410,6 +410,27 @@ reranker promoted and nobody graded, so the arm is scored only where it was
 already known to be doing well. It overstated the gain roughly ninefold at depth
 200 — `+0.087` against a judged `+0.010`.
 
+**We tested that rather than asserting it.** If `--judged-only` is biased by
+precisely the coverage it throws away, it must agree with the judged truth
+wherever coverage is already 100%, and over-read everywhere else:
+
+| rerank depth | bge + promotion — **the lane we pooled** | | | MiniLM + promotion — *not pooled* | | |
+|---|---|---|---|---|---|---|
+| | judged truth | `--judged-only` | gap | judged truth | `--judged-only` | gap |
+| 20 | +0.0657 | +0.0657 | **0.0000** | +0.0584 | +0.0584 | **0.0000** |
+| 50 | +0.0465 | +0.0596 | +0.0131 | +0.0308 | +0.0680 | +0.0372 |
+| 100 | +0.0349 | +0.0384 | +0.0035 | +0.0292 | +0.0458 | +0.0166 |
+| 200 | +0.0097 | +0.0097 | **0.0000** | +0.0249 | +0.0419 | +0.0170 |
+
+It agrees to four decimals at exactly the two places it should, and nowhere
+else. Depth 200 is the one to look at: the bge arm converges **because that is
+the lane we pooled and judged**, while MiniLM — same corpus, same depth, never
+pooled — still over-reads by +0.017.
+
+If you take one thing from §5 and §5a, take this: the fix for a coverage problem
+is judgements on the arm you are measuring, not a filter that makes the coverage
+number look better.
+
 **Neither estimator is safe. Only judgements are.** We pooled the depth-200
 reranked lane and graded the 399 records it surfaced that no judge had seen, for
 $0.06; 81 were relevant; coverage went to 100% and the number stopped moving.

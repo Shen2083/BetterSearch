@@ -18,7 +18,10 @@ TWO THINGS THAT ARE NOT OPTIONAL
 
 **It needs prose, not a catalogue record.** Measured on records as they ship -
 a title, an author, a semicolon list of subject headings, 24 words median - a
-cross-encoder is worth +0.005 and -0.001. That is not a weak model; it is a
+cross-encoder is worth +0.005 and -0.001 at depth 20 - and turns actively
+harmful deeper, -0.017 and -0.040 over 200 candidates, because given more stubs
+to order a passage model orders them worse than retrieval did. That is not a
+weak model; it is a
 model trained to read passages being handed something with nothing to read.
 On the enriched text, 95 words median, the same model is worth +0.073. So
 `rerank` scores only records that *have* enriched text and leaves every other
