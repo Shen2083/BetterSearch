@@ -117,9 +117,84 @@ lane shares the configured default and the mismatch either raises or, if the
 dimensions happen to agree, silently scores one index with another's vectors.
 `scripts/compare_arms.py` takes the same suffix.
 
-**Expected**: roughly 1,979 judgements, each lane contributing records no other
+**Expected**: roughly 2,378 judgements, each lane contributing records no other
 lane found — if a new lane contributes none, it is not adding information and
 the pool did not need it.
+
+#### Pooling an arm that is not an index and a mode
+
+A reranked lane is a retrieval plus a cross-encoder plus a depth, so there is no
+index path that expresses it. Give it as precomputed rankings instead —
+`{query: [doc_id, ...]}`, the shape `tune_reranking.py --dump` writes and
+`score_rankings.py` reads:
+
+```bash
+python scripts/build_eval_set.py --per-lane 20 \
+    --lane-file "rerank-bge-200=data/rankings/rerank-bge-200.json" \
+    --lane-file "rerank-bge-200-promoted=data/rankings/rerank-bge-200-promoted.json"
+```
+
+Those two files are committed, because the judgements are only auditable if the
+pool they were made over can be reconstructed — and a reranked lane has no index
+path that re-derives it. `data/rankings/README.md` says what each arm is and how
+to regenerate the full depth-200 dump (about 25 minutes of CPU, no network, no
+key):
+
+```bash
+python scripts/tune_reranking.py --depths 200 --rerankers bge --dump /tmp/lane200
+```
+
+The dump is depth-long; `--per-lane` cuts it to the top K, in rank order. Any
+future system — a Vespa ranking profile included — becomes poolable by dumping
+its rankings in that shape, with no code change here.
+
+**Expected** on the two lanes above: `399 new to judge`, about **$0.06** at
+Haiku 4.5 batch rates, against 1,979 grades carried forward (that run has since
+been made, so a repeat carries 2,378 forward and finds nothing new). The
+per-lane line
+reads `399 of 820 retrieved pairs were never judged` — that, not `unique_to`, is
+the number that says whether a lane was worth pooling.
+
+#### The pool only ever grows
+
+`--reuse` (on by default, pointing at `data/eval_real.json`) carries existing
+grades forward and judges only pairs no judge has seen, which is both cheaper
+and the only way published figures stay comparable. Two things it does that are
+worth understanding before you trust a re-pooled number.
+
+**Reuse is keyed on the query's text, not its position.** The judgements file
+keys grades `q{index}--{doc_id}`. Re-pooling invites editing the query list, and
+if reuse read those keys, inserting one query would shift every index after it
+and silently attach grades to the wrong queries. The ground truth would be
+corrupt and nothing would look wrong.
+
+**Records already judged stay in the pool even if no current lane retrieves
+them** (`--no-keep-judged` turns this off, and you almost certainly do not want
+to). Without it, a record the old lanes found and the new ones miss would drop
+out of `relevant_doc_ids`, shrinking the denominator every published figure was
+measured against — so every arm would appear to improve while nothing had. A
+judgement is paid for and permanent.
+
+A useful consequence: the lanes that built the previous pool do **not** have to
+still exist on disk to keep contributing to it. `lanes_pooled` lists them
+alongside this run's lanes, and `lanes_run` lists only the ones actually
+executed. So the command above is reproducible even though `.bettersearch/real`,
+`real-enriched` and `real-bge` are gitignored and do not survive a fresh clone.
+
+To check reuse is wired up correctly, run it with no lanes at all:
+
+```bash
+python scripts/build_eval_set.py --validate 0 --out /tmp/inert.json
+```
+
+**Expected**: `2378 grades carried forward · 0 new to judge`, and `/tmp/inert.json`
+identical to `data/eval_real.json` on every query's `relevant_doc_ids`, `grades`
+and `note`. Only `judge_self_consistency` (null, since no judge ran),
+`lanes_run` (empty) and one sentence of `description` may differ. If anything
+else moves, reuse is mismatching keys and no number downstream can be trusted.
+
+Add `--dry-run` to any of these to pool, report how many pairs are genuinely new
+and what judging them would cost, and stop before spending anything.
 
 ### The tests
 
@@ -194,7 +269,7 @@ To re-check that events are findable and not intrusive:
 python scripts/check_events.py
 ```
 
-**Expected**: 11 of 12 event-shaped queries reach an event, 0 of 5 known-item
+**Expected**: 12 of 12 event-shaped queries reach an event, 0 of 5 known-item
 lookups show one, and the script concludes that one index is enough. If reach
 drops below 60% it says so and exits non-zero — that is the signal to retrieve
 each collection separately and fuse by rank with
@@ -269,7 +344,16 @@ python scripts/check_browser_parity.py
 | nDCG@10, keyword | 0.439 | 0.439 | **0.000** |
 | ordering, keyword | — | — | **identical on 41/41** |
 | promotion labels (`--blend`) | — | — | **50/50 records agree** |
-| explanations | — | — | 85.1% of shared records |
+| explanations | — | — | 85.3% of shared records |
+| top-20 overlap, `--filter` | — | — | **94.9%** mean, 85% worst |
+| ordering, keyword + `--filter` | — | — | **identical on 41/41** |
+
+Run it with `--filter "format=Large print"` as well. Filtering now happens
+*before* the cut on both sides, and the order is the kind of thing that is easy
+to get right in one implementation and wrong in the other; an unfiltered run
+cannot see that. The keyword lane with a filter is the sharpest check of all —
+it is model-free, so anything short of 41/41 identical ordering is a porting
+bug rather than quantisation.
 
 Run the keyword and blended lanes too — `--mode keyword` and `--blend` — because
 they are the model-free parts and **exact is the bar**: BM25 and exact matching
@@ -373,18 +457,28 @@ python scripts/render_pdf.py docs/approach-technical.html
 python scripts/render_pdf.py docs/approach-client.html
 python scripts/render_pdf.py README.md --out docs/README.pdf
 python scripts/render_pdf.py docs/ARCHITECTURE.md --out docs/ARCHITECTURE.pdf
+python scripts/render_pdf.py docs/VESPA-HANDOVER.md --out docs/VESPA-HANDOVER.pdf
 python scripts/build_standalone.py          # docs/catalogue-standalone.html
 ```
 
 The two approach documents are written as HTML and rendered directly.
-`docs/README.pdf` and `docs/ARCHITECTURE.pdf` are converted from their markdown
-— **rebuild them after any substantive edit**, because nothing forces it and a
+`docs/README.pdf`, `docs/ARCHITECTURE.pdf` and `docs/VESPA-HANDOVER.pdf` are
+converted from their markdown — **rebuild them after any substantive edit**, because nothing forces it and a
 stale PDF is not visible in a diff.
 
-`docs/ARCHITECTURE.md` draws its diagrams from `docs/architecture/*.svg` rather
-than from Mermaid, because markdown-it has no Mermaid plugin here and would
-print a fenced ```mermaid block as its own source. A relative image works in
-both targets: GitHub renders it, and Chromium resolves it against the
+**Mermaid renders.** A fenced ```mermaid block is drawn to SVG inside the print
+browser, so README keeps its diagrams as diffable text and still produces a
+clean PDF. The library is pinned and cached in `.cache/` on first use, so only
+the first build needs the network — and a document with no diagram fetches
+nothing at all. If a diagram fails to parse the build **fails** rather than
+printing its source: that failure mode is invisible in a PDF, which is how
+`docs/README.pdf` sat stale for over a week.
+
+`docs/ARCHITECTURE.md` still draws from `docs/architecture/*.svg` rather than
+Mermaid. That was originally forced — there was no Mermaid support — and is now
+a choice: those three diagrams are hand-laid-out, and Mermaid's automatic layout
+does not reproduce them. New diagrams should prefer Mermaid. A relative image
+works in both targets: GitHub renders it, and Chromium resolves it against the
 intermediate HTML, which is written beside the markdown. Use `--keep-html` to inspect the generated HTML in a browser
 while changing the print stylesheet, which lives in `scripts/render_pdf.py`.
 

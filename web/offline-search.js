@@ -40,6 +40,7 @@
   // Read from api/catalogue.py at build time so the page and the API cannot
   // disagree about how long a result list is.
   const TOP_K = window.__SEMANTIC_TOP_K__ || 20;
+  const POOL = window.__SEMANTIC_POOL__ || 200;
   const EXPLAIN_HEADINGS = window.__EXPLAIN_HEADINGS__ || 2;
   // "toggle" keeps the two modes and the button pair; "blended" is one box,
   // always meaning, with named records promoted into it. Read from the build
@@ -187,13 +188,14 @@
       scored[i] = [DOC_IDS[i], total * SCALES[i]];
     }
     scored.sort((a, b) => b[1] - a[1]);
-    // The cut happens here, on chunks, before anything is collapsed - which is
-    // where searcher.semantic(top_k=...) cuts on the server. Collapsing first
-    // would quietly return more than TOP_K records.
+    // POOL, not TOP_K: this is the candidate set a facet filter selects within,
+    // matching searcher.semantic(top_k=SEMANTIC_POOL) on the server. The
+    // displayed cut to TOP_K happens in search(), after filtering - see the
+    // comment there and SEMANTIC_POOL in api/catalogue.py.
     //
     // The query vector is handed back rather than stashed in a closure, so
     // that two searches in flight at once cannot explain each other's cards.
-    return { hits: scored.slice(0, TOP_K), vector: q };
+    return { hits: scored.slice(0, POOL), vector: q };
   }
 
   // ---- why a record is here, mirroring api/catalogue.py -------------------
@@ -473,11 +475,18 @@
       [ranked, promoted] = promoteExact(ranked, findExact(query));
     }
 
-    // Facets are counted before filtering, so the sidebar shows what you could
-    // narrow to rather than only what is already selected.
+    // Facets are counted over the pool, before filtering - counting over a
+    // filtered retrieval would collapse the sidebar to the value already
+    // selected. A facet can therefore read a larger number than the list it
+    // opens; see the note in api/catalogue.py.
     const facets = buildFacets(ranked.map(([record]) => record));
 
-    const kept = ranked.filter(([record]) => matchesFilters(record, filters));
+    // Filter first, then cut. Narrowing to one branch should give the best
+    // twenty records in that branch, not the remnant of twenty chosen without
+    // reference to it. Keyword needs no cut - BM25 scores nothing that shares
+    // no term with the query.
+    let kept = ranked.filter(([record]) => matchesFilters(record, filters));
+    if (mode !== "keyword") kept = kept.slice(0, TOP_K);
     const total = kept.length;
     const start = (page - 1) * perPage;
     const window_ = kept.slice(start, start + perPage);

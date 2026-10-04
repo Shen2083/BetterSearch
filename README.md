@@ -323,6 +323,12 @@ travels through them, and the interfaces to extend — see
 **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**, also available as
 [a PDF](docs/ARCHITECTURE.pdf).
 
+Rebuilding this on another engine? **[docs/VESPA-HANDOVER.md](docs/VESPA-HANDOVER.md)**
+([PDF](docs/VESPA-HANDOVER.pdf)) is written for a team doing exactly that: what
+transfers, what to re-measure, and the traps. `scripts/score_rankings.py` scores
+any engine's output against the same 2,378 judgements, so a rebuild can be held
+to this one's bar rather than to a new one.
+
 `web/index.html` is the view for working on retrieval rather than for showing
 anyone — all three modes on one screen, scored, so a change in chunking or model
 is visible immediately:
@@ -658,20 +664,27 @@ queries I drafted and Shen reviewed, with relevance judged by Claude Haiku on a
 pooled candidate set. Build it with `scripts/fetch_openlibrary.py` and
 `scripts/build_eval_set.py`.
 
-The pool is the top 20 from each of four lanes — BM25, MiniLM over thin
-records, MiniLM over enriched records, and bge-base over thin records — unioned,
-shuffled and judged blind: 1,979 judgements over 41 queries. Four lanes rather
-than three because an arm that is measured but not pooled is penalised for
+The pool is the top 20 from each of six lanes — BM25, MiniLM over thin records,
+MiniLM over enriched records, bge-base over thin records, and the depth-200
+`bge-reranker-base` lane in both its plain and exact-match-promoted forms —
+unioned, shuffled and judged blind: **2,378 judgements over 41 queries**. Six
+rather than four because an arm that is measured but not pooled is penalised for
 everything it finds that the pooled lanes missed; see *Comparing embedding
-models* below, where that mistake reversed a conclusion.
+models* below, where that mistake reversed a conclusion, and *Going deeper*,
+where it did so again.
+
+The pool only ever grows. Judgements are carried forward on `(query text,
+doc_id)`, so adding a lane can widen `relevant_doc_ids` but never shrink it —
+otherwise every previously published figure would silently improve against a
+smaller denominator.
 
 ### The three modes
 
 | mode | Recall@5 | MRR@10 | nDCG@10 |
 |---|---|---|---|
-| keyword | 0.196 | 0.633 | 0.443 |
-| **semantic** | **0.264** | **0.725** | **0.579** |
-| hybrid | 0.228 | 0.710 | 0.549 |
+| keyword | 0.191 | 0.633 | 0.443 |
+| **semantic** | **0.255** | **0.725** | **0.579** |
+| hybrid | 0.220 | 0.710 | 0.549 |
 
 **Hybrid still loses, and that kills a hypothesis.** The earlier result — hybrid
 below pure semantic — was explained away as an artefact of an eval set weighted
@@ -734,16 +747,16 @@ judgements, on the thin 4,000-record arm:
 
 | strategy | precision | recall | F1 | median results |
 |---|---|---|---|---|
-| absolute 0.15 (old) | **0.039** | 0.985 | 0.074 | 763 |
-| relative ≥ 0.90 × best | 0.585 | 0.282 | 0.380 | 4 |
-| relative ≥ 0.85 × best | 0.515 | 0.372 | 0.432 | 9 |
-| largest-gap cut | 0.653 | 0.229 | 0.340 | 2 |
-| fixed top-5 | 0.527 | 0.264 | 0.352 | 5 |
-| fixed top-10 | 0.459 | 0.381 | 0.416 | 10 |
-| fixed top-15 | 0.416 | 0.506 | 0.457 | 15 |
-| **fixed top-20** | 0.396 | 0.603 | **0.478** | 20 |
+| absolute 0.15 (old) | **0.042** | 0.977 | 0.080 | 763 |
+| relative ≥ 0.90 × best | 0.585 | 0.273 | 0.372 | 4 |
+| relative ≥ 0.85 × best | 0.515 | 0.356 | 0.421 | 9 |
+| largest-gap cut | 0.653 | 0.223 | 0.333 | 2 |
+| fixed top-5 | 0.527 | 0.255 | 0.344 | 5 |
+| fixed top-10 | 0.459 | 0.364 | 0.406 | 10 |
+| fixed top-15 | 0.416 | 0.483 | 0.447 | 15 |
+| **fixed top-20** | 0.396 | 0.573 | **0.469** | 20 |
 
-Precision **0.035**: the floor admits almost everything and calls it a result
+Precision **0.042**: the floor admits almost everything and calls it a result
 set. But the fix I proposed from result counts alone — a relative cut — is
 **not** the winner. Plain top-k beats every threshold on F1, because thresholds
 buy precision by throwing away recall the pagination would have handled anyway.
@@ -752,11 +765,18 @@ is why the fix waited for the judgements.
 
 **Where the evidence stops.** The eval pooled each lane to depth 20, so no record
 below rank 20 has a judgement and every one of them scores as irrelevant. F1 is
-still *rising* at k=20 — 0.352, 0.416, 0.457, 0.478 across the sweep — and the
-fall after it (0.468 at 25, 0.359 at 50) is an artefact of running past the pool,
+still *rising* at k=20 — 0.344, 0.406, 0.447, 0.469 across the sweep — and the
+fall after it (0.464 at 25, 0.369 at 50) is an artefact of running past the pool,
 not a peak. So the honest claim is narrow: **20 is the deepest cut this eval can
 vouch for, and it beats everything shallower.** Whether 30 would be better is
 unmeasured, and would need a deeper pool to answer.
+
+Re-derived after the pool grew to six lanes and 2,378 judgements: every F1 fell
+by about 0.01, because recall is measured against a larger set of relevant
+records, and **the ranking of the strategies did not change at all.** `fixed
+top-20` still wins on both arms (0.469 thin, 0.520 enriched), so
+`SEMANTIC_TOP_K = 20` stands unaltered. A re-pool that moves every number and no
+decision is the good case.
 
 `api/catalogue.py` now retrieves `SEMANTIC_TOP_K = 20` directly instead of
 retrieving everything and filtering. `books like Agatha Christie` returns 20
@@ -903,6 +923,210 @@ so the quality figures above can be checked.
 - **Two queries score 0.000 on both arms** — `learning to grow vegetables in
   pots` and `the one about a boy wizard at school`. Reported rather than
   quietly dropped.
+
+---
+
+## Narrowing: the filter has to come before the cut
+
+Found while asking what else Vespa could offer. It is not a missing feature —
+it was a defect here.
+
+`run_search` retrieved the semantic top 20 and *then* applied facet filters, so
+ticking "Large print" did not search the large-print records. It kept whichever
+of twenty already-chosen records happened to be large print. Measured over 41
+queries × 10 facet values on the 4,000-record corpus, through the real pipeline:
+
+| | filter after the cut | filter before it |
+|---|---|---|
+| results returned | **4.00** | 19.96 |
+| returned fewer than 3 | **31.2%** | 0.0% |
+| returned zero | 2.9% | 0.0% |
+
+Those facets each cover 14–18% of the corpus. At a real library "available now
+at my branch" is a far smaller slice, and the facet panel would have returned
+almost nothing almost always.
+
+The fix is a **candidate pool**: retrieval fetches `SEMANTIC_POOL` (200), the
+filter selects within it, and the cut to `SEMANTIC_TOP_K` comes afterwards. The
+measured decision does not move — `scripts/tune_cutoff.py` chose 20 as *what a
+reader sees*, and a reader still sees 20. The pool is never displayed in full,
+so this is not the absolute floor that admitted 3,665 of 4,000 records.
+
+**The regression gate, checked before anything else.** An unfiltered search must
+be untouched: nDCG@10 stayed at exactly **0.6582**, with **41/41 identical
+result lists**. On the books-and-events corpus it is 39/41 — the two that differ
+had been returning 18 results because a weekly event series collapsed inside the
+old top 20, and now return a full 20. The additions land at ranks 19–20, so
+nDCG@10 is unchanged at 0.6511 there too. A strict improvement, observed rather
+than discovered later.
+
+**What moved, and is a real cost.** Facet counts are now computed over the pool
+rather than the page, which is forced: counting over a filtered retrieval would
+collapse the sidebar to the value already selected and make cross-narrowing
+impossible. So a facet can read a larger number than the list it opens —
+"Large print 28" above a list of 20. The count is still honest, because every
+record it counts is reachable by clicking it. That was *not* true of the
+763-record shadow set the old floor produced, which is the thing this must not
+drift back into.
+
+**Not claimed:** nDCG over the filtered searches rises 0.2759 → 0.3186, and that
+number should not be quoted. Filter-aware retrieval surfaces records the four
+pooled lanes never saw, so judged coverage falls and the comparison is subject
+to exactly the bias described above. The collapse in result *count* is
+arithmetic and needs no judgements at all.
+
+`200` is judgement, not measurement, and the constant says so. It is set so a
+facet covering a seventh of the corpus still offers comfortably more candidates
+than the twenty displayed, and `BETTERSEARCH_POOL` overrides it. Raising it
+cannot change an unfiltered search.
+
+---
+
+## Reranking: the ordering is the problem, not the retrieval
+
+Asked because the engineering team is moving to Vespa, whose contribution to
+*quality* — as opposed to serving — is its reranking phase. The ceiling was
+measured before anything was built. Reordering only the candidates already
+retrieved, with every relevant one moved to the top:
+
+| depth | ours | oracle | headroom | judged coverage |
+|---|---|---|---|---|
+| **20** | **0.6582** | **0.9124** | **+0.254** | **100%** |
+| 50 | 0.6582 | 0.9703 | +0.312 | 92.7% |
+| 100 | 0.6582 | 0.9850 | +0.327 | 98.8% |
+| 200 | 0.6582 | 1.0000 | +0.342 | 100% |
+
+**The retrieval is fine; the ordering is the problem.** 161 records across the
+41 queries are judged relevant, retrieved, and sitting at ranks 11–20 — on page
+two. Per-query headroom has a median of 0.209, so it is broad rather than a few
+outliers; the seven queries with nothing to gain are exact-name controls,
+already at 1.000.
+
+Coverage is high at every depth here **because the pool was rebuilt to make it
+so**. It was not always: the reranked lane at depth 200 was 59.5% judged, and
+the figures that produced are in [Going deeper](#going-deeper-reranking-pays-at-20-and-decays-with-depth)
+below as a worked example of how badly that misleads. Reranking does not change
+the candidate set, so coverage at the *display* depth of 20 was always 100% by
+construction — `scripts/tune_reranking.py` asserts that rather than trusting
+it. Deeper, it had to be bought.
+
+Rerank depth 20 — the twenty candidates the page displays. Judged coverage is
+100% on every arm, so nDCG@10 is comparable down the column.
+
+| arm | nDCG@10 | vs base | recall@10 | controls | ms/query |
+|---|---|---|---|---|---|
+| baseline (bge-base, as shipped) | 0.6582 | — | 0.4196 | 1.000 | 0 |
+| + BM25 as a weighted second phase | 0.6782 | +0.020 | 0.4258 | 1.000 | 0 |
+| + `ms-marco-MiniLM-L-6-v2` over **thin** records | 0.6632 | +0.005 | 0.4263 | 1.000 | 186 |
+| + `ms-marco-MiniLM-L-6-v2` over **enriched** records | 0.7149 | +0.057 | 0.4780 | **0.877** | 356 |
+| &nbsp;&nbsp;… + exact-match promotion | 0.7280 | +0.070 | 0.4780 | 1.000 | 356 |
+| + `bge-reranker-base` over **thin** records | 0.6573 | −0.001 | 0.4277 | 1.000 | 890 |
+| + `bge-reranker-base` over **enriched** records | 0.7257 | +0.068 | **0.4871** | **0.926** | 2,809 |
+| &nbsp;&nbsp;**… + exact-match promotion** | **0.7308** | **+0.073** | 0.4852 | **1.000** | 2,809 |
+| oracle (the ceiling) | 0.9124 | +0.254 | 0.5560 | 1.000 | — |
+
+**A cross-encoder is worth nothing on a catalogue record.** Both rerankers are
+flat on the records as they ship — +0.005 and −0.001. That is not a weak model:
+on a written sentence `bge-reranker-base` separates cleanly (0.643 for a
+beekeeping passage against 0.000 for a calculus textbook). It is that the record
+is a 24-word metadata stub — a title, an author, a publisher, a semicolon list
+of subject headings — and a model trained to read passages has nothing to read.
+Give it the enriched text instead, at 95 words median, and the same model is
+worth **+0.073**.
+
+So reranking does not replace enrichment; it is **unlocked** by it. The two are
+the same bet — that these records are too thin — arriving from different ends.
+
+**And it broke the thing libraries care most about.** Both enriched arms
+regressed the known-item controls, `Sue Monk Kidd` worst at −0.369. That is the
+*same* failure enrichment itself has, recorded above: it helps queries about
+aboutness and hurts queries about identity. The reranker inherits it, because it
+is reasoning over the same prose.
+
+The fix was already in the repository. `src/bettersearch/exact.py` lifts records
+the reader arguably *named* by rule rather than by score, and its docstring
+calls it "a guarantee rather than an improvement", worth 0.658 → 0.658. Against
+a reranker it starts earning its keep: controls back to **1.000**, and the mean
+goes *up* rather than down, because the queries it rescues were the ones being
+broken. A component measured as worthless becomes valuable the moment something
+upstream is strong enough to be unpredictable.
+
+### Going deeper: reranking pays at 20 and decays with depth
+
+"Retrieve wide, rank deep" is what Vespa's phased ranking exists for, and it
+looked like the natural next move, because the pool we already fetch holds far
+more of the good records than the page we show:
+
+| retrieval depth | recall of judged-relevant | missed |
+|---|---|---|
+| 10 | 0.420 | 501 |
+| **20 — what we display** | **0.628** | **340** |
+| 50 | 0.809 | 185 |
+| **200 — the pool** | **0.961** | 48 |
+
+340 judged-relevant records are retrieved and thrown away on every run. So the
+reranker was given the full pool instead of the top 20. **It does not help. It
+decays, monotonically, all the way down:**
+
+| rerank depth | 20 | 50 | 100 | 200 |
+|---|---|---|---|---|
+| recall@10 vs baseline | **+0.066** | +0.047 | +0.035 | **+0.010** |
+| judged coverage | 100% | 92.7% | 98.8% | 100% |
+| ms/query (CPU) | 2,809 | 5,548 | 10,093 | 19,937 |
+
+Seven times the latency for a seventh of the gain. **Rerank the twenty you
+display, and stop there.** For a Vespa `rerank-count`, that is the number.
+
+#### This took two wrong answers to reach, and both are instructive
+
+The first sweep, before the pool was rebuilt, read `+0.079 / +0.029 / −0.007 /
+−0.062` with coverage falling to 59.5%. That looked like the pooling penalty and
+it was: reranking 200 candidates promotes records no judge ever saw, and every
+one scores zero however good it is.
+
+So it was re-run with `--judged-only`, which discards unjudged candidates and
+pins coverage at 100%. That read `+0.079 / +0.072 / +0.091 / +0.087` —
+apparently no decay at all, strongest at 100 — and it was recorded here as the
+true shape the eval could not see.
+
+**It was the larger error of the two.** Discarding unjudged candidates does not
+neutralise the bias, it reverses it: what gets discarded is precisely the junk
+the reranker promoted and nobody graded, so the arm is scored only on the
+candidates where it was already known to be doing well. It flattered the
+reranker roughly ninefold at depth 200 — `+0.087` against a judged truth of
+`+0.010`.
+
+The fix was to pay for the judgements. `data/rankings/` holds the depth-200
+reranked lane, both plain and exact-match-promoted; both were pooled and the 399
+records they surfaced that no judge had seen were graded, at a cost of $0.06.
+81 came back relevant. Coverage at depth 200 went 59.5% → 100%, and the number
+stopped moving.
+
+Two general lessons, both cheaper to learn here than in production:
+
+- **A coverage-correction that changes the answer is not a correction.** Both
+  `--judged-only` and raw pooling are biased estimators; agreeing with neither
+  is what the judgements are for. `scripts/bound_repool_effect.py` now exists to
+  bound the gap before paying, and its own prediction was 3× out on magnitude —
+  it assigns relevance independently of rank, and relevance correlates with
+  rank, so it over-separates arms. Its docstring says so with the numbers.
+- **recall@10 is not pooling-safe.** I proposed the original sweep claiming it
+  was, because the denominator is fixed. The *numerator* is not: an unjudged
+  record entering the top 10 displaces a judged-relevant one. The script says so
+  where the claim was made.
+
+**What is not claimed.** The best arm captures 29% of the headroom; 0.18 of
+nDCG is still on the table and unexplained. `bge-reranker-base` costs 2.8
+seconds per query on CPU for 20 candidates — unusable without ONNX or a GPU, and
+the MiniLM cross-encoder gets most of the gain for **13% of the cost** (356 ms
+against 2,809 ms): 96% of it on nDCG@10 (+0.070 against +0.073) and 89% on
+recall@10 (+0.058 against +0.066). It is the arm to ship if either is.
+The BM25 second phase at +0.020 is reported, not shipped: `w` was swept on the
+same 41 queries it is scored on, so that number is an upper bound on the idea
+rather than an estimate of it. Forty-one queries remains few, and the ceiling is
+still a set of LLM judgements — a reranker approaching the oracle is
+increasingly agreeing with Claude Haiku, not demonstrably serving readers
+better.
 
 ---
 

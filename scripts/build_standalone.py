@@ -151,7 +151,7 @@ def json_block(name: str, payload: object) -> str:
 
 
 def build(out: Path, model: str, interaction: str = "toggle") -> Path:
-    from api.catalogue import (EXPLAIN_HEADINGS, SEMANTIC_TOP_K,
+    from api.catalogue import (EXPLAIN_HEADINGS, SEMANTIC_POOL, SEMANTIC_TOP_K,
                               load_catalogue, load_meta)
     from bettersearch.exact import MAX_PROMOTED, PHRASE_TOKENS
 
@@ -214,6 +214,7 @@ def build(out: Path, model: str, interaction: str = "toggle") -> Path:
         # The cut is read from api/catalogue.py rather than repeated here, so
         # the page and the API cannot disagree about how long a result list is.
         + f"<script>window.__SEMANTIC_TOP_K__ = {SEMANTIC_TOP_K};"
+          f"window.__SEMANTIC_POOL__ = {SEMANTIC_POOL};"
           f"window.__EXPLAIN_HEADINGS__ = {EXPLAIN_HEADINGS};"
           f"window.__PHRASE_TOKENS__ = {PHRASE_TOKENS};"
           f"window.__MAX_PROMOTED__ = {MAX_PROMOTED};"

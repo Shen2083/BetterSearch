@@ -20,7 +20,12 @@ enrich = ["anthropic>=1.0"]
 # Storage backends. numpy is built in; pgvector is the production path.
 pgvector = ["psycopg[binary]>=3.2", "pgvector>=0.3"]
 api = ["fastapi>=0.115", "uvicorn[standard]>=0.30"]
-dev = ["pytest>=8.0"]
+# markdown-it-py is scripts/render_pdf.py's markdown parser, and the suite tests
+# its fence handling - a Mermaid fence that fails to render prints as a code
+# block, which looks deliberate in a PDF and went unnoticed for a week. It is a
+# pure-Python parser: no model, no network, no API key, so CI keeps the property
+# its workflow comment protects.
+dev = ["pytest>=8.0", "markdown-it-py>=3.0"]
 
 [project.scripts]
 bettersearch = "bettersearch.cli:main"
