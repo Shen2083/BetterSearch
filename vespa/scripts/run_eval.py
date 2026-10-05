@@ -85,6 +85,16 @@ def build_body(mode: str, query: str, hits: int, profile: str,
             f"select doc_id from record where userQuery() or "
             f"({{targetHits:{hits}}}nearestNeighbor(embedding, q))"
         )
+    elif mode == "binary":
+        # Hamming over the packed vectors. The query is packed the same way:
+        # one bit per dimension by sign, eight per byte, most significant bit
+        # first, which is what Vespa's pack_bits does. Getting the bit order
+        # wrong does not error, it returns nonsense, so the dense lane is the
+        # control: a correct packing tracks it closely.
+        body["yql"] = (
+            f"select doc_id from record where "
+            f"{{targetHits:{hits}}}nearestNeighbor(embedding_binary, qb)"
+        )
     elif mode == "colbert":
         # Retrieval is the same dense lane; the second phase is what differs.
         # The query's token embeddings are produced by Vespa's own embedder,
@@ -101,6 +111,11 @@ def build_body(mode: str, query: str, hits: int, profile: str,
 
     if vector is not None:
         body["input.query(q)"] = {"values": vector}
+        if mode == "binary":
+            import numpy as np
+            bits = (np.asarray(vector, dtype=np.float32) > 0).astype(np.uint8)
+            packed = np.packbits(bits, bitorder="big").view(np.int8)
+            body["input.query(qb)"] = {"values": [int(v) for v in packed]}
 
     body.update(extra)
     return body
@@ -109,7 +124,8 @@ def build_body(mode: str, query: str, hits: int, profile: str,
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mode", required=True,
-                        choices=["bm25", "dense", "hybrid", "colbert"])
+                        choices=["bm25", "dense", "hybrid", "colbert",
+                                 "binary"])
     parser.add_argument("--profile", required=True, help="Vespa rank-profile name")
     parser.add_argument("--out", required=True, help="lane file to write")
     parser.add_argument("--queries", default=QUERIES)
@@ -131,7 +147,7 @@ def main() -> None:
     queries = json.loads(Path(args.queries).read_text(encoding="utf-8"))["queries"]
 
     provider = None
-    if args.mode in {"dense", "hybrid", "colbert"}:
+    if args.mode in {"dense", "hybrid", "colbert", "binary"}:
         from bettersearch.embeddings import get_provider
         provider = get_provider()
         print(f"query encoder: {provider.model_id}")

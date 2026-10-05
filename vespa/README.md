@@ -8,12 +8,17 @@ This directory runs them. One Vespa node, the same 4,000 book records, the same
 41 judged queries, scored through the same harness that produced every
 published figure in this repository.
 
-Four of the eight now have a measured number against them. Late interaction and
-phased ranking came out **better** than the handover expected; RRF came out
-exactly as it predicted, in Vespa's own implementation; the per-node IDF
-warning is **overstated** at this corpus size. A fifth, `sameElement`, is
-**wrong** and needed no measurement to settle: it does not apply to this schema
-at all. Three are not done, and are listed at the end with reasons.
+**Six of the eight now have evidence against them**, one is wrong, and one
+cannot be measured with this eval set. That is everything answerable here.
+
+Late interaction and phased ranking came out **better** than the handover
+expected. RRF came out exactly as predicted, in Vespa's own implementation.
+Partial attribute updates do what was claimed. The per-node IDF warning is
+**overstated** at this corpus size, and binary quantisation is **oversold**:
+the 32-fold reduction and the quality are not available at the same time.
+`sameElement` is **wrong** and needed no measurement to settle — it does not
+apply to this schema at all. `grouping` has no number because none of the 41
+queries carries a facet filter.
 
 One finding that is not in the handover came out of the port, and it is a
 negative: fielding the record properly, which our Python provably cannot do,
@@ -214,6 +219,58 @@ is sound. And the document-frequency recovery rests on a fit whose residuals
 are the same size as the effect, so this establishes that the effect is *not
 large* and cannot resolve whether it is small or zero.
 
+## 6. Binary quantisation is oversold, and there is a trap next to it
+
+768 floats at 4 bytes each become 96 bytes: a 32-fold reduction, Hamming
+instead of cosine, computed by Vespa from the float field at indexing time.
+
+| lane | nDCG@10 | coverage | top-10 same as float | round trip |
+|---|---|---|---|---|
+| float, exact | 0.6582 | 100.0% | — | 23 ms |
+| packed, Hamming only | 0.5847 | 83.2% | 59.0% | 10 ms |
+| packed, then rescored on the floats | **0.6580** | 99.8% | **94.4%** | 10 ms |
+
+Retrieve on the packed vectors and rescore the survivors with the float ones,
+and essentially all the quality comes back: 0.6580 against 0.6582, an identical
+top ten on 32 of 41 queries, at **less than half the latency**.
+
+**But the two benefits are not simultaneous.** The rescore needs the float
+vectors, so they must still be stored — that profile buys query cost, not
+memory. Drop the floats and take the real 32-fold saving, and you are at
+0.5847, down 0.07 with 59% of the top ten changed. The handover presents the
+compression as close to free. On this corpus it is free of *latency*, not of
+memory.
+
+**The trap.** The obvious second-phase expression, `closeness(field, embedding)`,
+scores **0.0837**. `closeness` only has a distance for the field
+`nearestNeighbor` actually ran against, which here is `embedding_binary`; asked
+about any other field it returns a meaningless value rather than failing. The
+profile retrieved almost exactly the right candidates — 63.9% of them matched
+the float lane — while its top ten matched 4.1% of the time. A quality
+measurement that only looked at nDCG would have read it as binary quantisation
+being catastrophic. Writing the dot product out, `sum(query(q) *
+attribute(embedding))`, is what the table above measures. Worth a line in the
+handover: this one fails silently and plausibly.
+
+## 7. Availability really does change in place
+
+The one finding with no number, because it does not produce one.
+`available` and `copies` change on every loan. In our system they live in the
+catalogue JSON the index was built from, so moving one means rebuilding,
+re-embedding and reloading. Here, `vespa/scripts/demo_partial_update.py`:
+
+```
+ol-OL15844725W  'Psychology'      available 0, copies 1
+  3312 of 4000 records are borrowable
+  one returned copy, fed as a partial update: 20 ms
+  3313 borrowable, a change of 1, on the query issued immediately after
+  no reindexing, no re-embedding, no redeploy
+```
+
+The test is a *filter*, not a summary field, because a stale availability
+filter is worse than no filter. The two integers are rewritten on the content
+node; the 768-float vector and the ColBERT token tensors are untouched.
+
 ## Not done, and why
 
 * **`sameElement` does not apply.** It needs an array of structs. `subjects` is
@@ -225,7 +282,6 @@ large* and cannot resolve whether it is small or zero.
   facet filter, so there is no nDCG to move. It would remove the
   `SEMANTIC_POOL = 200` approximation `api/catalogue.py` admits is "judgement,
   not measurement", but that is a demonstration, not a number.
-* **Binary quantisation and partial attribute updates** are not yet run.
 * **The query embedder is still ours**, deliberately. Letting Vespa embed the
   query too changes two things at once — ONNX against torch numerics, and
   Vespa's tokenizer against sentence-transformers' — and would have muddied the

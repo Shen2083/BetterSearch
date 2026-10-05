@@ -137,6 +137,22 @@ schema record {
         indexing: input embed_text | embed colbert | attribute
     }
 
+    # The same 768 vectors, one bit per dimension: 768 floats at 4 bytes each
+    # become 96 int8 values, a 32-fold reduction. binarize maps each dimension
+    # to 0 or 1 by sign, pack_bits packs eight per byte, and Hamming distance
+    # replaces cosine. Computed by Vespa from the float field at indexing time,
+    # so there is one source of truth for the vectors.
+    #
+    # Not tested with Matryoshka truncation: bge-base-en-v1.5 was not trained
+    # with a Matryoshka objective, so truncating it would measure the
+    # truncation rather than the idea.
+    field embedding_binary type tensor<int8>(x[96]) {
+        indexing: input embedding | binarize | pack_bits | attribute
+        attribute {
+            distance-metric: hamming
+        }
+    }
+
     # Exactly the two fields our Python BM25 scores over, so the parity lane
     # reproduces it rather than improving on it.
     fieldset default {
@@ -201,6 +217,40 @@ schema record {
         }
         first-phase {
             expression: closeness(field, embedding)
+        }
+    }
+
+    # Hamming alone: what 32x compression costs with nothing to repair it.
+    rank-profile binary {
+        inputs {
+            query(qb) tensor<int8>(x[96])
+        }
+        first-phase {
+            expression: closeness(field, embedding_binary)
+        }
+    }
+
+    # Vespa's recommended shape: retrieve cheaply on the packed vectors, then
+    # rescore the survivors with the float ones. The float vectors still have to
+    # be stored for this, so it buys query cost rather than memory.
+    rank-profile binary_rerank inherits binary {
+        inputs {
+            query(qb) tensor<int8>(x[96])
+            query(q) tensor<float>(x[768])
+        }
+        first-phase {
+            expression: closeness(field, embedding_binary)
+        }
+        second-phase {
+            # Not closeness(field, embedding). closeness only has a distance
+            # for the field nearestNeighbor actually ran against, which here is
+            # embedding_binary; asked about any other field it returns a
+            # meaningless score rather than failing, and the profile scores
+            # 0.0837 while retrieving almost exactly the right candidates. The
+            # dot product is written out instead. The vectors are L2 normalised
+            # by the encoder, so this is cosine.
+            expression: sum(query(q) * attribute(embedding))
+            rerank-count: 100
         }
     }
 

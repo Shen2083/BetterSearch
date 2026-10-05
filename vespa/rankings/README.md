@@ -26,6 +26,8 @@ floors except where coverage is 100%.
 | `vespa-colbert-rc50.json` | `colbert` | same, `rerank-count` 50 | 0.6557 | 89.5% |
 | `vespa-colbert-rc100.json` | `colbert` | same, `rerank-count` 100 | 0.6449 | 87.3% |
 | `vespa-colbert-rc200.json` | `colbert` | same, `rerank-count` 200 | 0.6473 | 85.6% |
+| `vespa-binary.json` | `binary` | the same vectors packed to one bit per dimension, 32x smaller, Hamming distance | 0.5847 | 83.2% |
+| `vespa-binary_rerank.json` | `binary_rerank` | packed retrieval, then rescored on the float vectors | 0.6580 | 99.8% |
 
 Regenerate any of them with `vespa/scripts/run_eval.py`; see `vespa/README.md`
 for the sequence from a clean clone.
