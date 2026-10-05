@@ -15,6 +15,20 @@
   <container id="default" version="1.0">
     <document-api/>
     <search/>
+
+    <!-- Vespa's own ColBERT embedder, not our MaxSim.
+         answerai-colbert-small-v1 publishes vespa_colbert.onnx in its own
+         repository, exported for this component, so this is the supported path
+         rather than a conversion of ours. 33M parameters, which sits under
+         Vespa's rough 30 to 40M threshold for wanting a GPU, so it runs on
+         container-node CPU where bge-reranker at 278M would not.
+         max-query-tokens 32 matches what our Python padded the query to. -->
+    <component id="colbert" type="colbert-embedder">
+      <transformer-model path="models/colbert.onnx"/>
+      <tokenizer-model path="models/colbert-tokenizer.json"/>
+      <max-query-tokens>32</max-query-tokens>
+      <max-document-tokens>256</max-document-tokens>
+    </component>
     <nodes>
       <node hostalias="node1"/>
     </nodes>

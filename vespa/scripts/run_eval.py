@@ -85,6 +85,17 @@ def build_body(mode: str, query: str, hits: int, profile: str,
             f"select doc_id from record where userQuery() or "
             f"({{targetHits:{hits}}}nearestNeighbor(embedding, q))"
         )
+    elif mode == "colbert":
+        # Retrieval is the same dense lane; the second phase is what differs.
+        # The query's token embeddings are produced by Vespa's own embedder,
+        # not by us, which is the point: our 0.7407 rested on a MaxSim written
+        # by hand against pylate.
+        body["yql"] = (
+            f"select doc_id from record where "
+            f"{{targetHits:{hits}}}nearestNeighbor(embedding, q)"
+        )
+        body["input.query(qt)"] = "embed(colbert, @qtext)"
+        body["qtext"] = query
     else:
         raise SystemExit(f"unknown mode {mode!r}")
 
@@ -97,7 +108,8 @@ def build_body(mode: str, query: str, hits: int, profile: str,
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--mode", required=True, choices=["bm25", "dense", "hybrid"])
+    parser.add_argument("--mode", required=True,
+                        choices=["bm25", "dense", "hybrid", "colbert"])
     parser.add_argument("--profile", required=True, help="Vespa rank-profile name")
     parser.add_argument("--out", required=True, help="lane file to write")
     parser.add_argument("--queries", default=QUERIES)
@@ -119,7 +131,7 @@ def main() -> None:
     queries = json.loads(Path(args.queries).read_text(encoding="utf-8"))["queries"]
 
     provider = None
-    if args.mode in {"dense", "hybrid"}:
+    if args.mode in {"dense", "hybrid", "colbert"}:
         from bettersearch.embeddings import get_provider
         provider = get_provider()
         print(f"query encoder: {provider.model_id}")

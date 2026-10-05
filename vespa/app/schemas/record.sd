@@ -121,11 +121,20 @@ schema record {
             }
         }
 
-        # Per-token ColBERT embeddings, 96 dimensions each, bfloat16 to halve
-        # the footprint. Mixed tensor: dt is the document-token dimension.
-        field colbert type tensor<bfloat16>(dt{}, x[96]) {
-            indexing: attribute | summary
-        }
+    }
+
+    # Per-token ColBERT embeddings, 96 dimensions each, bfloat16 to halve the
+    # footprint. dt is the document-token dimension.
+    #
+    # Declared outside the document block, so Vespa computes it at feed time
+    # from embed_text with the embedder in services.xml. Nothing in the feed
+    # carries token vectors: the point of the exercise is to measure Vespa's
+    # late interaction, not to reimplement it and feed the answer in. Our own
+    # 0.7407 came from a MaxSim written by hand against pylate, which is
+    # exactly the thing docs/VESPA-HANDOVER.md says a production default should
+    # not rest on.
+    field colbert type tensor<bfloat16>(dt{}, x[96]) {
+        indexing: input embed_text | embed colbert | attribute
     }
 
     # Exactly the two fields our Python BM25 scores over, so the parity lane
@@ -143,6 +152,27 @@ schema record {
     rank-profile bm25_flat {
         first-phase {
             expression: bm25(title) + bm25(text)
+        }
+    }
+
+    # Exposes the significance Vespa is actually using for each query term.
+    # That is the quantity behind the per-node IDF warning in
+    # docs/VESPA-HANDOVER.md: Vespa builds significance from the document
+    # frequencies on each content node, so two nodes holding different
+    # documents weight the same term differently. Reading it is the only way to
+    # check the warning without guessing how Vespa stemmed the term.
+    rank-profile bm25_flat_explain inherits bm25_flat {
+        match-features {
+            term(0).significance
+            term(1).significance
+            term(2).significance
+            term(3).significance
+            term(4).significance
+            term(5).significance
+            term(6).significance
+            term(7).significance
+            term(8).significance
+            term(9).significance
         }
     }
 

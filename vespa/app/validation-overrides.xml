@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<validation-overrides>
+  <!-- The colbert field moved from a value carried in the feed to one Vespa
+       computes itself from embed_text, which changes its indexing script.
+       Vespa refuses that silently-destructive change by default, which is the
+       right default: in production the records would have to be reindexed.
+
+       Here the whole corpus is re-fed from scratch on every change, so there is
+       nothing to lose. The date is short on purpose, so this override expires
+       rather than becoming permanent. -->
+  <allow until="2026-10-25">indexing-change</allow>
+</validation-overrides>
