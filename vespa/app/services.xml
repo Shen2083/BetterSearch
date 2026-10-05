@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<services version="1.0">
+
+  <!-- One node, because this is a proof of concept and not a cluster.
+       Everything that would be split across nodes in production runs here:
+       the config server, the stateless container, and one content node.
+
+       The single most important consequence is in schemas/record.sd: Vespa
+       builds its BM25 significance (IDF) per content node, and with one node
+       the local model and a global model are identical by construction. The
+       per-node skew that a real deployment would see is measured instead by
+       deploying a significance model generated from half the corpus. See
+       vespa/scripts/make_significance.py. -->
+
+  <container id="default" version="1.0">
+    <document-api/>
+    <search/>
+    <nodes>
+      <node hostalias="node1"/>
+    </nodes>
+  </container>
+
+  <content id="catalogue" version="1.0">
+    <min-redundancy>1</min-redundancy>
+
+    <!-- Raised from the 80% default purely because of this machine, not
+         because a library should run it this way.
+
+         The container filesystem reports a 252 GB size with 15 GB available,
+         so Vespa computes 1 - 15/252 = 94% full and blocks feeding, while df
+         reports 62% used. Vespa's arithmetic is correct; the filesystem's
+         self-description is not sound. Writable space here is a fixed per-session
+         allowance that does not shrink the reported size. Without this, every
+         feed returns HTTP 507 and no measurement is possible.
+
+         In production the default is the right value and this block should be
+         deleted. -->
+    <tuning>
+      <resource-limits>
+        <disk>0.97</disk>
+        <memory>0.90</memory>
+      </resource-limits>
+    </tuning>
+    <documents>
+      <document type="record" mode="index"/>
+    </documents>
+    <nodes>
+      <node hostalias="node1" distribution-key="0"/>
+    </nodes>
+  </content>
+
+</services>

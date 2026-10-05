@@ -1,0 +1,162 @@
+"""Ask Vespa the 41 eval queries and write lane files the harness can score.
+
+Output is `{query: [doc_id, ...]}` and nothing else, which is the only shape
+`scripts/score_rankings.py` reads and the shape
+`scripts/build_eval_set.py --lane-file` pools. RUNBOOK.md:155 anticipated this:
+"Any future system - a Vespa ranking profile included - becomes poolable by
+dumping its rankings in that shape, with no code change here."
+
+Query strings are copied out of data/eval_real.json untouched, because the
+scorer matches on the query text character for character and silently reports
+a mismatch as a missing query rather than failing.
+
+Two deliberate choices about faithfulness:
+
+* The dense lane's query vector comes from `bettersearch.embeddings.get_provider`,
+  the same encoder that built the index, so the only variable under test is
+  Vespa's retrieval and ranking. Letting Vespa embed the query is a separate
+  measurement, because it changes two things at once: ONNX against torch
+  numerics, and Vespa's tokenizer against sentence-transformers'.
+
+* The keyword lane uses `type=any`. Our BM25 scans every record and scores
+  whatever terms are present, which is an OR. Vespa defaults to weakAnd, an OR
+  with early termination, and that approximation would show up as a scoring
+  difference that has nothing to do with BM25.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import time
+import urllib.error
+import urllib.request
+from pathlib import Path
+
+ENDPOINT = "http://localhost:8080/search/"
+QUERIES = "data/eval_real.json"
+
+# No proxy: Vespa is on localhost, and the agent proxy would neither route to
+# it nor be reachable from it.
+OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+
+
+def search(body: dict, *, timeout: float = 60.0) -> dict:
+    request = urllib.request.Request(
+        ENDPOINT,
+        data=json.dumps(body).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with OPENER.open(request, timeout=timeout) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        raise SystemExit(f"Vespa returned {exc.code}: {exc.read().decode()[:600]}") from exc
+
+
+def doc_ids(result: dict) -> list[str]:
+    children = result.get("root", {}).get("children", [])
+    ids = []
+    for child in children:
+        fields = child.get("fields", {})
+        if "doc_id" in fields:
+            ids.append(fields["doc_id"])
+    return ids
+
+
+def build_body(mode: str, query: str, hits: int, profile: str,
+               vector: list[float] | None, extra: dict) -> dict:
+    body: dict = {"hits": hits, "ranking.profile": profile, "timeout": "20s"}
+
+    if mode in {"bm25", "hybrid"}:
+        body["query"] = query
+        body["type"] = "any"
+
+    if mode == "bm25":
+        body["yql"] = "select doc_id from record where userQuery()"
+    elif mode == "dense":
+        body["yql"] = (
+            f"select doc_id from record where "
+            f"{{targetHits:{hits}}}nearestNeighbor(embedding, q)"
+        )
+    elif mode == "hybrid":
+        body["yql"] = (
+            f"select doc_id from record where userQuery() or "
+            f"({{targetHits:{hits}}}nearestNeighbor(embedding, q))"
+        )
+    else:
+        raise SystemExit(f"unknown mode {mode!r}")
+
+    if vector is not None:
+        body["input.query(q)"] = {"values": vector}
+
+    body.update(extra)
+    return body
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--mode", required=True, choices=["bm25", "dense", "hybrid"])
+    parser.add_argument("--profile", required=True, help="Vespa rank-profile name")
+    parser.add_argument("--out", required=True, help="lane file to write")
+    parser.add_argument("--queries", default=QUERIES)
+    parser.add_argument("--hits", type=int, default=100)
+    parser.add_argument(
+        "--set", action="append", default=[],
+        help="extra query property, KEY=VALUE, repeatable "
+             "(e.g. --set 'model.defaultIndex=fielded')",
+    )
+    args = parser.parse_args()
+
+    extra: dict = {}
+    for item in args.set:
+        if "=" not in item:
+            raise SystemExit(f"--set wants KEY=VALUE, got {item!r}")
+        key, value = item.split("=", 1)
+        extra[key] = value
+
+    queries = json.loads(Path(args.queries).read_text(encoding="utf-8"))["queries"]
+
+    provider = None
+    if args.mode in {"dense", "hybrid"}:
+        from bettersearch.embeddings import get_provider
+        provider = get_provider()
+        print(f"query encoder: {provider.model_id}")
+
+    rankings: dict[str, list[str]] = {}
+    empty: list[str] = []
+    elapsed: list[float] = []
+
+    for item in queries:
+        query = item["query"]
+        vector = None
+        if provider is not None:
+            vector = [float(v) for v in provider.embed_query(query)]
+        body = build_body(args.mode, query, args.hits, args.profile, vector, extra)
+        start = time.perf_counter()
+        result = search(body)
+        elapsed.append((time.perf_counter() - start) * 1000.0)
+        ids = doc_ids(result)
+        if not ids:
+            empty.append(query)
+        rankings[query] = ids
+
+    out = Path(args.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(rankings, indent=1), encoding="utf-8")
+
+    depths = [len(v) for v in rankings.values()]
+    print(f"{len(rankings)} queries -> {out}")
+    print(f"profile {args.profile}, mode {args.mode}"
+          + (f", {extra}" if extra else ""))
+    print(f"hits returned: min {min(depths)}, median "
+          f"{sorted(depths)[len(depths) // 2]}, max {max(depths)}")
+    print(f"vespa round trip: {sum(elapsed) / len(elapsed):.0f} ms mean, "
+          f"{max(elapsed):.0f} ms max")
+    if empty:
+        print(f"! {len(empty)} queries returned nothing: {empty[:3]}")
+
+
+if __name__ == "__main__":
+    main()

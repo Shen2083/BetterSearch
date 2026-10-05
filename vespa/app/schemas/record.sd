@@ -1,0 +1,225 @@
+schema record {
+
+    document record {
+
+        # The identifier the eval harness scores on. Kept as an attribute so it
+        # can be returned without fetching a summary, and so grouping can key on it.
+        field doc_id type string {
+            indexing: attribute | summary
+            attribute: fast-search
+            rank: filter
+        }
+
+        field title type string {
+            indexing: index | summary
+            index: enable-bm25
+        }
+
+        # Single-valued in the source corpus: one author string per record,
+        # not a list. Indexed in its own right here, which is the whole point --
+        # src/bettersearch/keyword.py:35-38 records that our BM25 cannot weight
+        # the author at all, because the author only exists as a line of prose
+        # inside the text blob below.
+        field author type string {
+            indexing: index | attribute | summary
+            index: enable-bm25
+        }
+
+        field author_dates type string {
+            indexing: summary
+        }
+
+        # Multi-valued: one to eight subject headings per record, 7,601 distinct
+        # across the corpus. An array<string>, not an array of structs, so
+        # sameElement does not apply to it -- matched-elements-only does, and
+        # that is the summary property declared below.
+        field subjects type array<string> {
+            indexing: index | summary
+            index: enable-bm25
+            summary: matched-elements-only
+        }
+
+        # The flat blob the Python system retrieves over: a derived
+        # concatenation of "Author: ...", "Published: <publisher>, <year>" and
+        # "Subjects: a; b; c". Kept verbatim so one lane can reproduce our BM25
+        # exactly, rather than reproducing a better version of it.
+        field text type string {
+            indexing: index | summary
+            index: enable-bm25
+        }
+
+        # The exact string our embedder was given, title and blob joined by a
+        # blank line (src/bettersearch/chunking.py:125). Stored, never indexed,
+        # purely so the port can be audited against the Python one.
+        field embed_text type string {
+            indexing: summary
+        }
+
+        # Year is a string in the source corpus, not an integer. Both forms are
+        # kept: the string for faithful display, the integer for range queries.
+        field year type string {
+            indexing: attribute | summary
+        }
+
+        field year_int type int {
+            indexing: attribute | summary
+        }
+
+        field publisher type string {
+            indexing: attribute | summary
+        }
+
+        field format type string {
+            indexing: attribute | summary
+        }
+
+        field language type string {
+            indexing: attribute | summary
+        }
+
+        field fiction type bool {
+            indexing: attribute | summary
+        }
+
+        field location type string {
+            indexing: attribute | summary
+        }
+
+        # Availability and copy counts change on every loan. Declared
+        # fast-access so a partial update lands in memory on the content node
+        # and is visible to the next query without reindexing the record.
+        # These two values are invented for the proof of concept and are not
+        # real library data.
+        field available type int {
+            indexing: attribute | summary
+            attribute: fast-access
+        }
+
+        field copies type int {
+            indexing: attribute | summary
+            attribute: fast-access
+        }
+
+        field tags type array<string> {
+            indexing: attribute | summary
+        }
+
+        field cover type string {
+            indexing: summary
+        }
+
+        # Fed from .bettersearch/real-bge.npz, which was verified byte-identical
+        # to the index behind the published 0.6582. No index block, so
+        # nearestNeighbor runs exact brute force over the attribute -- the same
+        # thing src/bettersearch/index/numpy_index.py does, and the reason dense
+        # parity should hold to within floating-point noise rather than
+        # approximately.
+        field embedding type tensor<float>(x[768]) {
+            indexing: attribute | summary
+            attribute {
+                distance-metric: angular
+            }
+        }
+
+        # Per-token ColBERT embeddings, 96 dimensions each, bfloat16 to halve
+        # the footprint. Mixed tensor: dt is the document-token dimension.
+        field colbert type tensor<bfloat16>(dt{}, x[96]) {
+            indexing: attribute | summary
+        }
+    }
+
+    # Exactly the two fields our Python BM25 scores over, so the parity lane
+    # reproduces it rather than improving on it.
+    fieldset default {
+        fields: title, text
+    }
+
+    # Author and subject headings as first-class searchable fields. This is the
+    # arrangement our Python cannot express.
+    fieldset fielded {
+        fields: title, author, subjects, text
+    }
+
+    rank-profile bm25_flat {
+        first-phase {
+            expression: bm25(title) + bm25(text)
+        }
+    }
+
+    # Weights are query inputs rather than constants, so the sweep runs against
+    # one deployment instead of one deployment per point.
+    rank-profile bm25_fielded {
+        inputs {
+            query(w_title) double: 1.0
+            query(w_author) double: 1.0
+            query(w_subjects) double: 1.0
+            query(w_text) double: 1.0
+        }
+        first-phase {
+            expression {
+                query(w_title) * bm25(title)
+                  + query(w_author) * bm25(author)
+                  + query(w_subjects) * bm25(subjects)
+                  + query(w_text) * bm25(text)
+            }
+        }
+    }
+
+    rank-profile dense {
+        inputs {
+            query(q) tensor<float>(x[768])
+        }
+        first-phase {
+            expression: closeness(field, embedding)
+        }
+    }
+
+    rank-profile hybrid_rrf inherits dense {
+        function bm25_score() {
+            expression: bm25(title) + bm25(text)
+        }
+        function dense_score() {
+            expression: closeness(field, embedding)
+        }
+        first-phase {
+            expression: bm25_score + dense_score
+        }
+        global-phase {
+            expression: reciprocal_rank_fusion(bm25_score, dense_score)
+            rerank-count: 1000
+        }
+    }
+
+    # Late interaction as Vespa ships it. rerank-count is overridable per query
+    # as ranking.rerankCount, so 20/50/100/200 is a sweep over one deployment.
+    rank-profile colbert inherits dense {
+        inputs {
+            query(q) tensor<float>(x[768])
+            query(qt) tensor<float>(querytoken{}, x[96])
+        }
+        function max_sim() {
+            expression {
+                sum(
+                    reduce(
+                        sum(query(qt) * attribute(colbert), x),
+                        max, dt
+                    ),
+                    querytoken
+                )
+            }
+        }
+        first-phase {
+            expression: closeness(field, embedding)
+        }
+        second-phase {
+            expression: max_sim
+            rerank-count: 20
+        }
+    }
+
+    document-summary minimal {
+        summary doc_id {}
+        summary title {}
+        from-disk
+    }
+}
