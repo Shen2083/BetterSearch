@@ -99,11 +99,22 @@ def load_enriched(path: str | Path, titles: dict[str, str]) -> dict[str, str]:
 #: call, and `pylate` rather than `sentence_transformers`.
 #:
 #: Measured at depth 20 on the judged corpus, `answerai-colbert-small-v1` beats
-#: both cross-encoders (nDCG@10 0.7407 against 0.7308) and, unlike either of
-#: them, does **not** regress the known-item controls - so it needs no
-#: exact-match repair to be safe. It is not the default yet: the depth sweep and
-#: a serving-path latency number come first. Select it with
-#: BETTERSEARCH_RERANK=answerdotai/answerai-colbert-small-v1.
+#: both cross-encoders - nDCG@10 0.7407 against 0.7308 - and holds the
+#: known-item controls at 1.000 there, where both cross-encoders regress them.
+#:
+#: That was first written down as "does not regress the controls", full stop,
+#: which the depth sweep it promised then contradicted: the controls hold at
+#: depth 20 and 50 and fall to **0.926 at depth 100**. It degrades the same way
+#: a cross-encoder does, just later. So at depth 20 it needs no exact-match
+#: repair; deeper, it does.
+#:
+#: It is not the default. 0.7407 against the shipped 0.7280 costs 2.5x the
+#: reranking latency, the MaxSim here is mine rather than a reference one, and
+#: `pylate` moves `sentence_transformers` and `torch` when it installs. Vespa
+#: ships this model's own `vespa_colbert.onnx` as a supported path and measures
+#: 0.7131 with it on *unenriched* records at a 45 ms round trip
+#: (docs/VESPA-HANDOVER.md section 5b), which is the shape worth building on.
+#: Select it here with BETTERSEARCH_RERANK=answerdotai/answerai-colbert-small-v1.
 LATE_INTERACTION = {"answerdotai/answerai-colbert-small-v1"}
 
 

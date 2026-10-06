@@ -1,28 +1,32 @@
 # A Vespa-only proof of concept
 
-`docs/VESPA-HANDOVER.md` hands the engineering team eight findings about Vespa.
-Every one of them was reasoned from the outside: read off Vespa's documentation
-and argued against our Python measurements. None had been run.
+Eight claims about Vespa were worked out for this project by reading Vespa's
+documentation and arguing it against our Python measurements. **None had been
+run, and none had been written down** — they lived in conversation, offered for
+`docs/VESPA-HANDOVER.md` and never added to it. Only two of the eight touch
+anything that document actually says: grouping over the matched set
+(`VESPA-HANDOVER.md:171`) and `rerank-count` as the phase boundary (`:200`).
+This directory is where they are recorded for the first time, with numbers.
 
-This directory runs them. One Vespa node, the same 4,000 book records, the same
-41 judged queries, scored through the same harness that produced every
-published figure in this repository.
+One Vespa node, the same 4,000 book records, the same 41 judged queries, scored
+through the same harness that produced every published figure in this
+repository.
 
-**Six of the eight now have evidence against them**, one is wrong, and one
-cannot be measured with this eval set. That is everything answerable here.
+**Six of the eight now have evidence**, one is wrong, and one cannot be
+measured with this eval set. That is everything answerable here.
 
-Late interaction and phased ranking came out **better** than the handover
-expected. RRF came out exactly as predicted, in Vespa's own implementation.
-Partial attribute updates do what was claimed. The per-node IDF warning is
-**overstated** at this corpus size, and binary quantisation is **oversold**:
-the 32-fold reduction and the quality are not available at the same time.
-`sameElement` is **wrong** and needed no measurement to settle — it does not
-apply to this schema at all. `grouping` has no number because none of the 41
-queries carries a facet filter.
+Late interaction and phased ranking came out **better** than predicted. RRF
+came out exactly as predicted, and confirms `VESPA-HANDOVER.md` §3.1 in Vespa's
+own implementation. Partial attribute updates do what was claimed. The per-node
+IDF warning is **overstated** at this corpus size, and binary quantisation is
+**oversold**: the 32-fold reduction and the quality are not available at the
+same time. `sameElement` is **wrong** and needed no measurement to settle — it
+does not apply to this schema at all. `grouping` has no number because none of
+the 41 queries carries a facet filter.
 
-One finding that is not in the handover came out of the port, and it is a
-negative: fielding the record properly, which our Python provably cannot do,
-does not help this corpus.
+A ninth question, nobody's prediction, came out of the port and is a negative:
+fielding the record properly, which our Python provably cannot do, does not
+help this corpus.
 
 Nothing on the serving path changes. This is a parallel branch.
 
@@ -153,14 +157,20 @@ survives contact.
 At rerank-count 20 **both arms sit at 100% coverage**, so +0.0549 is a clean
 within-Vespa A/B, and controls stay at 1.000 with no exact-match repair.
 
-The decay below that is **confounded**, and the coverage column says how.
-Reranking the top 20 of the dense list can only reorder records that were
-already pooled. Past 20 it promotes records from deeper, which no judge ever
-saw, and those count as irrelevant. Our Python sweep measured a monotonic decay
-over the same depths (+0.066 / +0.047 / +0.035 / +0.010) and read it as a real
-effect; the same shape here comes with coverage falling from 100% to 85.6%, so
-part of what we published as decay may be the pool thinning rather than the
-reranker weakening. That is a caution about our own number, not Vespa's.
+The decay below that is **confounded, and it is my measurement that is
+confounded, not ours.** Reranking the top 20 of the dense list can only reorder
+records that were already pooled. Past 20 it promotes records from deeper, which
+no judge ever saw, and those count as irrelevant.
+
+I first wrote this up the other way round, as a caution about our own published
+depth sweep. That was wrong, and the handover says so on its own page.
+`VESPA-HANDOVER.md:391-394` already reports coverage per depth alongside the
++0.066 / +0.047 / +0.035 / +0.010 figures — 100% / 92.7% / 98.8% / 100% — and
+§5a documents at length how an earlier draft got the depth question wrong by
+discarding unjudged candidates. Our sweep never dropped below 92.7%. Mine falls
+to 85.6%. So the decay I measured past rerank-count 20 is **less** trustworthy
+than the one already published, not more, and the only row here that supports a
+conclusion is rerank-count 20, where both arms sit at 100%.
 
 **Two things make this the finding to act on.**
 
@@ -182,15 +192,15 @@ most of the enrichment win without the enrichment bill.
 
 And **rerank-count 200 completes**. In our implementation depth 200 did not
 finish — twice, alone, on an idle box, with no theory ever offered
-(`scripts/tune_reranking.py`). Here it is a 70 ms query. The handover's advice
-to let the Vespa team evaluate ColBERT properly, because for them it is a
-supported path rather than an extra dependency and someone else's MaxSim, is
-borne out.
+(`scripts/tune_reranking.py`). Here it is a 70 ms query. The reason given for
+handing late interaction to the Vespa team rather than shipping it ourselves —
+that for them it is a supported path rather than an extra dependency and
+someone else's MaxSim — is borne out.
 
 ## 5. The per-node IDF warning is overstated
 
-This is the one the handover says it most wants read, and it does not hold at
-this corpus size.
+This was the prediction I most wanted checked, and it does not hold at this
+corpus size.
 
 `vespa/scripts/probe_significance.py` reads the significance Vespa is really
 using for each query term out of `term(i).significance` in match-features,
@@ -237,8 +247,8 @@ top ten on 32 of 41 queries, at **less than half the latency**.
 **But the two benefits are not simultaneous.** The rescore needs the float
 vectors, so they must still be stored — that profile buys query cost, not
 memory. Drop the floats and take the real 32-fold saving, and you are at
-0.5847, down 0.07 with 59% of the top ten changed. The handover presents the
-compression as close to free. On this corpus it is free of *latency*, not of
+0.5847, down 0.07 with 59% of the top ten changed. The prediction was that the
+compression is close to free. On this corpus it is free of *latency*, not of
 memory.
 
 **The trap.** The obvious second-phase expression, `closeness(field, embedding)`,

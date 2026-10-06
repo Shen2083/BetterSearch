@@ -13,6 +13,13 @@ Vespa makes easiest.
 Every number here was produced by code in this repository and can be
 regenerated. Where a measurement is weak or contested, it says so.
 
+**§5a and §5b were added after the rest.** §5b matters most if you are about to
+start: a real Vespa node has since been run over these records, and it broke two
+of the predictions this note makes about Vespa and falsified one piece of advice
+badly enough to have sent you the wrong way. Those corrections are marked where
+the original claim sits, not only in §5b. `vespa/README.md` reproduces the whole
+thing from a clean clone.
+
 ---
 
 ## 1. What Vespa replaces, and what it does not decide
@@ -55,8 +62,19 @@ the encoder it used, because mixing them is how the gap gets misread:
 | bge-base + LLM enrichment of thin records | 0.743 |
 
 A Vespa implementation over the same 4,000 records should reach **0.658** on
-semantic retrieval and **0.443** on BM25 alone. Below that, something in the
-port has gone wrong. Meaningfully above it, read §5 before celebrating.
+semantic retrieval. Meaningfully above it, read §5 before celebrating.
+
+**The 0.443 BM25 figure is not a port-correctness bar, and an earlier draft of
+this note was wrong to imply it.** It said: below 0.443 on BM25 alone,
+something in the port has gone wrong. A real Vespa node has since been measured
+over these records (§5b) and its built-in BM25 scores **0.4120** — below the
+bar, with nothing wrong. Two reasons, neither of them a defect: Vespa's
+linguistics stem and ours do not, so it retrieves records our BM25 never
+surfaced and 25% of its top ten was never judged; and `text` in this corpus is
+a *derived* concatenation, so the fielded BM25F that Vespa makes possible has
+nothing extra to weight. Hold the port to **0.658 on dense retrieval**, which
+reproduces to four decimal places, and treat BM25 as a comparison rather than a
+gate.
 
 **With a reranking phase, the bar is 0.728**, which is what the service now
 ships — a cross-encoder over the enriched text at depth 20, then exact-match
@@ -84,7 +102,10 @@ has broken exact-name lookup, which is the one thing library users do most.
 
 ---
 
-## 3. Four traps, each one hit or verified here
+## 3. Five traps, each one hit or verified here
+
+A sixth was found later, on the real node, and is in §5b: a rank expression that
+returns a meaningless score instead of failing.
 
 ### 3.1 Hybrid is the easiest thing to switch on and the thing that lost
 
@@ -140,7 +161,7 @@ only, so re-ingesting a corpus where only availability changed embeds nothing.
 That property is worth preserving explicitly in the schema rather than
 rediscovering.
 
-### 3.5 Filter before the cut, never after
+### 3.4 Filter before the cut, never after
 
 Vespa's filtered ANN does the right thing here, so this is a trap only if you
 reimplement the obvious order — which is what we did, and it was wrong.
@@ -173,7 +194,7 @@ Two consequences for the schema and the rank profile:
   would get" or "matches in the corpus", because with a vector query those are
   very different numbers and only one of them is bounded.
 
-### 3.4 Make the index carry its encoder's identity
+### 3.5 Make the index carry its encoder's identity
 
 Every index here stores the `model_id` it was built with and checks it on read
 *and* on write. Change the encoder and the index refuses to answer rather than
@@ -339,30 +360,65 @@ is not decoration — it cost us two wrong answers before we paid to re-pool. Se
 | cross-encoder over the records **as they are** | 0.6573–0.6632 | 1.000 | 186–890 |
 | cross-encoder over **enriched** records | 0.7149–0.7257 | 0.877–0.926 | 356–2,809 |
 | **the same, plus exact-match promotion** | **0.7308** | **1.000** | 2,809 |
+| late interaction, our pylate MaxSim, enriched | **0.7407** | 1.000 at depth 20 | 764 |
+| late interaction, **Vespa native, unenriched** | **0.7131** | **1.000** | **45** |
 | oracle | 0.9124 | 1.000 | — |
+
+The last two rows were added after this note was first written, and the second
+of them is the one to look at: it needed no enrichment, no exact-match repair
+and no GPU. §5b has it. The 0.7407 row is ours and carries a caveat the Vespa
+row does not — it rests on a MaxSim written by hand against `pylate`, which is
+exactly why it was handed over rather than shipped.
 
 Three things follow, and all three are rank-profile decisions:
 
-1. **A cross-encoder is worth nothing on a bare catalogue record.** +0.005 and
+1. **A *cross-encoder* is worth nothing on a bare catalogue record.** +0.005 and
    −0.001. The record is a 24-word metadata stub and a passage-reading model has
    nothing to read. The same model separates cleanly on a written sentence, so
-   this is the data, not the model. **If you put a reranker in the global phase
-   without giving it prose, you will pay the latency and get nothing.**
-2. **Enrichment unlocks it.** At 95 words median the same reranker is worth
-   +0.073. Reranking and enrichment are not alternatives; they are the same bet
-   that these records are too thin, and they compound.
-3. **It breaks exact-name lookup, and that must be caught.** Both enriched arms
-   regressed the known-item controls — `Sue Monk Kidd` −0.369 — because a model
-   reasoning over prose optimises aboutness at the cost of identity. A rule that
-   lifts named records regardless of score restores them to 1.000 *and* raises
-   the mean. Whatever you build, make the controls a gate in CI, not a thing
-   somebody notices later.
+   this is the data, not the model.
 
-**The cost is the catch.** `bge-reranker-base` is 2.8 s/query on CPU for 20
-candidates. Vespa pays that on every search, so it needs ONNX, a GPU, or the
-MiniLM cross-encoder — which gets most of the gain for **13% of the time**: 96%
-of it on nDCG@10 (+0.070 against +0.073) and 89% on recall@10 (+0.058 against
-+0.066). If you ship one reranker, ship that one; it is the one we ship.
+   An earlier draft of this note generalised that to **"if you put a reranker in
+   the global phase without giving it prose, you will pay the latency and get
+   nothing."** That is false, and it is false in the direction that would stop
+   you trying the thing that worked best. A *late-interaction* reranker scores
+   by matching tokens, not by reading a passage, and on these same 24-word stubs
+   Vespa's native `colbert-embedder` with MaxSim in `second-phase` is worth
+   **+0.0549** — 0.6582 to 0.7131, both arms at 100% judged coverage, 45 ms.
+   Narrow the warning to cross-encoders; see §5b.
+2. **Enrichment unlocks it — for a cross-encoder.** At 95 words median the same
+   reranker is worth +0.073. For a cross-encoder, reranking and enrichment are
+   the same bet that these records are too thin, and they compound. For late
+   interaction they are closer to **alternatives**: Vespa's native embedder on
+   unenriched records lands within 0.002 of what our MiniLM reaches only after
+   all 4,000 records have been enriched (+0.0549 against +0.0567). That makes
+   enrichment a budget question rather than a prerequisite.
+3. **A cross-encoder breaks exact-name lookup, and that must be caught.** Both
+   enriched arms regressed the known-item controls — `Sue Monk Kidd` −0.369 —
+   because a model reasoning over prose optimises aboutness at the cost of
+   identity. A rule that lifts named records regardless of score restores them
+   to 1.000 *and* raises the mean.
+
+   Late interaction does not need that repair at shallow depth: controls hold at
+   **1.000 natively** under Vespa's ColBERT at `rerank-count` 20, and under our
+   own at depth 20 and 50. They do fall to **0.926 at depth 100**, so it
+   degrades the same way, just later. Either way the advice is unchanged and is
+   the part to keep: **make the controls a gate in CI**, not a thing somebody
+   notices later.
+
+**The cost is the catch in Python, and much less of one in Vespa.**
+`bge-reranker-base` is 2.8 s/query on CPU for 20 candidates. In our service that
+needs ONNX, a GPU, or the MiniLM cross-encoder — which gets most of the gain for
+**13% of the time**: 96% of it on nDCG@10 (+0.070 against +0.073) and 89% on
+recall@10 (+0.058 against +0.066). If you ship one reranker *in a Python
+service*, ship that one; it is the one we ship.
+
+An earlier draft said "Vespa pays that on every search". Measured, it does not:
+the ColBERT `second-phase` arm is a **45 ms** round trip including retrieval,
+and 70 ms at `rerank-count` 200 (§5b). So the recommendation inverts for a
+Vespa deployment — in-cluster late interaction beats MiniLM-after-enrichment on
+quality *and* costs a fraction of it, because the model runs where the documents
+already are and the token tensors are an attribute rather than a per-query
+model call.
 
 Two numbers, because they measure different things. The arms table above reports
 **356 ms** for MiniLM — that is `scripts/tune_reranking.py`'s per-arm cost.
@@ -396,6 +452,17 @@ It does, monotonically:
 
 Seven times the latency for a seventh of the gain. Rerank the twenty you
 display.
+
+**Vespa reaches the same conclusion from a weaker measurement, and the
+difference is instructive.** Its native ColBERT sweep over the same depths gave
+0.7131 / 0.6557 / 0.6449 / 0.6473 — the same shape — but with judged coverage
+falling *monotonically*, 100% → 89.5% → 87.3% → 85.6%, because reranking deeper
+promotes records no judge ever saw. The coverage row above is **not**
+monotonic (100 / 92.7 / 98.8 / 100), and that is the tell: the `+0.010 at depth
+200 on 100% coverage` cell is one the pool-thinning explanation cannot reach, so
+the decay measured here is real and not an artefact. The Vespa sweep's deeper
+rows are the unreliable ones. Set `rerank-count` to 20 — but if you re-measure
+it yourself, pool the arm first or only the shallowest row will mean anything.
 
 **How that draft got it wrong is the most useful thing in this section**, because
 it is a trap any team measuring a Vespa rank profile will meet. The first sweep,
@@ -436,14 +503,183 @@ reranked lane and graded the 399 records it surfaced that no judge had seen, for
 $0.06; 81 were relevant; coverage went to 100% and the number stopped moving.
 `data/rankings/` holds that lane so you can reproduce the pool, and
 `scripts/bound_repool_effect.py` bounds the gap before you spend — read its
-ordering, not its margins, which were 3× out.
+ordering, not its margins, which were 3× out. `vespa/rankings/` holds eleven more,
+from the real node, **none of them pooled** — see §5b.
 
-**Still unexplained:** the best arm captures 29% of the available headroom. The
-remaining 0.18 is real, measured, and nobody here knows what reaches it. That is
-the most interesting open question in this handover, and the first one worth
-spending a week on.
+**Still unexplained:** the best arm captures **32%** of the available headroom
+(0.7407 against an 0.9124 oracle over an 0.6582 baseline; the 0.7308
+cross-encoder arm captures 29%, and Vespa's native late interaction 22% while
+paying for no enrichment at all). The remaining ~0.17 is real, measured, and
+nobody here knows what reaches it. That is the most interesting open question in
+this handover, and the first one worth spending a week on.
 
 Reproduce with `python scripts/tune_reranking.py`.
+
+---
+
+## 5b. What a real Vespa node measured — and which of my predictions it broke
+
+Everything above §5b was reasoned about Vespa from the outside: read off its
+documentation and argued against our Python measurements. Eight such claims were
+worked out for this project and **none of them had been run.** Most were never
+even written into this note; they lived in conversation. This section records
+them with numbers for the first time.
+
+One node from `ghcr.io/vespa-engine/vespa`, the same 4,000 records, the same 41
+judged queries, scored through `scripts/score_rankings.py` — the same harness
+behind every figure above. Reproduce it from `vespa/README.md`; the application
+package is `vespa/app/`, the lane files are `vespa/rankings/`.
+
+**Read the coverage column before the nDCG column.** These eleven lanes were never
+pooled — the judge needs an API key and none was available — so anything a Vespa
+profile surfaced that our six pooled lanes missed counts as irrelevant. Every
+figure here is a **floor, not an estimate**, except where coverage is 100%. The
+comparisons to trust are Vespa against Vespa, where both sides are equally
+unjudged and the difference is close to unbiased. That is the rule §5's coverage
+table is missing, and it is what makes the ColBERT A/B below sound.
+
+### The port is faithful, which is what licenses the rest
+
+| lane | nDCG@10 | coverage | controls |
+|---|---|---|---|
+| dense, fed vectors | **0.6582** | 100.0% | 1.000 |
+
+Exactly the §2 bar, to four decimal places. The vectors were not recomputed —
+they were lifted out of the index behind the published figure, so the only
+variable is Vespa's retrieval and ranking, and `vespa/scripts/make_feed.py`
+refuses to write a feed until it has checked all 4,000 records were embedded
+from exactly the text our encoder saw. Vespa's exact `nearestNeighbor` over an
+attribute with no `index` block reproduces our brute-force numpy scan. **HNSW
+was deliberately not exercised**; that approximation is still unmeasured here.
+
+### Confirmed
+
+- **RRF loses, in Vespa's own implementation.** §3.1 predicted this and it
+  holds: `reciprocal_rank_fusion()` in a `global-phase` scores **0.5620**
+  against dense-only's 0.6582, both at coverage §5 calls comparable. Fusing
+  costs 0.096.
+- **Partial attribute updates work as §3.3 says.** An `assign` to `available`
+  takes **20 ms** and the filter count moves on the very next query, with the
+  768-float vector and the ColBERT token tensors untouched. §3.3 cited the
+  mechanism from documentation; it can now cite a run
+  (`vespa/scripts/demo_partial_update.py`).
+- **Late interaction**, which is the result worth acting on and is folded into
+  §5a above rather than repeated here.
+
+### Overstated: per-node BM25 significance
+
+The prediction was that Vespa builds significance per content node, so a
+multi-node port would miss the §2 BM25 bar for reasons unrelated to the port.
+**At this corpus size it will not.**
+
+`vespa/scripts/probe_significance.py` reads the significance Vespa is really
+using per query term out of `term(i).significance` in match-features, recovers
+each term's document frequency, resamples it from `Binomial(df, 0.5)` to
+simulate a node holding half the corpus, and re-issues every query through
+Vespa's own per-term `{significance: x}` annotation.
+
+```
+significance ~ 0.7454 + -0.02617 * log(df)      worst residual 0.0254
+half-corpus node, 5 random splits:  -0.0009 -0.0051 -0.0012 -0.0011 +0.0002
+mean shift -0.0016 nDCG, mean top-10 overlap with global significance 98.0%
+```
+
+Significance spans only 0.574 to 0.687 across a **124-fold** range of document
+frequency — Vespa compresses it hard — so halving the documents a node sees
+moves a term by about 0.018, which is less than the scatter in the relationship
+itself. Stated with its limit: this shows the effect is **not large** and cannot
+show it is zero, because the document-frequency recovery rests on a fit whose
+residuals are the size of the effect.
+
+The method matters more than the number. `term(i).significance` in
+`match-features` is how your team can check this on a real multi-node cluster
+in an afternoon, without guessing how Vespa stemmed anything. The CLI's
+`significance` subcommand would be the cleaner route; the version matching this
+server did not have it.
+
+### Oversold: binary quantisation
+
+| lane | nDCG@10 | coverage | top-10 same as float | round trip |
+|---|---|---|---|---|
+| float, exact | 0.6582 | 100.0% | — | 23 ms |
+| packed, Hamming only | 0.5847 | 83.2% | 59.0% | 10 ms |
+| packed, then rescored on the floats | **0.6580** | 99.8% | **94.4%** | 10 ms |
+
+768 floats at 4 bytes become 96 bytes with `binarize | pack_bits`: a 32-fold
+reduction. Retrieve on the packed vectors and rescore the survivors with the
+float ones and essentially all the quality comes back — an identical top ten on
+32 of 41 queries, at under half the latency.
+
+**But the two benefits are not simultaneous**, which is the part the prediction
+missed. The rescore needs the float vectors, so they must still be stored: that
+profile buys query cost, not memory. Drop the floats and take the real 32-fold
+saving and you are at 0.5847 — down 0.07, with 59% of the top ten changed.
+Free of *latency* here, not of memory. (Matryoshka truncation was not tested:
+`bge-base-en-v1.5` has no Matryoshka objective, so truncating it would measure
+the truncation. `README.md`'s 6× storage claim combines it with int8 and quotes
+no quality cost; treat that as unmeasured.)
+
+### Wrong: `sameElement` for subject headings
+
+It needs an array of structs. `subjects` is a flat `array<string>`, so
+`sameElement` does not apply to this schema at all. The version that is true
+here is **`matched-elements-only`**, declared on the field in
+`vespa/app/schemas/record.sd`: Vespa will return *which* subject headings
+matched. That is worth knowing because `api/catalogue.py` spends a query-time
+embedding pass guessing exactly that, to populate `closest_headings` on a card.
+
+### A sixth trap, and this one fails silently
+
+The obvious way to rescore binary retrieval on the float vectors is
+`closeness(field, embedding)` in a `second-phase`. It scores **0.0837**.
+
+`closeness` only has a distance for the field `nearestNeighbor` actually ran
+against — here `embedding_binary`. Asked about any other field it returns a
+meaningless value rather than failing. Write the dot product out instead:
+`sum(query(q) * attribute(embedding))`.
+
+What makes it worth a trap of its own is how it hides. The giveaway was not the
+metric but an overlap check: **63.9% of its candidates matched the float lane
+while its top ten matched 4.1%** — retrieval was right, ordering was noise.
+Reading nDCG alone would have recorded binary quantisation as catastrophic and
+moved on. When you measure a rank profile, check set overlap against a known-good
+profile as well as the metric; they fail in distinguishable ways.
+
+### Not measurable here: grouping
+
+§3.5 and §4 say grouping computes facet counts over the matched set, "which is
+the right answer". Probably true and still unverified: **none of the 41 eval
+queries carries a facet filter**, so there is no number to move. It would remove
+the fixed candidate pool `api/catalogue.py` admits is "judgement, not
+measurement", but that is a demonstration, not a measurement, and this note
+should not claim otherwise.
+
+### A negative result nobody predicted
+
+`src/bettersearch/keyword.py` records that our BM25 cannot weight the author or
+the subject headings at all, because neither is a field — both exist only as
+lines of prose inside one `text` blob. Vespa indexes them separately, so this
+was the first chance to ask whether that matters. **It does not help here.**
+
+| lane | nDCG@10 | coverage | controls |
+|---|---|---|---|
+| BM25, flat title + text | **0.4120** | 75.4% | 0.886 |
+| BM25F, best of 27 weightings, **fitted** | 0.3952 | 75.1% | 0.726 |
+| BM25F, equal weights | 0.3734 | 72.2% | 0.600 |
+
+All 27 combinations scored below flat, and the best is fitted on the same 41
+queries it is scored on, so the out-of-sample number is worse still. The reason
+is our data, not Vespa: `text` is a derived concatenation that already contains
+the author line and the subject headings, so weighting them separately
+double-counts terms `bm25(text)` has scored already. **Fielding would pay on a
+corpus where the fields carry distinct content.** Check that before budgeting for
+a fielded schema.
+
+The sweep did reproduce our title-weight finding independently, and turned up
+something useful: at title weight 2 or above the known-item controls reach
+**1.000 natively**. Vespa gets there with a rank-profile weight where we needed
+a separate exact-match promotion stage — though it costs nDCG, the same trade
+`scripts/tune_title_weight.py` measured.
 
 ---
 
@@ -472,10 +708,16 @@ are cheap to carry over:
    five.
 2. Is enrichment of thin records on the table? It is worth +0.085 nDCG on top of
    the best encoder, and it is the second thing to try, not the first — a bigger
-   encoder buys most of what it buys, for free.
+   encoder buys most of what it buys, for free. And there is now a third option
+   that did not exist when this was written: native late interaction gets most
+   of the enrichment win with no enrichment bill at all (§5b). If the answer to
+   this question is "no, we cannot fund enrichment", that is the route.
 3. What is the re-embedding plan when the encoder changes, and who notices if
    documents and queries fall out of step?
 4. Will you re-pool the judgements with Vespa as a lane before comparing? If
-   not, §5 says what the comparison is worth.
+   not, §5 says what the comparison is worth. This is now the single most
+   valuable thing you could spend $0.06 on: eleven Vespa lanes are committed in
+   `vespa/rankings/` and **none of them is pooled**, because no API key was
+   available. Every figure in §5b is a floor until they are.
 5. Multilingual? Every measurement here is English-only and the encoder choice
    would change.

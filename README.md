@@ -329,6 +329,12 @@ transfers, what to re-measure, and the traps. `scripts/score_rankings.py` scores
 any engine's output against the same 2,378 judgements, so a rebuild can be held
 to this one's bar rather than to a new one.
 
+Some of that note has since been tested rather than argued. **[vespa/README.md](vespa/README.md)**
+stands a real Vespa node up over these 4,000 records and measures eight of its
+claims: dense retrieval reproduces 0.6582 exactly, native late interaction
+reaches 0.7131 on *unenriched* records at a 45 ms round trip, and two of the
+predictions turned out to be wrong. §5b of the handover has the summary.
+
 `web/index.html` is the view for working on retrieval rather than for showing
 anyone — all three modes on one screen, scored, so a change in chunking or model
 is visible immediately:
@@ -525,6 +531,17 @@ before index overhead. Three multiplicative fixes, all implemented:
 
 Together that is 6x: **5.72 GB → 0.95 GB**, the difference between needing a large
 managed Postgres instance and fitting comfortably on a small one.
+
+**None of those three rows has a quality column, and that is a gap, not a
+claim.** Neither the truncation nor the fp16 storage has been measured against
+the judged set here. The one compression lever that *has* been measured is a
+harder one — one bit per dimension instead of 32, on a Vespa node over these
+4,000 records — and it cost **0.07 nDCG**, changing 59% of the top ten, unless
+the full-precision vectors were kept for a rescoring pass, in which case the
+quality came back but the storage saving did not
+(`docs/VESPA-HANDOVER.md` §5b). Treat these three as untested on relevance
+until somebody runs them, and expect the saving and the quality not to be
+available at the same time.
 
 Self-hosting changes the arithmetic again, in both directions. The default
 encoder here is `bge-base-en-v1.5` at 768 dimensions: 1.43 GB for 1M chunks at
