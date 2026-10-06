@@ -21,6 +21,17 @@ HOST = "https://huggingface.co"
 FILES = [
     ("answerdotai/answerai-colbert-small-v1", "vespa_colbert.onnx", "colbert.onnx"),
     ("answerdotai/answerai-colbert-small-v1", "tokenizer.json", "colbert-tokenizer.json"),
+    # bge-base-en-v1.5, so Vespa can embed the query itself rather than being
+    # handed a vector from our encoder. No `prepend` is configured for it, on
+    # purpose: `bettersearch.embeddings.local` adds no instruction prefix to a
+    # query either, and a prefix on one side only would make the comparison
+    # measure the prefix.
+    # Underscores, not hyphens: Vespa derives a model's name from its filename
+    # under models/ and rejects a package whose model name is not letters,
+    # numbers or underscores. It only applies this to the models it imports, so
+    # colbert-tokenizer.json was fine and bge-base.onnx was not.
+    ("BAAI/bge-base-en-v1.5", "onnx/model.onnx", "bge_base.onnx"),
+    ("BAAI/bge-base-en-v1.5", "tokenizer.json", "bge_base_tokenizer.json"),
 ]
 DEST = Path("vespa/app/models")
 

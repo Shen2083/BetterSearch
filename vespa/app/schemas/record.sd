@@ -153,6 +153,17 @@ schema record {
         }
     }
 
+    # The same text, embedded by Vespa rather than by us. The parity lane above
+    # is fed vectors from our own encoder so that the only variable is Vespa's
+    # retrieval; this field moves the encoder inside Vespa too, which is the
+    # second half of the question and a separate measurement.
+    field embedding_native type tensor<float>(x[768]) {
+        indexing: input embed_text | embed bge | attribute
+        attribute {
+            distance-metric: angular
+        }
+    }
+
     # Exactly the two fields our Python BM25 scores over, so the parity lane
     # reproduces it rather than improving on it.
     fieldset default {
@@ -251,6 +262,16 @@ schema record {
             # by the encoder, so this is cosine.
             expression: sum(query(q) * attribute(embedding))
             rerank-count: 100
+        }
+    }
+
+    # Vespa embeds the query as well. Nothing in the request carries a vector.
+    rank-profile dense_native {
+        inputs {
+            query(qn) tensor<float>(x[768])
+        }
+        first-phase {
+            expression: closeness(field, embedding_native)
         }
     }
 

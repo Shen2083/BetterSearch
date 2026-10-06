@@ -23,6 +23,28 @@
          Vespa's rough 30 to 40M threshold for wanting a GPU, so it runs on
          container-node CPU where bge-reranker at 278M would not.
          max-query-tokens 32 matches what our Python padded the query to. -->
+    <!-- bge-base-en-v1.5, so Vespa can embed the query and the record itself
+         instead of being handed vectors from our encoder. This is a separate
+         measurement from the parity lane on purpose: it changes ONNX against
+         torch numerics and Vespa's tokenizer against sentence-transformers' at
+         the same time, which would have muddied the gate.
+
+         Two settings are not defaults and both matter:
+
+         pooling-strategy is cls, because bge pools the CLS token. Vespa
+         defaults to mean, and mean-pooling a model trained for CLS would have
+         measured the pooling rather than the port.
+
+         There is deliberately no <prepend>. bge's card suggests an instruction
+         prefix for queries, and `bettersearch.embeddings.local` does not add
+         one; a prefix on one side only would measure the prefix. -->
+    <component id="bge" type="hugging-face-embedder">
+      <transformer-model path="models/bge_base.onnx"/>
+      <tokenizer-model path="models/bge_base_tokenizer.json"/>
+      <pooling-strategy>cls</pooling-strategy>
+      <normalize>true</normalize>
+    </component>
+
     <component id="colbert" type="colbert-embedder">
       <transformer-model path="models/colbert.onnx"/>
       <tokenizer-model path="models/colbert-tokenizer.json"/>

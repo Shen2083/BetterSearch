@@ -12,11 +12,14 @@ a mismatch as a missing query rather than failing.
 
 Two deliberate choices about faithfulness:
 
-* The dense lane's query vector comes from `bettersearch.embeddings.get_provider`,
+* The `dense` lane's query vector comes from `bettersearch.embeddings.get_provider`,
   the same encoder that built the index, so the only variable under test is
-  Vespa's retrieval and ranking. Letting Vespa embed the query is a separate
-  measurement, because it changes two things at once: ONNX against torch
-  numerics, and Vespa's tokenizer against sentence-transformers'.
+  Vespa's retrieval and ranking. Letting Vespa embed the query is the separate
+  `dense_native` lane, because it changes two things at once: ONNX against torch
+  numerics, and Vespa's tokenizer against sentence-transformers'. Both have now
+  been run and they agree on every one of the 41 top tens, so the separation
+  turned out to be unnecessary - but it is the reason the agreement means
+  anything.
 
 * The keyword lane uses `type=any`. Our BM25 scans every record and scores
   whatever terms are present, which is an OR. Vespa defaults to weakAnd, an OR
@@ -85,6 +88,15 @@ def build_body(mode: str, query: str, hits: int, profile: str,
             f"select doc_id from record where userQuery() or "
             f"({{targetHits:{hits}}}nearestNeighbor(embedding, q))"
         )
+    elif mode == "dense_native":
+        # No vector in the request. Vespa tokenises and embeds the query with
+        # the same ONNX model it embedded the records with.
+        body["yql"] = (
+            f"select doc_id from record where "
+            f"{{targetHits:{hits}}}nearestNeighbor(embedding_native, qn)"
+        )
+        body["input.query(qn)"] = "embed(bge, @qtext)"
+        body["qtext"] = query
     elif mode == "binary":
         # Hamming over the packed vectors. The query is packed the same way:
         # one bit per dimension by sign, eight per byte, most significant bit
@@ -125,7 +137,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mode", required=True,
                         choices=["bm25", "dense", "hybrid", "colbert",
-                                 "binary"])
+                                 "binary", "dense_native"])
     parser.add_argument("--profile", required=True, help="Vespa rank-profile name")
     parser.add_argument("--out", required=True, help="lane file to write")
     parser.add_argument("--queries", default=QUERIES)

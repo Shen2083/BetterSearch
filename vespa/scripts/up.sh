@@ -15,12 +15,24 @@ set -euo pipefail
 IMAGE="ghcr.io/vespa-engine/vespa@sha256:f9cef4b0eb8de08a2d3d56a01377dfdb7f71a9747dfb0f610915bc608e82dd97"
 APP_DIR="$(cd "$(dirname "$0")/../app" && pwd)"
 
-if [ ! -S /var/run/docker.sock ]; then
+# Probe for a *responding* daemon, not for the socket file. A container restart
+# leaves the socket behind with nothing listening on it, and an earlier version
+# of this script tested `[ -S /var/run/docker.sock ]`, decided the daemon was up,
+# and then failed every docker command.
+if ! docker info >/dev/null 2>&1; then
   echo "starting dockerd"
+  rm -f /var/run/docker.sock
   mkdir -p /home/user/.docker-data
   nohup dockerd --data-root=/home/user/.docker-data --storage-driver=overlay2 \
     > /tmp/dockerd.log 2>&1 &
-  for _ in $(seq 1 30); do [ -S /var/run/docker.sock ] && break; sleep 1; done
+  for _ in $(seq 1 40); do
+    docker info >/dev/null 2>&1 && break
+    sleep 1
+  done
+  docker info >/dev/null 2>&1 || {
+    echo "dockerd did not start; see /tmp/dockerd.log" >&2
+    exit 1
+  }
 fi
 
 # Docker Hub rate-limits anonymous pulls from this egress IP; ghcr does not.

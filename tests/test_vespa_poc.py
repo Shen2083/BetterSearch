@@ -109,6 +109,28 @@ class TestBuildBody:
         assert body["input.query(qt)"] == "embed(colbert, @qtext)"
         assert body["qtext"] == "bees"
 
+    def test_dense_native_sends_no_vector_at_all(self):
+        # The whole point of the lane: Vespa tokenises and embeds the query
+        # itself. A vector in the request would mean our encoder was still
+        # involved and the measurement would be of nothing in particular.
+        body = run_eval.build_body("dense_native", "bees", 20, "dense_native",
+                                   None, {})
+        assert body["input.query(qn)"] == "embed(bge, @qtext)"
+        assert body["qtext"] == "bees"
+        assert "input.query(q)" not in body
+        assert "embedding_native" in body["yql"]
+
+    def test_binary_packs_the_query_the_way_vespa_packs_documents(self):
+        # Most significant bit first, eight dimensions per byte, signed. A
+        # wrong bit order does not error, it silently returns nonsense.
+        vector = [1.0] * 8 + [-1.0] * 8 + [0.0] * 8
+        body = run_eval.build_body("binary", "bees", 20, "binary", vector, {})
+        packed = body["input.query(qb)"]["values"]
+        assert len(packed) == 3
+        assert packed[0] == -1   # 0b11111111 as int8
+        assert packed[1] == 0    # eight negatives
+        assert packed[2] == 0    # zeros are not > 0
+
     def test_extra_properties_are_passed_through(self):
         body = run_eval.build_body("bm25", "bees", 20, "bm25_fielded", None,
                                    {"model.defaultIndex": "fielded"})

@@ -503,7 +503,7 @@ reranked lane and graded the 399 records it surfaced that no judge had seen, for
 $0.06; 81 were relevant; coverage went to 100% and the number stopped moving.
 `data/rankings/` holds that lane so you can reproduce the pool, and
 `scripts/bound_repool_effect.py` bounds the gap before you spend — read its
-ordering, not its margins, which were 3× out. `vespa/rankings/` holds eleven more,
+ordering, not its margins, which were 3× out. `vespa/rankings/` holds twelve more,
 from the real node, **none of them pooled** — see §5b.
 
 **Still unexplained:** the best arm captures **32%** of the available headroom
@@ -530,7 +530,7 @@ judged queries, scored through `scripts/score_rankings.py` — the same harness
 behind every figure above. Reproduce it from `vespa/README.md`; the application
 package is `vespa/app/`, the lane files are `vespa/rankings/`.
 
-**Read the coverage column before the nDCG column.** These eleven lanes were never
+**Read the coverage column before the nDCG column.** These twelve lanes were never
 pooled — the judge needs an API key and none was available — so anything a Vespa
 profile surfaced that our six pooled lanes missed counts as irrelevant. Every
 figure here is a **floor, not an estimate**, except where coverage is 100%. The
@@ -551,6 +551,23 @@ refuses to write a feed until it has checked all 4,000 records were embedded
 from exactly the text our encoder saw. Vespa's exact `nearestNeighbor` over an
 attribute with no `index` block reproduces our brute-force numpy scan. **HNSW
 was deliberately not exercised**; that approximation is still unmeasured here.
+
+**And Vespa's own encoder agrees with ours.** The row above is fed vectors, so
+that the only variable was Vespa's retrieval. Moving the encoder inside Vespa
+too — `hugging-face-embedder` over the ONNX export of `bge-base-en-v1.5`,
+embedding both the records and the query — gives 0.6582 / 0.2819 / 0.7820
+again, and not merely in aggregate: **the same documents in the same order in
+all 41 top tens**, with identical top-100 ordering on 37 of 41 and 100% set
+overlap at both depths. The four that differ do so only past position ten. So
+there is no ONNX-against-torch caveat to carry.
+
+Two of its settings are not defaults and both are load-bearing:
+`pooling-strategy` must be `cls`, because bge pools the CLS token and Vespa
+defaults to mean; and there must be **no** `<prepend>`, because our encoder adds
+no instruction prefix to a query and a prefix on one side only would measure the
+prefix. Get either wrong and you will be measuring the configuration rather than
+the port. The cost is one forward pass per query: 72 ms round trip against
+23 ms with the vector supplied.
 
 ### Confirmed
 
@@ -716,7 +733,7 @@ are cheap to carry over:
    documents and queries fall out of step?
 4. Will you re-pool the judgements with Vespa as a lane before comparing? If
    not, §5 says what the comparison is worth. This is now the single most
-   valuable thing you could spend $0.06 on: eleven Vespa lanes are committed in
+   valuable thing you could spend $0.06 on: twelve Vespa lanes are committed in
    `vespa/rankings/` and **none of them is pooled**, because no API key was
    available. Every figure in §5b is a floor until they are.
 5. Multilingual? Every measurement here is English-only and the encoder choice

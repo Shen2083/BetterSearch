@@ -281,6 +281,48 @@ The test is a *filter*, not a summary field, because a stale availability
 filter is worse than no filter. The two integers are rewritten on the content
 node; the 768-float vector and the ColBERT token tensors are untouched.
 
+## 8. Vespa's own encoder changes nothing measurable
+
+The parity gate was deliberately fed vectors from our encoder, so the only
+variable was Vespa's retrieval. That left the other half of the question open:
+does Vespa's **own** embedding of the same text agree with ours? It changes two
+things at once — ONNX against torch numerics, and Vespa's tokenizer against
+sentence-transformers' — which is why it was kept out of the gate.
+
+With `hugging-face-embedder` over the ONNX export of `bge-base-en-v1.5`, Vespa
+embedding both the records and the query:
+
+| lane | nDCG@10 | Recall@5 | MRR@10 | coverage | round trip |
+|---|---|---|---|---|---|
+| vectors fed from our encoder | 0.6582 | 0.2819 | 0.7820 | 100.0% | 23 ms |
+| **Vespa embeds everything** | **0.6582** | **0.2819** | **0.7820** | 100.0% | 72 ms |
+
+Not merely equal in aggregate — **the same documents in the same order**:
+
+```
+identical top-10 ordering    41/41 queries
+identical top-100 ordering   37/41 queries
+set overlap at 10 and at 100     100.0%
+```
+
+The four queries that differ at all differ only past position ten, where
+near-tied records swap. So the port is faithful end to end, encoder included,
+and no caveat about ONNX numerics is needed.
+
+Two settings carried that result and neither is a default:
+
+- **`pooling-strategy: cls`.** bge pools the CLS token; Vespa's embedder
+  defaults to mean. Mean-pooling a model trained for CLS would have measured
+  the pooling rather than the port.
+- **no `<prepend>`.** bge's model card suggests an instruction prefix for
+  queries. `bettersearch.embeddings.local` does not add one, and a prefix on one
+  side only would have measured the prefix.
+
+The cost is latency: 72 ms against 23 ms, the difference being one bge-base
+forward pass per query on CPU. For a service that already has the query vector
+from somewhere else, feeding it in is three times cheaper. For one that does
+not, this is the simpler architecture and it costs nothing in quality.
+
 ## Not done, and why
 
 * **`sameElement` does not apply.** It needs an array of structs. `subjects` is
@@ -292,7 +334,5 @@ node; the 768-float vector and the ColBERT token tensors are untouched.
   facet filter, so there is no nDCG to move. It would remove the
   `SEMANTIC_POOL = 200` approximation `api/catalogue.py` admits is "judgement,
   not measurement", but that is a demonstration, not a number.
-* **The query embedder is still ours**, deliberately. Letting Vespa embed the
-  query too changes two things at once — ONNX against torch numerics, and
-  Vespa's tokenizer against sentence-transformers' — and would have muddied the
-  parity gate. Worth doing next, now that the gate has held.
+* Nothing else. The query embedder was the last item here, and it has since
+  been measured — see §8.
