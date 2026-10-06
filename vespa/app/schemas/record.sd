@@ -153,6 +153,27 @@ schema record {
         }
     }
 
+    # The same vectors, searched approximately. The exact field above is left
+    # alone so the parity gate still reproduces; this one carries an hnsw index
+    # and nothing else differs, which is what makes the comparison between them
+    # a measurement of the approximation rather than of two indexes.
+    #
+    # Synthetic rather than a second fed field: `input embedding` copies the
+    # value Vespa already holds, so the feed does not grow and the two fields
+    # cannot drift apart.
+    field embedding_hnsw type tensor<float>(x[768]) {
+        indexing: input embedding | attribute | index
+        attribute {
+            distance-metric: angular
+        }
+        index {
+            hnsw {
+                max-links-per-node: 16
+                neighbors-to-explore-at-insert: 200
+            }
+        }
+    }
+
     # The same text, embedded by Vespa rather than by us. The parity lane above
     # is fed vectors from our own encoder so that the only variable is Vespa's
     # retrieval; this field moves the encoder inside Vespa too, which is the
@@ -228,6 +249,17 @@ schema record {
         }
         first-phase {
             expression: closeness(field, embedding)
+        }
+    }
+
+    # Identical to `dense` but over the hnsw-indexed field. Everything that
+    # separates them is the approximation.
+    rank-profile dense_hnsw {
+        inputs {
+            query(q) tensor<float>(x[768])
+        }
+        first-phase {
+            expression: closeness(field, embedding_hnsw)
         }
     }
 

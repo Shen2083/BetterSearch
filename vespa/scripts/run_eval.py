@@ -88,6 +88,26 @@ def build_body(mode: str, query: str, hits: int, profile: str,
             f"select doc_id from record where userQuery() or "
             f"({{targetHits:{hits}}}nearestNeighbor(embedding, q))"
         )
+    elif mode == "dense_hnsw":
+        # approximate:true is not decoration. Vespa falls back to an exact scan
+        # when it judges the approximation unhelpful - a restrictive filter, or
+        # targetHits large against the corpus - and says nothing about it. A
+        # lane that silently ran exactly would read as perfect recall, which is
+        # the same failure shape as closeness(field, embedding) scoring 0.0837
+        # while retrieving the right candidates. compare_approximation.py
+        # checks the fallback did not happen rather than assuming.
+        # exploreAdditionalHits is an annotation on the operator, not a query
+        # property. Sent as a property it is accepted and ignored, so the sweep
+        # would have produced identical rows and read as insensitivity to the
+        # parameter rather than as the parameter never arriving.
+        explore = extra.pop("hnsw.exploreAdditionalHits", None)
+        annotations = f"targetHits:{hits}, approximate:true"
+        if explore is not None:
+            annotations += f", hnsw.exploreAdditionalHits:{int(explore)}"
+        body["yql"] = (
+            f"select doc_id from record where "
+            f"{{{annotations}}}nearestNeighbor(embedding_hnsw, q)"
+        )
     elif mode == "dense_native":
         # No vector in the request. Vespa tokenises and embeds the query with
         # the same ONNX model it embedded the records with.
@@ -137,7 +157,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mode", required=True,
                         choices=["bm25", "dense", "hybrid", "colbert",
-                                 "binary", "dense_native"])
+                                 "binary", "dense_native", "dense_hnsw"])
     parser.add_argument("--profile", required=True, help="Vespa rank-profile name")
     parser.add_argument("--out", required=True, help="lane file to write")
     parser.add_argument("--queries", default=QUERIES)
@@ -159,7 +179,7 @@ def main() -> None:
     queries = json.loads(Path(args.queries).read_text(encoding="utf-8"))["queries"]
 
     provider = None
-    if args.mode in {"dense", "hybrid", "colbert", "binary"}:
+    if args.mode in {"dense", "hybrid", "colbert", "binary", "dense_hnsw"}:
         from bettersearch.embeddings import get_provider
         provider = get_provider()
         print(f"query encoder: {provider.model_id}")

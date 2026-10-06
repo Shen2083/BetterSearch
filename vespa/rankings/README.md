@@ -19,6 +19,7 @@ floors except where coverage is 100%.
 |---|---|---|---|---|
 | `vespa-dense.json` | `dense` | exact `nearestNeighbor` over the vectors from `.bettersearch/real-books-base.npz`. The parity gate. | 0.6582 | 100.0% |
 | `vespa-dense-native.json` | `dense_native` | the same, but Vespa embedded both the records and the query itself, with the ONNX export of bge-base. Identical top ten on all 41 queries. | 0.6582 | 100.0% |
+| `vespa-dense-hnsw.json` | `dense_hnsw` | approximate search over an hnsw index on the same vectors, `exploreAdditionalHits` 500. Recall 1.0000 against exact at that setting; see §9 for what it costs at lower ones. | 0.6582 | 100.0% |
 | `vespa-bm25-flat.json` | `bm25_flat` | `bm25(title) + bm25(text)`, the two fields our Python scores, `type=any` to match its OR | 0.4120 | 75.4% |
 | `vespa-bm25-fielded.json` | `bm25_fielded` | title, author, subjects, text as separate fields, all weights 1.0 | 0.3734 | 72.2% |
 | `vespa-bm25-fielded-best.json` | `bm25_fielded` | best of 27 weightings, **fitted on these same queries**: title 1.0, author 0.0, subjects 0.5, text 1.0 | 0.3952 | 75.1% |

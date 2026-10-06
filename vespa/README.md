@@ -323,6 +323,79 @@ forward pass per query on CPU. For a service that already has the query vector
 from somewhere else, feeding it in is three times cheaper. For one that does
 not, this is the simpler architecture and it costs nothing in quality.
 
+## 9. What HNSW costs — and why this corpus cannot tell you
+
+Every dense figure above used **exact** search: `nearestNeighbor` over an
+attribute with no `index` block, which is what made parity with
+`numpy_index.py` possible. A library running 500,000 holdings will use the
+approximation instead. This measures it.
+
+**Read the limit before the table.** 4,000 records is far too few for HNSW to
+behave the way it will in production — the interesting regime is 10⁵ to 10⁸,
+and at this size a graph search touches a large share of the corpus anyway.
+What follows is evidence the approximation is configured correctly and a method
+that transfers. It is not a scale answer.
+
+This is, though, **the only unbiased number in the whole proof of concept.**
+Everything else here is qualified by judged coverage, because the lanes were
+never pooled. This asks the same index the same question twice, exactly and
+approximately, and reports how much of the exact answer the approximation
+found. No judgements are involved at all.
+
+| `hnsw.exploreAdditionalHits` | recall@10 | recall@100 | identical top ten | median latency |
+|---|---|---|---|---|
+| exact (the reference) | — | — | — | 17 ms |
+| 0 | 0.9951 | 0.9654 | 40/41 | 18 ms |
+| 100 | 0.9976 | 0.9944 | 40/41 | 18 ms |
+| 500 | **1.0000** | **1.0000** | **41/41** | 17 ms |
+
+Two things follow, and the second is the one worth carrying.
+
+**The approximate path is really running.** Near-perfect recall has two
+explanations — a good graph, or Vespa quietly falling back to an exact scan,
+which it does when it judges the approximation unhelpful and does not say so.
+The sweep separates them: recall *moves* with the parameter, from 0.9654 to
+1.0000 at depth 100. A fallback would be insensitive to it. (This nearly went
+wrong twice. `hnsw.exploreAdditionalHits` is an annotation on the operator, not
+a query property, and sent as a property it is accepted and ignored. And
+`build_body` consumes it from the dict it is handed, so a caller reusing one
+dict across the loop would have set it on the first query only. Either bug
+produces a flat sweep that reads as "the parameter does nothing".)
+
+**At this size the approximation buys nothing.** 17 ms exact against 17 ms
+approximate. HNSW earns its place by making a scan cheaper, and a scan over
+4,000 × 768 floats is not expensive. Anyone quoting a latency win from a
+corpus this size is quoting noise.
+
+### The direction, over the only honest lever available
+
+Recall as the corpus grows, fed in stages so the graph grows rather than being
+rebuilt, `exploreAdditionalHits` at 0 so the trend is not hidden behind a
+perfect score. Real records only — no catalogue records were invented to pad
+the corpus, because fabricated bibliographic data would make everything
+downstream unfalsifiable.
+
+| documents | recall@10 | recall@100 | identical top ten | exact ms | hnsw ms |
+|---|---|---|---|---|---|
+| 1,000 | 0.9976 | 0.9793 | 40/41 | 11 | 12 |
+| 2,000 | 0.9854 | 0.9702 | 35/41 | 12 | 13 |
+| 4,000 | 0.9976 | **0.9639** | 40/41 | 14 | 12 |
+
+`recall@100` falls monotonically — 0.9793, 0.9702, 0.9639 — losing about 0.015
+over a fourfold increase. `recall@10` does not move monotonically and should be
+read as noise: 41 queries is too few to resolve a difference that small.
+
+The latency columns show the expected *shape* — exact rises with the corpus,
+11 to 14 ms, while HNSW stays flat — but 3 ms across three points is not a
+measurement of scaling and should not be quoted as one. It is the right shape,
+not a result.
+
+**What to do with this.** Run `vespa/scripts/compare_approximation.py` against
+your own corpus at your own scale; it needs no judgements, so it works on day
+one, before any relevance work exists. Tune `exploreAdditionalHits` until
+recall against exact is where you want it, and check that recall *moves* when
+you change it — if it does not, you are measuring a fallback.
+
 ## Not done, and why
 
 * **`sameElement` does not apply.** It needs an array of structs. `subjects` is

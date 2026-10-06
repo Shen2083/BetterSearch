@@ -31,6 +31,7 @@ def _load(name: str):
 make_feed = _load("make_feed")
 run_eval = _load("run_eval")
 probe_significance = _load("probe_significance")
+compare_approximation = _load("compare_approximation")
 
 
 RECORD = {
@@ -131,6 +132,38 @@ class TestBuildBody:
         assert packed[1] == 0    # eight negatives
         assert packed[2] == 0    # zeros are not > 0
 
+    def test_hnsw_mode_forces_the_approximate_path(self):
+        # Without approximate:true Vespa may quietly run an exact scan, and the
+        # lane would read as perfect recall while measuring nothing.
+        body = run_eval.build_body("dense_hnsw", "bees", 100, "dense_hnsw",
+                                   [0.1], {})
+        assert "approximate:true" in body["yql"]
+        assert "embedding_hnsw" in body["yql"]
+
+    def test_explore_additional_hits_lands_in_the_annotation(self):
+        # It is an annotation on the operator. Sent as a query property it is
+        # accepted and ignored, and the sweep would show no sensitivity to a
+        # parameter that never arrived.
+        body = run_eval.build_body("dense_hnsw", "bees", 100, "dense_hnsw",
+                                   [0.1], {"hnsw.exploreAdditionalHits": 500})
+        assert "hnsw.exploreAdditionalHits:500" in body["yql"]
+        assert "hnsw.exploreAdditionalHits" not in body
+
+    def test_build_body_consumes_the_annotation_from_the_dict_it_is_given(self):
+        # build_body pops the annotation out of `extra`. A caller that reuses
+        # one dict across a loop therefore gets the parameter on the first
+        # query and not on the rest - and a sweep would read as insensitive to
+        # a parameter that only ever arrived once. compare_approximation.py
+        # passes a copy for this reason; this pins the behaviour it copies for.
+        shared = {"hnsw.exploreAdditionalHits": 500}
+        run_eval.build_body("dense_hnsw", "a", 100, "p", [0.1], shared)
+        assert shared == {}, "build_body must consume it, or the comment is wrong"
+
+        extra = {"hnsw.exploreAdditionalHits": 500}
+        bodies = [run_eval.build_body("dense_hnsw", q, 100, "p", [0.1], dict(extra))
+                  for q in ("a", "b", "c")]
+        assert all("hnsw.exploreAdditionalHits:500" in b["yql"] for b in bodies)
+
     def test_extra_properties_are_passed_through(self):
         body = run_eval.build_body("bm25", "bees", 20, "bm25_fielded", None,
                                    {"model.defaultIndex": "fielded"})
@@ -167,3 +200,43 @@ class TestAnnotatedYql:
     def test_quotes_in_a_query_cannot_break_out_of_the_yql(self):
         yql = probe_significance.annotated_yql('say "hi"', [0.5, 0.5])
         assert yql.count('"') == 4
+
+
+class TestApproximationRecall:
+    def test_a_perfect_approximation_recalls_everything(self):
+        exact = ["a", "b", "c"]
+        assert compare_approximation.recall_at(exact, ["a", "b", "c"], 3) == 1.0
+
+    def test_recall_counts_set_membership_not_order(self):
+        # A reordering inside the top k is not a recall failure; it is a
+        # ranking difference, and first_divergence is what reports it.
+        assert compare_approximation.recall_at(["a", "b"], ["b", "a"], 2) == 1.0
+
+    def test_a_missed_document_lowers_recall(self):
+        assert compare_approximation.recall_at(["a", "b"], ["a", "z"], 2) == 0.5
+
+    def test_recall_of_an_empty_exact_list_is_one_not_a_crash(self):
+        # Division by zero here would take out the whole sweep for one query
+        # that legitimately matched nothing.
+        assert compare_approximation.recall_at([], ["a"], 10) == 1.0
+
+    def test_recall_only_looks_at_the_top_k_of_both(self):
+        exact = ["a", "b", "c", "d"]
+        approx = ["a", "b", "z", "y"]
+        assert compare_approximation.recall_at(exact, approx, 2) == 1.0
+        assert compare_approximation.recall_at(exact, approx, 4) == 0.5
+
+
+class TestFirstDivergence:
+    def test_identical_lists_never_diverge(self):
+        assert compare_approximation.first_divergence(["a", "b"], ["a", "b"]) is None
+
+    def test_divergence_is_one_based(self):
+        assert compare_approximation.first_divergence(["a", "b"], ["z", "b"]) == 1
+        assert compare_approximation.first_divergence(["a", "b"], ["a", "z"]) == 2
+
+    def test_a_short_list_diverges_where_it_runs_out(self):
+        assert compare_approximation.first_divergence(["a", "b", "c"], ["a", "b"]) == 3
+
+    def test_two_empty_lists_are_identical(self):
+        assert compare_approximation.first_divergence([], []) is None

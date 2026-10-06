@@ -27,7 +27,7 @@ thing from a clean clone.
 | What the prototype does | On Vespa |
 |---|---|
 | BM25 in `src/bettersearch/keyword.py` | built in |
-| Brute-force cosine over a numpy array | ANN with HNSW |
+| Brute-force cosine over a numpy array | ANN with HNSW (measured in §5b: identical results, and at this corpus size no faster) |
 | Facet counting in `api/catalogue.py` | grouping |
 | Fixed top-20 cut, then re-rank | phased ranking |
 | `sentence-transformers` in the API process | an in-cluster embedder |
@@ -503,7 +503,7 @@ reranked lane and graded the 399 records it surfaced that no judge had seen, for
 $0.06; 81 were relevant; coverage went to 100% and the number stopped moving.
 `data/rankings/` holds that lane so you can reproduce the pool, and
 `scripts/bound_repool_effect.py` bounds the gap before you spend — read its
-ordering, not its margins, which were 3× out. `vespa/rankings/` holds twelve more,
+ordering, not its margins, which were 3× out. `vespa/rankings/` holds thirteen more,
 from the real node, **none of them pooled** — see §5b.
 
 **Still unexplained:** the best arm captures **32%** of the available headroom
@@ -530,7 +530,7 @@ judged queries, scored through `scripts/score_rankings.py` — the same harness
 behind every figure above. Reproduce it from `vespa/README.md`; the application
 package is `vespa/app/`, the lane files are `vespa/rankings/`.
 
-**Read the coverage column before the nDCG column.** These twelve lanes were never
+**Read the coverage column before the nDCG column.** These thirteen lanes were never
 pooled — the judge needs an API key and none was available — so anything a Vespa
 profile surfaced that our six pooled lanes missed counts as irrelevant. Every
 figure here is a **floor, not an estimate**, except where coverage is 100%. The
@@ -549,8 +549,9 @@ they were lifted out of the index behind the published figure, so the only
 variable is Vespa's retrieval and ranking, and `vespa/scripts/make_feed.py`
 refuses to write a feed until it has checked all 4,000 records were embedded
 from exactly the text our encoder saw. Vespa's exact `nearestNeighbor` over an
-attribute with no `index` block reproduces our brute-force numpy scan. **HNSW
-was deliberately not exercised**; that approximation is still unmeasured here.
+attribute with no `index` block reproduces our brute-force numpy scan. HNSW was
+deliberately kept out of the gate so that parity meant one thing; it is
+measured separately below.
 
 **And Vespa's own encoder agrees with ours.** The row above is fed vectors, so
 that the only variable was Vespa's retrieval. Moving the encoder inside Vespa
@@ -568,6 +569,45 @@ no instruction prefix to a query and a prefix on one side only would measure the
 prefix. Get either wrong and you will be measuring the configuration rather than
 the port. The cost is one forward pass per query: 72 ms round trip against
 23 ms with the vector supplied.
+
+### The approximation: measured, and the only unbiased number here
+
+Every dense figure in this note used exact search. A library at 500,000
+holdings will not. `vespa/scripts/compare_approximation.py` asks the same index
+the same question twice, exactly and approximately, and reports how much of the
+exact answer the approximation found — **no judgements involved**, so unlike
+every other figure in §5b this one carries no coverage caveat at all.
+
+| `hnsw.exploreAdditionalHits` | recall@10 | recall@100 | identical top ten | median latency |
+|---|---|---|---|---|
+| exact (reference) | — | — | — | 17 ms |
+| 0 | 0.9951 | 0.9654 | 40/41 | 18 ms |
+| 100 | 0.9976 | 0.9944 | 40/41 | 18 ms |
+| 500 | **1.0000** | **1.0000** | **41/41** | 17 ms |
+
+**At 4,000 records the approximation buys nothing** — 17 ms either way. HNSW
+earns its place by making a scan cheaper, and a scan over 4,000 × 768 floats is
+not expensive. Do not quote a latency win from a corpus this size.
+
+Growing the corpus in stages, with `exploreAdditionalHits` at 0 so the trend is
+not hidden behind a perfect score: recall@100 falls monotonically — 0.9793 at
+1,000 documents, 0.9702 at 2,000, **0.9639 at 4,000** — while exact latency
+rises 11 → 14 ms and the approximate stays flat. That is the right shape, over
+far too small a range to be a scaling law. recall@10 does not move
+monotonically and should be read as noise at 41 queries.
+
+**The operational warning worth more than the numbers.** Vespa falls back to an
+exact scan when it judges the approximation unhelpful, and says nothing about
+it. Near-perfect recall therefore has two explanations and the result alone
+cannot separate them. Check that recall *moves* when you change
+`exploreAdditionalHits`; a flat sweep means you are measuring a fallback, not a
+graph. Two bugs on our side produced exactly that flat sweep before it was
+right: the parameter is an annotation on the operator and is silently ignored as
+a query property, and our own body builder consumed it from the dict it was
+handed, so one dict reused across a loop set it on the first query only.
+
+Run it against your own corpus at your own scale. It needs no relevance
+judgements, so it works on day one.
 
 ### Confirmed
 
@@ -733,7 +773,7 @@ are cheap to carry over:
    documents and queries fall out of step?
 4. Will you re-pool the judgements with Vespa as a lane before comparing? If
    not, §5 says what the comparison is worth. This is now the single most
-   valuable thing you could spend $0.06 on: twelve Vespa lanes are committed in
+   valuable thing you could spend $0.06 on: thirteen Vespa lanes are committed in
    `vespa/rankings/` and **none of them is pooled**, because no API key was
    available. Every figure in §5b is a floor until they are.
 5. Multilingual? Every measurement here is English-only and the encoder choice

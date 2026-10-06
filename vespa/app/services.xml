@@ -69,11 +69,18 @@
          allowance that does not shrink the reported size. Without this, every
          feed returns HTTP 507 and no measurement is possible.
 
+         Raised again to 0.99 once the application package grew to 545 MB of
+         ONNX models. Vespa keeps a full copy of the package per deploy session
+         and distributes another: three deploys cost about 4.8 GB here, which
+         moved the ratio enough to block feeding on its own. That part is not a
+         quirk of this machine and is worth knowing before bundling models into
+         a package: budget roughly the package size per retained session.
+
          In production the default is the right value and this block should be
          deleted. -->
     <tuning>
       <resource-limits>
-        <disk>0.97</disk>
+        <disk>0.99</disk>
         <memory>0.90</memory>
       </resource-limits>
     </tuning>
