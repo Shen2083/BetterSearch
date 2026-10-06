@@ -66,6 +66,23 @@ exact-match-promoted; both were pooled and the 399 records they surfaced that no
 judge had seen were graded for $0.06. 81 came back relevant, coverage at depth
 200 went 59.5% -> 100%, and the number stopped moving.
 
+**And that was tested, not asserted.** If `--judged-only` is biased by exactly
+the coverage it discards, it has to agree with the judged truth wherever
+coverage is already 100% and over-read everywhere else:
+
+              bge + promotion            ms-marco-MiniLM + promotion
+              (the lane we pooled)       (never pooled)
+    depth   truth  judged-only    gap  truth  judged-only    gap
+       20  +0.0657     +0.0657  0.0000 +0.0584    +0.0584  0.0000
+       50  +0.0465     +0.0596 +0.0131 +0.0308    +0.0680 +0.0372
+      100  +0.0349     +0.0384 +0.0035 +0.0292    +0.0458 +0.0166
+      200  +0.0097     +0.0097  0.0000 +0.0249    +0.0419 +0.0170
+
+It agrees to four decimals at exactly the two places it should and nowhere else:
+depth 20, where every candidate was judged anyway, and depth 200 for bge -
+because that is the lane whose candidates were pooled and judged. MiniLM, same
+corpus and depth but never pooled, still over-reads there by +0.017.
+
 So: a coverage *correction* is not the same as having the judgements. If you
 reach for `--judged-only` to compare arms, read it as an upper bound on the arm
 that surfaced the unjudged records, never as the answer.
@@ -131,7 +148,77 @@ CONTROL_PREFIX = "control"
 RERANKERS = {
     "minilm": "cross-encoder/ms-marco-MiniLM-L-6-v2",
     "bge": "BAAI/bge-reranker-base",
+    # Late interaction rather than a cross-encoder: query and record are still
+    # encoded separately, but into one vector *per token*, scored by summing
+    # each query token's best match against the record's tokens (MaxSim). The
+    # middle ground between a bi-encoder, which compresses a record to one
+    # vector and leaves what the oracle says is 0.18 of nDCG on the table, and a
+    # cross-encoder, which reads the pair together and costs 371 ms a search.
+    #
+    # Here because it is the shape Vespa reaches for: Vespa ships a native
+    # ColBERT embedder, and this model carries a `vespa_colbert.onnx` in its own
+    # repository. The hypothesis worth testing is not that it beats a
+    # cross-encoder on enriched prose - it is that it works on records **as they
+    # ship**, where a cross-encoder measured -0.017 to -0.040. Token matching
+    # needs tokens, not a passage.
+    "colbert": "answerdotai/answerai-colbert-small-v1",
 }
+
+#: Entries in RERANKERS that are late-interaction rather than cross-encoders.
+LATE_INTERACTION = {"answerdotai/answerai-colbert-small-v1"}
+
+
+class LateInteraction:
+    """A ColBERT model wearing `CrossEncoder.predict`'s interface.
+
+    The arm builder hands every reranker a list of (query, record) pairs and
+    wants one score each, which is a cross-encoder's shape. Late interaction
+    does not work that way: query and records are encoded separately into one
+    vector per token and scored by MaxSim. Adapting here rather than branching
+    in the arm keeps every arm measured by the same code path - and
+    `measure()`'s permutation guard applies to this one unchanged.
+
+    Every pair in a call shares a query, so the query is encoded once.
+
+    **Scores are not comparable with a cross-encoder's.** MaxSim sums one cosine
+    per query position, and ColBERT pads the query to 32 positions with [MASK]
+    tokens that match many record tokens, so the absolute numbers sit near 30
+    and barely spread. Only the order matters, which is all `order()` uses.
+    """
+
+    def __init__(self, repo: str) -> None:
+        try:
+            from pylate import models as pylate_models
+        except ImportError as exc:  # pragma: no cover - depends on the install
+            raise SystemExit(
+                "--rerankers colbert needs pylate: pip install pylate\n"
+                "\n"
+                "Install it on its own and check afterwards. It pins "
+                "sentence-transformers and torch, and on this box it downgraded "
+                "sentence-transformers 6.1.0 -> 5.3.0. That did not move any "
+                "measured number - the serving-path eval reproduced 0.6582 and "
+                "0.7280 exactly after it - but the test suite cannot tell you "
+                "so, because it runs on a fake provider. Re-run a real "
+                "measurement before trusting one."
+            ) from exc
+
+        # pylate prints "No sentence-transformers model found" and falls back to
+        # a bare BertModel. That is expected for this checkpoint and does not
+        # mean the ColBERT head was skipped: the projection loads from
+        # `linear.weight`, embeddings come back 96-dimensional, and two
+        # independent loads produce identical vectors - which is what rules out
+        # a randomly initialised head.
+        self._model = pylate_models.ColBERT(model_name_or_path=repo)
+
+    def predict(self, pairs, show_progress_bar=False):
+        query = pairs[0][0]
+        documents = [d for _, d in pairs]
+        q = self._model.encode([query], is_query=True, show_progress_bar=False)
+        d = self._model.encode([documents], is_query=False, show_progress_bar=False)
+        qv = np.asarray(q[0], dtype=np.float32)
+        return np.array(
+            [float((np.asarray(doc, dtype=np.float32) @ qv.T).max(axis=0).sum())
+             for doc in d[0]], dtype=np.float32)
 
 
 def load_index(path: Path):
@@ -307,7 +394,10 @@ def main() -> int:
         for key in args.rerankers.split(","):
             repo = RERANKERS[key.strip()]
             print(f"  loading {repo} …", flush=True)
-            models[repo] = CrossEncoder(repo, max_length=512)
+            if repo in LATE_INTERACTION:
+                models[repo] = LateInteraction(repo)
+            else:
+                models[repo] = CrossEncoder(repo, max_length=512)
 
     everything = {}
     for depth in depths:

@@ -1,0 +1,358 @@
+schema record {
+
+    document record {
+
+        # The identifier the eval harness scores on. Kept as an attribute so it
+        # can be returned without fetching a summary, and so grouping can key on it.
+        field doc_id type string {
+            indexing: attribute | summary
+            attribute: fast-search
+            rank: filter
+        }
+
+        field title type string {
+            indexing: index | summary
+            index: enable-bm25
+        }
+
+        # Single-valued in the source corpus: one author string per record,
+        # not a list. Indexed in its own right here, which is the whole point --
+        # src/bettersearch/keyword.py:35-38 records that our BM25 cannot weight
+        # the author at all, because the author only exists as a line of prose
+        # inside the text blob below.
+        field author type string {
+            indexing: index | attribute | summary
+            index: enable-bm25
+        }
+
+        field author_dates type string {
+            indexing: summary
+        }
+
+        # Multi-valued: one to eight subject headings per record, 7,601 distinct
+        # across the corpus. An array<string>, not an array of structs, so
+        # sameElement does not apply to it -- matched-elements-only does, and
+        # that is the summary property declared below.
+        field subjects type array<string> {
+            indexing: index | summary
+            index: enable-bm25
+            summary: matched-elements-only
+        }
+
+        # The flat blob the Python system retrieves over: a derived
+        # concatenation of "Author: ...", "Published: <publisher>, <year>" and
+        # "Subjects: a; b; c". Kept verbatim so one lane can reproduce our BM25
+        # exactly, rather than reproducing a better version of it.
+        field text type string {
+            indexing: index | summary
+            index: enable-bm25
+        }
+
+        # The exact string our embedder was given, title and blob joined by a
+        # blank line (src/bettersearch/chunking.py:125). Stored, never indexed,
+        # purely so the port can be audited against the Python one.
+        field embed_text type string {
+            indexing: summary
+        }
+
+        # Year is a string in the source corpus, not an integer. Both forms are
+        # kept: the string for faithful display, the integer for range queries.
+        field year type string {
+            indexing: attribute | summary
+        }
+
+        field year_int type int {
+            indexing: attribute | summary
+        }
+
+        field publisher type string {
+            indexing: attribute | summary
+        }
+
+        field format type string {
+            indexing: attribute | summary
+        }
+
+        field language type string {
+            indexing: attribute | summary
+        }
+
+        field fiction type bool {
+            indexing: attribute | summary
+        }
+
+        field location type string {
+            indexing: attribute | summary
+        }
+
+        # Availability and copy counts change on every loan. Declared
+        # fast-access so a partial update lands in memory on the content node
+        # and is visible to the next query without reindexing the record.
+        # These two values are invented for the proof of concept and are not
+        # real library data.
+        field available type int {
+            indexing: attribute | summary
+            attribute: fast-access
+        }
+
+        field copies type int {
+            indexing: attribute | summary
+            attribute: fast-access
+        }
+
+        field tags type array<string> {
+            indexing: attribute | summary
+        }
+
+        field cover type string {
+            indexing: summary
+        }
+
+        # Fed from .bettersearch/real-bge.npz, which was verified byte-identical
+        # to the index behind the published 0.6582. No index block, so
+        # nearestNeighbor runs exact brute force over the attribute -- the same
+        # thing src/bettersearch/index/numpy_index.py does, and the reason dense
+        # parity should hold to within floating-point noise rather than
+        # approximately.
+        field embedding type tensor<float>(x[768]) {
+            indexing: attribute | summary
+            attribute {
+                distance-metric: angular
+            }
+        }
+
+    }
+
+    # Per-token ColBERT embeddings, 96 dimensions each, bfloat16 to halve the
+    # footprint. dt is the document-token dimension.
+    #
+    # Declared outside the document block, so Vespa computes it at feed time
+    # from embed_text with the embedder in services.xml. Nothing in the feed
+    # carries token vectors: the point of the exercise is to measure Vespa's
+    # late interaction, not to reimplement it and feed the answer in. Our own
+    # 0.7407 came from a MaxSim written by hand against pylate, which is
+    # exactly the thing docs/VESPA-HANDOVER.md says a production default should
+    # not rest on.
+    field colbert type tensor<bfloat16>(dt{}, x[96]) {
+        indexing: input embed_text | embed colbert | attribute
+    }
+
+    # The same 768 vectors, one bit per dimension: 768 floats at 4 bytes each
+    # become 96 int8 values, a 32-fold reduction. binarize maps each dimension
+    # to 0 or 1 by sign, pack_bits packs eight per byte, and Hamming distance
+    # replaces cosine. Computed by Vespa from the float field at indexing time,
+    # so there is one source of truth for the vectors.
+    #
+    # Not tested with Matryoshka truncation: bge-base-en-v1.5 was not trained
+    # with a Matryoshka objective, so truncating it would measure the
+    # truncation rather than the idea.
+    field embedding_binary type tensor<int8>(x[96]) {
+        indexing: input embedding | binarize | pack_bits | attribute
+        attribute {
+            distance-metric: hamming
+        }
+    }
+
+    # The same vectors, searched approximately. The exact field above is left
+    # alone so the parity gate still reproduces; this one carries an hnsw index
+    # and nothing else differs, which is what makes the comparison between them
+    # a measurement of the approximation rather than of two indexes.
+    #
+    # Synthetic rather than a second fed field: `input embedding` copies the
+    # value Vespa already holds, so the feed does not grow and the two fields
+    # cannot drift apart.
+    field embedding_hnsw type tensor<float>(x[768]) {
+        indexing: input embedding | attribute | index
+        attribute {
+            distance-metric: angular
+        }
+        index {
+            hnsw {
+                max-links-per-node: 16
+                neighbors-to-explore-at-insert: 200
+            }
+        }
+    }
+
+    # The same text, embedded by Vespa rather than by us. The parity lane above
+    # is fed vectors from our own encoder so that the only variable is Vespa's
+    # retrieval; this field moves the encoder inside Vespa too, which is the
+    # second half of the question and a separate measurement.
+    field embedding_native type tensor<float>(x[768]) {
+        indexing: input embed_text | embed bge | attribute
+        attribute {
+            distance-metric: angular
+        }
+    }
+
+    # Exactly the two fields our Python BM25 scores over, so the parity lane
+    # reproduces it rather than improving on it.
+    fieldset default {
+        fields: title, text
+    }
+
+    # Author and subject headings as first-class searchable fields. This is the
+    # arrangement our Python cannot express.
+    fieldset fielded {
+        fields: title, author, subjects, text
+    }
+
+    rank-profile bm25_flat {
+        first-phase {
+            expression: bm25(title) + bm25(text)
+        }
+    }
+
+    # Exposes the significance Vespa is actually using for each query term.
+    # That is the quantity behind the per-node IDF warning in
+    # docs/VESPA-HANDOVER.md: Vespa builds significance from the document
+    # frequencies on each content node, so two nodes holding different
+    # documents weight the same term differently. Reading it is the only way to
+    # check the warning without guessing how Vespa stemmed the term.
+    rank-profile bm25_flat_explain inherits bm25_flat {
+        match-features {
+            term(0).significance
+            term(1).significance
+            term(2).significance
+            term(3).significance
+            term(4).significance
+            term(5).significance
+            term(6).significance
+            term(7).significance
+            term(8).significance
+            term(9).significance
+        }
+    }
+
+    # Weights are query inputs rather than constants, so the sweep runs against
+    # one deployment instead of one deployment per point.
+    rank-profile bm25_fielded {
+        inputs {
+            query(w_title) double: 1.0
+            query(w_author) double: 1.0
+            query(w_subjects) double: 1.0
+            query(w_text) double: 1.0
+        }
+        first-phase {
+            expression {
+                query(w_title) * bm25(title)
+                  + query(w_author) * bm25(author)
+                  + query(w_subjects) * bm25(subjects)
+                  + query(w_text) * bm25(text)
+            }
+        }
+    }
+
+    rank-profile dense {
+        inputs {
+            query(q) tensor<float>(x[768])
+        }
+        first-phase {
+            expression: closeness(field, embedding)
+        }
+    }
+
+    # Identical to `dense` but over the hnsw-indexed field. Everything that
+    # separates them is the approximation.
+    rank-profile dense_hnsw {
+        inputs {
+            query(q) tensor<float>(x[768])
+        }
+        first-phase {
+            expression: closeness(field, embedding_hnsw)
+        }
+    }
+
+    # Hamming alone: what 32x compression costs with nothing to repair it.
+    rank-profile binary {
+        inputs {
+            query(qb) tensor<int8>(x[96])
+        }
+        first-phase {
+            expression: closeness(field, embedding_binary)
+        }
+    }
+
+    # Vespa's recommended shape: retrieve cheaply on the packed vectors, then
+    # rescore the survivors with the float ones. The float vectors still have to
+    # be stored for this, so it buys query cost rather than memory.
+    rank-profile binary_rerank inherits binary {
+        inputs {
+            query(qb) tensor<int8>(x[96])
+            query(q) tensor<float>(x[768])
+        }
+        first-phase {
+            expression: closeness(field, embedding_binary)
+        }
+        second-phase {
+            # Not closeness(field, embedding). closeness only has a distance
+            # for the field nearestNeighbor actually ran against, which here is
+            # embedding_binary; asked about any other field it returns a
+            # meaningless score rather than failing, and the profile scores
+            # 0.0837 while retrieving almost exactly the right candidates. The
+            # dot product is written out instead. The vectors are L2 normalised
+            # by the encoder, so this is cosine.
+            expression: sum(query(q) * attribute(embedding))
+            rerank-count: 100
+        }
+    }
+
+    # Vespa embeds the query as well. Nothing in the request carries a vector.
+    rank-profile dense_native {
+        inputs {
+            query(qn) tensor<float>(x[768])
+        }
+        first-phase {
+            expression: closeness(field, embedding_native)
+        }
+    }
+
+    rank-profile hybrid_rrf inherits dense {
+        function bm25_score() {
+            expression: bm25(title) + bm25(text)
+        }
+        function dense_score() {
+            expression: closeness(field, embedding)
+        }
+        first-phase {
+            expression: bm25_score + dense_score
+        }
+        global-phase {
+            expression: reciprocal_rank_fusion(bm25_score, dense_score)
+            rerank-count: 1000
+        }
+    }
+
+    # Late interaction as Vespa ships it. rerank-count is overridable per query
+    # as ranking.rerankCount, so 20/50/100/200 is a sweep over one deployment.
+    rank-profile colbert inherits dense {
+        inputs {
+            query(q) tensor<float>(x[768])
+            query(qt) tensor<float>(querytoken{}, x[96])
+        }
+        function max_sim() {
+            expression {
+                sum(
+                    reduce(
+                        sum(query(qt) * attribute(colbert), x),
+                        max, dt
+                    ),
+                    querytoken
+                )
+            }
+        }
+        first-phase {
+            expression: closeness(field, embedding)
+        }
+        second-phase {
+            expression: max_sim
+            rerank-count: 20
+        }
+    }
+
+    document-summary minimal {
+        summary doc_id {}
+        summary title {}
+        from-disk
+    }
+}

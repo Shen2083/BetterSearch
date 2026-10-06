@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<services version="1.0">
+
+  <!-- One node, because this is a proof of concept and not a cluster.
+       Everything that would be split across nodes in production runs here:
+       the config server, the stateless container, and one content node.
+
+       The single most important consequence is in schemas/record.sd: Vespa
+       builds its BM25 significance (IDF) per content node, and with one node
+       the local model and a global model are identical by construction. The
+       per-node skew that a real deployment would see is measured instead by
+       deploying a significance model generated from half the corpus. See
+       vespa/scripts/make_significance.py. -->
+
+  <container id="default" version="1.0">
+    <document-api/>
+    <search/>
+
+    <!-- Vespa's own ColBERT embedder, not our MaxSim.
+         answerai-colbert-small-v1 publishes vespa_colbert.onnx in its own
+         repository, exported for this component, so this is the supported path
+         rather than a conversion of ours. 33M parameters, which sits under
+         Vespa's rough 30 to 40M threshold for wanting a GPU, so it runs on
+         container-node CPU where bge-reranker at 278M would not.
+         max-query-tokens 32 matches what our Python padded the query to. -->
+    <!-- bge-base-en-v1.5, so Vespa can embed the query and the record itself
+         instead of being handed vectors from our encoder. This is a separate
+         measurement from the parity lane on purpose: it changes ONNX against
+         torch numerics and Vespa's tokenizer against sentence-transformers' at
+         the same time, which would have muddied the gate.
+
+         Two settings are not defaults and both matter:
+
+         pooling-strategy is cls, because bge pools the CLS token. Vespa
+         defaults to mean, and mean-pooling a model trained for CLS would have
+         measured the pooling rather than the port.
+
+         There is deliberately no <prepend>. bge's card suggests an instruction
+         prefix for queries, and `bettersearch.embeddings.local` does not add
+         one; a prefix on one side only would measure the prefix. -->
+    <component id="bge" type="hugging-face-embedder">
+      <transformer-model path="models/bge_base.onnx"/>
+      <tokenizer-model path="models/bge_base_tokenizer.json"/>
+      <pooling-strategy>cls</pooling-strategy>
+      <normalize>true</normalize>
+    </component>
+
+    <component id="colbert" type="colbert-embedder">
+      <transformer-model path="models/colbert.onnx"/>
+      <tokenizer-model path="models/colbert-tokenizer.json"/>
+      <max-query-tokens>32</max-query-tokens>
+      <max-document-tokens>256</max-document-tokens>
+    </component>
+    <nodes>
+      <node hostalias="node1"/>
+    </nodes>
+  </container>
+
+  <content id="catalogue" version="1.0">
+    <min-redundancy>1</min-redundancy>
+
+    <!-- Raised from the 80% default purely because of this machine, not
+         because a library should run it this way.
+
+         The container filesystem reports a 252 GB size with 15 GB available,
+         so Vespa computes 1 - 15/252 = 94% full and blocks feeding, while df
+         reports 62% used. Vespa's arithmetic is correct; the filesystem's
+         self-description is not sound. Writable space here is a fixed per-session
+         allowance that does not shrink the reported size. Without this, every
+         feed returns HTTP 507 and no measurement is possible.
+
+         Raised again to 0.99 once the application package grew to 545 MB of
+         ONNX models. Vespa keeps a full copy of the package per deploy session
+         and distributes another: three deploys cost about 4.8 GB here, which
+         moved the ratio enough to block feeding on its own. That part is not a
+         quirk of this machine and is worth knowing before bundling models into
+         a package: budget roughly the package size per retained session.
+
+         In production the default is the right value and this block should be
+         deleted. -->
+    <tuning>
+      <resource-limits>
+        <disk>0.99</disk>
+        <memory>0.90</memory>
+      </resource-limits>
+    </tuning>
+    <documents>
+      <document type="record" mode="index"/>
+    </documents>
+    <nodes>
+      <node hostalias="node1" distribution-key="0"/>
+    </nodes>
+  </content>
+
+</services>

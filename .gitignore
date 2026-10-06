@@ -33,3 +33,9 @@ package-lock.json
 # success; this catches a crashed run)
 .mdprint-*.html
 *.print.html
+
+# Vespa proof of concept: generated feed and downloaded model weights.
+# Rebuild with vespa/scripts/make_feed.py and vespa/scripts/fetch_models.py.
+vespa/feed/
+vespa/app/models/*.onnx
+vespa/app/models/*tokenizer*.json

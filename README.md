@@ -329,6 +329,12 @@ transfers, what to re-measure, and the traps. `scripts/score_rankings.py` scores
 any engine's output against the same 2,378 judgements, so a rebuild can be held
 to this one's bar rather than to a new one.
 
+Some of that note has since been tested rather than argued. **[vespa/README.md](vespa/README.md)**
+stands a real Vespa node up over these 4,000 records and measures eight of its
+claims: dense retrieval reproduces 0.6582 exactly, native late interaction
+reaches 0.7131 on *unenriched* records at a 45 ms round trip, and two of the
+predictions turned out to be wrong. §5b of the handover has the summary.
+
 `web/index.html` is the view for working on retrieval rather than for showing
 anyone — all three modes on one screen, scored, so a change in chunking or model
 is visible immediately:
@@ -525,6 +531,17 @@ before index overhead. Three multiplicative fixes, all implemented:
 
 Together that is 6x: **5.72 GB → 0.95 GB**, the difference between needing a large
 managed Postgres instance and fitting comfortably on a small one.
+
+**None of those three rows has a quality column, and that is a gap, not a
+claim.** Neither the truncation nor the fp16 storage has been measured against
+the judged set here. The one compression lever that *has* been measured is a
+harder one — one bit per dimension instead of 32, on a Vespa node over these
+4,000 records — and it cost **0.07 nDCG**, changing 59% of the top ten, unless
+the full-precision vectors were kept for a rescoring pass, in which case the
+quality came back but the storage saving did not
+(`docs/VESPA-HANDOVER.md` §5b). Treat these three as untested on relevance
+until somebody runs them, and expect the saving and the quality not to be
+available at the same time.
 
 Self-hosting changes the arithmetic again, in both directions. The default
 encoder here is `bge-base-en-v1.5` at 768 dimensions: 1.43 GB for 1M chunks at
@@ -1077,6 +1094,13 @@ decays, monotonically, all the way down:**
 Seven times the latency for a seventh of the gain. **Rerank the twenty you
 display, and stop there.** For a Vespa `rerank-count`, that is the number.
 
+Depth also exposes something depth 20 hides. On records **as they ship**, a
+cross-encoder stops being merely useless and turns harmful: **−0.017** for
+MiniLM and **−0.040** for bge at depth 200, against +0.005 and −0.001 at depth
+20. Given a hundred 24-word stubs instead of twenty, a passage model reorders
+them actively worse than retrieval did. The need for prose is not a
+nice-to-have that buys a bit more — without it, going deeper costs you.
+
 #### This took two wrong answers to reach, and both are instructive
 
 The first sweep, before the pool was rebuilt, read `+0.079 / +0.029 / −0.007 /
@@ -1101,6 +1125,28 @@ reranked lane, both plain and exact-match-promoted; both were pooled and the 399
 records they surfaced that no judge had seen were graded, at a cost of $0.06.
 81 came back relevant. Coverage at depth 200 went 59.5% → 100%, and the number
 stopped moving.
+
+**That account makes a prediction, so it was tested rather than asserted.** If
+`--judged-only` is biased by exactly the coverage it discards, it must agree
+with the judged truth wherever coverage is already 100%, and over-read
+everywhere else. Both sweeps, all four depths, against the re-pooled eval:
+
+| rerank depth | bge + promotion — **the lane we pooled** | | | MiniLM + promotion — *not pooled* | | |
+|---|---|---|---|---|---|---|
+| | judged truth | `--judged-only` | gap | judged truth | `--judged-only` | gap |
+| 20 | +0.0657 | +0.0657 | **0.0000** | +0.0584 | +0.0584 | **0.0000** |
+| 50 | +0.0465 | +0.0596 | +0.0131 | +0.0308 | +0.0680 | +0.0372 |
+| 100 | +0.0349 | +0.0384 | +0.0035 | +0.0292 | +0.0458 | +0.0166 |
+| 200 | +0.0097 | +0.0097 | **0.0000** | +0.0249 | +0.0419 | +0.0170 |
+
+It agrees **to four decimals at exactly the two places it should**, and nowhere
+else. Depth 20, where every candidate was judged anyway. And depth 200 for the
+bge arm — *because that is the lane whose candidates were pooled and judged*.
+MiniLM, same corpus and same depth but never pooled, still over-reads there by
++0.017.
+
+The arm we paid for converges; the arm we did not, does not. That is about as
+close to a controlled experiment as this eval allows.
 
 Two general lessons, both cheaper to learn here than in production:
 
